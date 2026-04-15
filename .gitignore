@@ -1,8 +1,14 @@
 .env
 .env.local
 .env.*.local
+*.env
+*.env.local
 node_modules/
 .DS_Store
 Thumbs.db
 *.log
 .vercel
+*passwords*
+*credentials*
+*secrets*
+.claude/
