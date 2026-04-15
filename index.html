@@ -72,7 +72,8 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--wine);outline-of
 .btn-ghost:hover{border-color:var(--ink);}
 .btn-secondary{background:transparent;color:var(--wine);border:1.5px solid var(--wine);padding:12px 20px;border-radius:var(--r-btn);cursor:pointer;font-size:13px;font-weight:700;}
 
-.full{width:100%;} .hidden{display:none!important;} #app{padding-bottom:0;}
+.full{width:100%;} .hidden{display:none!important;} #app{padding-bottom:0;background:#FFFFFF;min-height:100vh;}
+.cust-headline{font-family:'Nunito Sans',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.06em;}
 
 /* ── DESKTOP PORTAL ──────────────────────────────── */
 body.dp{
@@ -1324,7 +1325,7 @@ function tabBar(tabs, activeId, setFn) {
       + 'letter-spacing:.08em;text-transform:uppercase;transition:all .15s'
       + '">'+label+'</button>';
   }).join('');
-  return '<div style="display:flex;background:#F8F8F8;border-bottom:1px solid #EFEFEF;border-top:1px solid #EFEFEF">'+btns+'</div>';
+  return '<div style="display:flex;background:#FFFFFF;border-bottom:1px solid #EFEFEF;border-top:1px solid #EFEFEF">'+btns+'</div>';
 }
 
 
