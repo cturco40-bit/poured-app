@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#7A1020">
 <meta name="description" content="Poured — Beverage Trade Events Platform">
-<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 64'%3E%3Cpath d='M26 0C26 0 0 24 0 39C0 53 11.6 64 26 64C40.4 64 52 53 52 39C52 24 26 0 26 0Z' fill='%237A1020'/%3E%3C/svg%3E">
 <!-- iOS home screen icons (inline SVG converted to data URI) -->
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%230F0A08' rx='40'/%3E%3Ctext x='90' y='115' text-anchor='middle' font-family='Georgia' font-size='72' fill='%23B8976A' font-weight='700'%3EP%3C/text%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -2706,9 +2706,9 @@ window.saveFeeOverride = function(eventId){
 };
 window.signOutAgent  = async function(){ await AUTH.signOut(); setState({portal:'agent'}); };
 window.signOutCoord  = async function(){ await AUTH.signOut(); setState({portal:'coordinator'}); };
-window.signOutCust   = async function(){ await AUTH.signOut(); setState({portal:'customer'}); };
+window.signOutCust   = async function(){ await AUTH.signOut(); setState({portal:'home'}); };
 window.backToCoordList = function(){ setState({coordSelectedEventId:null}); };
-window.backToAgentList = function(){ setState({selectedEventId:null}); };
+window.backToAgentList = function(){ setState({selectedEventId:null, portal:'agent_in'}); };
 window.backToCustList  = function(){ setState({selectedEventId:null, orderDone:false, cart:[]}); };
 window.openCoordEvent  = function(id){ setState({coordSelectedEventId:id, coordTab:'overview'}); };
 window.openCustEvent   = function(id){ setState({selectedEventId:id, custTab:'ticket'}); };
