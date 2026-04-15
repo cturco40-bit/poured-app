@@ -595,10 +595,6 @@ let state = {
   adminTab: "dashboard",
   adminSelectedCoordId: null,
   feeOverrides: {},   // eventId -> {ticketFlat, ticketPct, unlockPct, unlockCap, submissionFee, featuredFee}
-  pendingCoords: [
-    {id:'c001', name:'Sarah Mitchell', email:'sarah@torontofoodweek.ca', org:'Toronto Food Week', events:3, status:'pending', applied:'2025-03-01'},
-    {id:'c002', name:'Jean-Luc Beaumont', email:'jlb@vinfest.ca', org:'Quebec VinFest', events:0, status:'pending', applied:'2025-03-08'},
-  ],
   coordinators: [
     {id:'c003', name:'The Tasting Collective', email:'coordinator@tasting.ca', org:'The Tasting Collective', events:4, revenue:18200, status:'active', joined:'2025-01-15'},
     {id:'c004', name:'ITA Canada', email:'events@itacanada.ca', org:'ITA Canada', events:2, revenue:9400, status:'active', joined:'2025-02-01'},
@@ -2297,7 +2293,7 @@ window.showInviteCoordModal = function() {
   title.textContent = 'Invite Event Host';
   var subtitle = document.createElement('div');
   subtitle.style.cssText = 'font-size:12px;color:#888;margin-bottom:20px';
-  subtitle.textContent = 'They will receive an email to create an event host account. Access is pending your approval.';
+  subtitle.textContent = 'They will receive an email to create an Event Host account and can start immediately.';
 
   var inpName  = inp('invc-name','text','Event host name');
   var inpEmail = inp('invc-email','email','coordinator@example.com');
@@ -2656,47 +2652,6 @@ window.calcOrderUnlockFee = function(sub) {
 
 
 window.signOutAdmin = async function(){ await AUTH.signOut(); setState({portal:'home'}); };
-window.approveCoord = function(id){
-  var coord = state.pendingCoords.find(function(c){return c.id===id;});
-  if(!coord) return;
-  var newPending = state.pendingCoords.filter(function(c){return c.id!==id;});
-  var newCoords  = state.coordinators.concat([Object.assign({},coord,{status:'active',joined:new Date().toISOString().split('T')[0],events:0,revenue:0})]);
-  setState({pendingCoords:newPending, coordinators:newCoords});
-  showToast(coord.name + ' approved — welcome email sent');
-};
-window.rejectCoord = function(id){
-  var coord = state.pendingCoords.find(function(c){return c.id===id;});
-  if(!coord) return;
-  var ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px';
-  var card = document.createElement('div');
-  card.style.cssText = 'background:#fff;border-radius:12px;padding:24px;width:100%;max-width:360px';
-  var title = document.createElement('div');
-  title.style.cssText = 'font-size:15px;font-weight:800;color:#1A1A1A;margin-bottom:8px';
-  title.textContent = 'Reject ' + coord.name + '?';
-  var body = document.createElement('div');
-  body.style.cssText = 'font-size:13px;color:#888;margin-bottom:20px;line-height:1.5';
-  body.textContent = 'Their application will be declined and they will not receive platform access.';
-  var row = document.createElement('div');
-  row.style.cssText = 'display:flex;gap:10px';
-  var btnCancel = document.createElement('button');
-  btnCancel.style.cssText = 'flex:1;padding:10px;border:1.5px solid #E5E5E5;border-radius:8px;background:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:Nunito Sans,sans-serif;color:#888';
-  btnCancel.textContent = 'Cancel';
-  btnCancel.onclick = function(){ ov.remove(); };
-  var btnReject = document.createElement('button');
-  btnReject.style.cssText = 'flex:1;padding:10px;border:none;border-radius:8px;background:#7A1020;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:Nunito Sans,sans-serif';
-  btnReject.textContent = 'Reject';
-  btnReject.onclick = function(){
-    ov.remove();
-    setState({pendingCoords:state.pendingCoords.filter(function(c){return c.id!==id;})});
-    showToast(coord.name + ' rejected');
-  };
-  row.appendChild(btnCancel); row.appendChild(btnReject);
-  card.appendChild(title); card.appendChild(body); card.appendChild(row);
-  ov.appendChild(card);
-  document.body.appendChild(ov);
-  ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
-};
 window.saveFeeOverride = function(eventId){
   var fields = ['ticketFlat','ticketPct','unlockPct','unlockCap','submissionFee','featuredFee'];
   var override = {};
@@ -3602,7 +3557,6 @@ function adminPortalHTML() {
   var totalEvents   = EVENTS.length + state.coordinators.reduce(function(s,c){return s+c.events;},0);
   var totalRevenue  = state.coordinators.reduce(function(s,c){return s+c.revenue;},0) + 32400;
   var activeCoords  = state.coordinators.filter(function(c){return c.status==='active';}).length;
-  var pendingCount  = state.pendingCoords.length;
 
   // Default fees
   var DEFAULTS = { ticketFlat:1.75, ticketPct:6, unlockPct:1.25, unlockCap:50, submissionFee:1.00, featuredFee:75 };
@@ -3619,11 +3573,10 @@ function adminPortalHTML() {
 
   // ── DASHBOARD ────────────────────────────────────────────────────
   if(tab==='dashboard') {
-    content += '<div class="dp-stats dp-stats-4" style="margin-bottom:24px">';
+    content += '<div class="dp-stats dp-stats-3" style="margin-bottom:24px">';
     content += '<div class="dp-stat"><div class="dp-stat-val">'+totalEvents+'</div><div class="dp-stat-label">Total events</div><div class="dp-stat-sub">All time</div></div>';
     content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#4A8A6A">$'+totalRevenue.toLocaleString()+'</div><div class="dp-stat-label">Platform revenue</div><div class="dp-stat-sub">All time</div></div>';
-    content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#2A4A6A">'+activeCoords+'</div><div class="dp-stat-label">Active coordinators</div></div>';
-    content += '<div class="dp-stat"><div class="dp-stat-val '+(pendingCount>0?'" style="color:#7A1020"':'">')+pendingCount+'</div><div class="dp-stat-label">Pending approval</div></div>';
+    content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#2A4A6A">'+activeCoords+'</div><div class="dp-stat-label">Active Event Hosts</div></div>';
     content += '</div>';
 
     // Revenue breakdown
@@ -3649,15 +3602,6 @@ function adminPortalHTML() {
     });
     content += '</tbody></table></div>';
     content += '</div>';
-
-    // Pending approvals alert
-    if(pendingCount > 0) {
-      content += '<div style="background:#FFF0F2;border:1px solid #FFD0D8;border-radius:10px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between">';
-      content += '<div><div style="font-size:13px;font-weight:600;color:#7A1020;margin-bottom:2px">'+pendingCount+' coordinator'+(pendingCount>1?'s':'')+' waiting for approval</div>';
-      content += '<div style="font-size:12px;color:var(--muted)">Review and approve to give them platform access</div></div>';
-      content += '<button class="dp-btn dp-btn-primary dp-btn-sm" onclick="setAdminTab(\'coordinators\')">Review now →</button>';
-      content += '</div>';
-    }
   }
 
   // ── FEE MANAGEMENT ───────────────────────────────────────────────
@@ -3710,27 +3654,6 @@ function adminPortalHTML() {
 
   // ── COORDINATORS ─────────────────────────────────────────────────
   else if(tab==='coordinators') {
-    // Pending approvals
-    if(state.pendingCoords.length > 0) {
-      content += '<div class="dp-card" style="margin-bottom:20px;border:1px solid #E8D5A0">';
-      content += '<div class="dp-card-header" style="background:#FFF8FA"><span class="dp-card-title" style="color:#7A1020">Pending Approval ('+state.pendingCoords.length+')</span></div>';
-      content += '<table class="dp-table"><thead><tr><th>Name</th><th>Organisation</th><th>Email</th><th>Planned events</th><th>Applied</th><th>Actions</th></tr></thead><tbody>';
-      state.pendingCoords.forEach(function(coord){
-        content += '<tr>'
-          + '<td style="font-weight:600;font-size:13px">'+coord.name+'</td>'
-          + '<td style="font-size:13px">'+coord.org+'</td>'
-          + '<td style="font-size:12px;color:var(--muted)">'+coord.email+'</td>'
-          + '<td style="font-size:13px">'+coord.events+'</td>'
-          + '<td style="font-size:12px;color:var(--muted)">'+coord.applied+'</td>'
-          + '<td><div style="display:flex;gap:6px">'
-          + '<button class="dp-btn dp-btn-danger dp-btn-sm" onclick="rejectCoord(\''+coord.id+'\')">Reject</button>'
-          + '<button class="dp-btn dp-btn-sage dp-btn-sm" onclick="approveCoord(\''+coord.id+'\')">✓ Approve</button>'
-          + '</div></td>'
-          + '</tr>';
-      });
-      content += '</tbody></table></div>';
-    }
-
     // Active coordinators
     content += '<div class="dp-card"><div class="dp-card-header"><span class="dp-card-title">Event Hosts</span>';
     content += '<button class="dp-btn dp-btn-primary dp-btn-sm" onclick="showInviteCoordModal()">+ Invite Event Host</button></div>';
@@ -3817,7 +3740,7 @@ function adminPortalHTML() {
     +   navItem('analytics','-','Analytics')
     +   navItem('events','-','All Events')
     +   '<div class="dp-sidebar-section" style="margin-top:8px">MANAGEMENT</div>'
-    +   navItem('coordinators','-','Coordinators', pendingCount||null)
+    +   navItem('coordinators','-','Event Hosts')
     +   navItem('fees','-','Fee Settings')
     +   '<div class="dp-sidebar-footer">'
     +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">Platform Admin</div>'
@@ -3829,9 +3752,7 @@ function adminPortalHTML() {
     +   '<div class="dp-topbar">'
     +     '<div><div class="dp-topbar-title" style="text-transform:uppercase;letter-spacing:.1em">Platform Admin</div>'
     +       '<div class="dp-topbar-sub">Beverage Events</div></div>'
-    +     '<div class="dp-topbar-actions">'
-    +       (pendingCount>0?'<span class="dp-badge dp-badge-red" style="padding:5px 10px;font-size:12px">'+pendingCount+' coordinator'+(pendingCount>1?'s':'')+' awaiting approval</span>':'')
-    +     '</div>'
+    +     '<div class="dp-topbar-actions"></div>'
     +   '</div>'
     +   '<div class="dp-content">'+content+'</div>'
     + '</div>'
