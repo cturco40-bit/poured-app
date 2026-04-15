@@ -3573,7 +3573,7 @@ function adminPortalHTML() {
 
   // ── DASHBOARD ────────────────────────────────────────────────────
   if(tab==='dashboard') {
-    content += '<div class="dp-stats dp-stats-3" style="margin-bottom:24px">';
+    content += '<div class="dp-stats dp-stats-3" style="margin-bottom:24px;grid-template-columns:repeat(3,minmax(200px,1fr))">';
     content += '<div class="dp-stat"><div class="dp-stat-val">'+totalEvents+'</div><div class="dp-stat-label">Total events</div><div class="dp-stat-sub">All time</div></div>';
     content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#4A8A6A">$'+totalRevenue.toLocaleString()+'</div><div class="dp-stat-label">Platform revenue</div><div class="dp-stat-sub">All time</div></div>';
     content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#2A4A6A">'+activeCoords+'</div><div class="dp-stat-label">Active Event Hosts</div></div>';
