@@ -1306,7 +1306,7 @@ function headerHTML(title='', onSignOut='', onBack='') {
     + '<div style="display:flex;align-items:center;gap:10px">'
     + (onBack ? '<button onclick="'+onBack+'" style="background:rgba(255,255,255,.12);border:none;border-radius:4px;color:rgba(255,255,255,.8);font-size:11px;cursor:pointer;padding:4px 10px;font-family:Nunito Sans,sans-serif;font-weight:700;letter-spacing:.06em">← Back</button>' : '')
     + logoSVG
-    + '<span style="font-size:15px;font-weight:800;color:#FFFFFF;letter-spacing:.14em;font-family:Nunito Sans,sans-serif">POURED</span>'
+    + '<span style="font-size:15px;font-weight:900;color:#FFFFFF;letter-spacing:.18em;text-transform:uppercase;font-family:Nunito Sans,sans-serif">POURED</span>'
     + '</div>'
     + (onSignOut ? '<button onclick="'+onSignOut+'" style="background:rgba(255,255,255,.12);border:none;border-radius:4px;padding:5px 10px;color:rgba(255,255,255,.7);font-size:10px;font-family:Nunito Sans,sans-serif;cursor:pointer;font-weight:700;letter-spacing:.08em">Sign out</button>' : '')
     + '</div>';
@@ -3321,8 +3321,8 @@ function custEventListHTML() {
     var h='<div style="background:#fff;border-radius:16px;overflow:hidden;margin-bottom:12px;border:1px solid '+B.mist+'">';
     h+='<div style="background:'+B.ink+';padding:14px 16px">';
     h+='<div style="display:flex;justify-content:space-between;align-items:flex-start">';
-    h+='<div style="flex:1"><div style="font-size:15px;color:'+B.cream+';font-style:italic;margin-bottom:2px">'+ev.name+'</div>';
-    h+='<div style="font-size:11px;color:'+B.cork+'">'+ev.date+' · '+ev.venue+'</div></div>';
+    h+='<div style="flex:1"><div style="font-size:13px;font-weight:800;color:#FFFFFF;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:Nunito Sans,sans-serif">'+ev.name+'</div>';
+    h+='<div style="font-size:11px;color:rgba(255,255,255,.6);font-weight:500">'+ev.date+' · '+ev.venue+'</div></div>';
     h+='<span style="font-size:10px;padding:3px 9px;border-radius:20px;background:'+sColor(ev.status)+'22;color:'+sColor(ev.status)+';margin-left:8px">'+sLabel(ev.status)+'</span>';
     h+='</div></div><div style="padding:12px 16px">';
     if(ev.status!=='past'){h+='<div style="height:3px;background:'+B.linen+';border-radius:2px;margin-bottom:12px"><div style="height:100%;width:'+pctSold+'%;background:'+B.wine+';border-radius:2px"></div></div>';}
@@ -3331,7 +3331,7 @@ function custEventListHTML() {
       h+='<button data-evid="'+ev.id+'" onclick="openCustEvent(parseInt(this.dataset.evid))" style="width:100%;padding:11px;border-radius:10px;border:none;background:'+B.ink+';color:'+B.cream+';font-size:13px;font-family:Nunito Sans,sans-serif;cursor:pointer;font-weight:700">'+(ev.status==='active'?'Browse & Order →':'View My Ticket →')+'</button>';
     } else {
       if(lowestPrice<9999)h+='<div style="font-size:16px;font-weight:700;color:'+B.pour+';margin-bottom:8px">from $'+lowestPrice+'</div>';
-      paidTiers.forEach(function(t){h+='<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid '+B.linen+'"><div><div style="font-size:13px;font-weight:600">'+t.label+'</div><div style="font-size:11px;color:'+B.cork+'">'+t.sold+'/'+t.capacity+'</div></div><div style="font-size:14px;font-weight:700;color:'+B.pour+'">$'+(t.price+calcTicketFee(t.price)).toFixed(0)+'</div></div>';});
+      paidTiers.forEach(function(t){h+='<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid '+B.linen+'"><div><div style="font-size:13px;font-weight:700;color:#1A1A1A;text-transform:uppercase;letter-spacing:.04em">'+t.label+'</div><div style="font-size:11px;color:'+B.cork+'">'+t.sold+'/'+t.capacity+'</div></div><div style="font-size:14px;font-weight:800;color:#7A1020">$'+(t.price+calcTicketFee(t.price)).toFixed(0)+'</div></div>';});
       h+='<button onclick="purchaseTicket(state.selectedEventId,t.id,t.price)" style="width:100%;padding:11px;border-radius:10px;border:none;background:'+B.wine+';color:'+B.cream+';font-size:13px;font-family:Nunito Sans,sans-serif;cursor:pointer;font-weight:700;margin-top:10px">Buy Tickets →</button>';
     }
     h+='</div></div>';
@@ -3363,7 +3363,7 @@ function custPortalHTML() {
     <div style="background:#fff;border-radius:18px;overflow:hidden;border:1.5px solid ${B.pour}33">
       <div style="background:${B.ink};padding:18px 20px">
         <div style="font-size:10px;color:var(--muted);letter-spacing:.18em;margin-bottom:4px">${EV.date} · ${EV.time}</div>
-        <div style="font-size:18px;color:${B.cream};font-style:italic;margin-bottom:2px">${EV.name}</div>
+        <div class="cust-headline" style="font-size:15px;color:#FFFFFF;margin-bottom:4px">${EV.name}</div>
         <div style="font-size:12px;color:${B.cork};margin-bottom:10px">${EV.venue} · ${EV.address}</div>
         <div style="display:flex;gap:6px">${[...new Set(EV.products.map(p=>p.category))].map(c=>`<span style="font-size:20px">${IC[c]||''}</span>`).join('')}</div>
       </div>
