@@ -313,7 +313,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     name: 'Beverage Events',
     short_name: 'Poured',
     description: 'Beverage Events Platform',
-    start_url: 'https://app.pouredevents.com/',
+    start_url: './',
     display: 'standalone',
     background_color: '#FFFFFF',
     theme_color: '#7A1020',
@@ -345,7 +345,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 if ('serviceWorker' in navigator) {
   var swOrigin = window.location.protocol;
   if (swOrigin === 'https:' || swOrigin === 'http:') {
-    navigator.serviceWorker.register('/sw.js').then(function() {
+    navigator.serviceWorker.register('./sw.js').then(function() {
       console.log('Poured: Service worker registered');
     }).catch(function(err) {
       // Silently skip if sw.js not yet deployed — app still works offline via cache
