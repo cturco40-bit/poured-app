@@ -1,4 +1,4 @@
-<!-- poured v11 -->
+<!-- poured v12 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -197,6 +197,10 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     font-size: 18px;
     line-height: 1;
   }
+  body.dp { overflow-x: hidden; }
+  .dp-shell { overflow-x: hidden; }
+  .dp-main { overflow-x: hidden; max-width: 100vw; }
+  .dp-content { overflow-x: hidden; box-sizing: border-box; }
 }
 
 .dp-shell{display:flex;height:100vh;overflow:hidden;}
@@ -534,6 +538,7 @@ var DB={listEvents:async function(){return window.EVENTS||[];},getEvent:async fu
 
 // ─── COLOURS & CONSTANTS ────────────────────────────────────────────────────
 const B = { ink:"#1A1A1A", wine:"#7A1020", pour:"#7A1020", gold:"#888888", cream:"#FFFFFF", linen:"#F8F8F8", mist:"#EFEFEF", cork:"#888888", sage:"#2a7a4a", slate:"#2a5a8a", amber:"#888888" };
+function isMobile() { return window.innerWidth < 768; }
 const HST = 0.13;
 const ORDER_FEE_PCT = 0.0125;
 const ORDER_FEE_CAP = 50;
@@ -1955,12 +1960,21 @@ function agentEventListHTML() {
     return s + ev.orders.filter(function(o){return o.agentEmail===AGENT_EMAIL&&!o.unlocked;}).length;
   },0);
 
+  var mobileCards = '';
   var rows = myListings.map(function(item){
     var ev = item.ev, listing = item.listing;
     var myProds   = ev.products.filter(function(p){return p.agentEmail===AGENT_EMAIL;});
     var myOrders  = ev.orders.filter(function(o){return o.agentEmail===AGENT_EMAIL;});
     var newOrd    = myOrders.filter(function(o){return !o.unlocked;}).length;
     var dotColor  = ev.status==='active'?'#4A8A6A':ev.status==='upcoming'?'#2A4A6A':'#CCC';
+    mobileCards += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+    mobileCards += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+    mobileCards += '<div style="font-size:14px;font-weight:700">'+ev.name+'</div>';
+    mobileCards += '<span class="dp-badge '+(ev.status==='active'?'dp-badge-green':'dp-badge-blue')+'">'+ev.status+'</span>';
+    mobileCards += '</div>';
+    mobileCards += '<div style="font-size:12px;color:#888;margin-bottom:8px">'+ev.date+' · '+ev.venue+'</div>';
+    mobileCards += '<button class="dp-btn dp-btn-primary dp-btn-sm" style="width:100%" onclick="openAgentEvent('+ev.id+',\'orders\')">View Orders →</button>';
+    mobileCards += '</div>';
     return '<tr style="cursor:pointer" onclick="openAgentEvent('+ev.id+')" onmouseenter="this.style.background=\'#FDFAF7\'" onmouseleave="this.style.background=\'\'">'
       + '<td style="padding:14px 16px;width:10px"><div class="dp-event-dot" style="background:'+dotColor+'"></div></td>'
       + '<td style="padding:14px 8px 14px 0;min-width:200px"><div style="font-size:14px;font-weight:600;color:#1A1A1A;margin-bottom:2px">'+ev.name+'</div><div style="font-size:12px;color:var(--muted)">'+ev.date+' · '+ev.venue+'</div></td>'
@@ -2004,8 +2018,10 @@ function agentEventListHTML() {
     +     '</div>'
     +     '<div class="dp-card">'
     +       '<div class="dp-card-header"><span class="dp-card-title">Invited Events</span></div>'
-    +       '<table class="dp-table"><thead><tr><th style="width:10px"></th><th>Event</th><th>Status</th><th>Submission</th><th>Products</th><th>Orders</th><th></th></tr></thead>'
-    +       '<tbody>'+rows+'</tbody></table>'
+    +       (isMobile()
+          ? '<div style="padding:12px">'+mobileCards+'</div>'
+          : '<table class="dp-table"><thead><tr><th style="width:10px"></th><th>Event</th><th>Status</th><th>Submission</th><th>Products</th><th>Orders</th><th></th></tr></thead>'
+          +   '<tbody>'+rows+'</tbody></table>')
     +       (myListings.length===0?'<div class="dp-empty"><div class="dp-empty-icon"></div><div class="dp-empty-text">No event invitations yet</div></div>':'')
     +     '</div>'
     +   '</div>'
@@ -2060,35 +2076,62 @@ function agentPortalHTML() {
     content += '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="dlAgentCSV()">⬇ Export CSV</button>';
     content += '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="printPourSheet(\''+AGENT_EMAIL+'\')">Pour Sheet</button>';
     content += '</div></div>';
-    content += '<table class="dp-table"><thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Value</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
 
     if(myOrders.length===0) {
-      content += '<tr><td colspan="6"><div class="dp-empty"><div class="dp-empty-icon"></div><div class="dp-empty-text">No orders yet</div></div></td></tr>';
-    }
+      content += '<div class="dp-empty"><div class="dp-empty-icon"></div><div class="dp-empty-text">No orders yet</div></div>';
+    } else if(isMobile()) {
+      content += '<div style="padding:12px">';
+      myOrders.forEach(function(order){
+        var isUnlocked  = !!state.unlocked[order.id];
+        var isConfirmed = !!state.confirmed[order.id];
+        var sub = order.items.reduce(function(s,i){return s+(i.qtyCases||1)*(i.pricePerCase||0);},0);
+        var fee = order.unlockFee || calcOrderUnlockFee(sub);
+        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+        content += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+        content += '<span style="font-family:monospace;font-size:11px;color:#888">'+order.id+'</span>';
+        content += '<span class="dp-badge '+(isConfirmed?'dp-badge-green':isUnlocked?'dp-badge-blue':'dp-badge-gray')+'">'+(isConfirmed?'Confirmed':isUnlocked?'Unlocked':'Locked')+'</span>';
+        content += '</div>';
+        content += '<div style="font-size:14px;font-weight:700;margin-bottom:4px">'+(isUnlocked?order.customer:'🔒 Locked — pay to reveal')+'</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:10px">'+order.items.length+' items · $'+sub.toFixed(2)+'</div>';
+        content += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+        if(!isUnlocked) content += '<button class="dp-btn dp-btn-primary dp-btn-sm" onclick="unlockOrder(\''+order.id+'\')">Unlock · $'+fee.toFixed(2)+'</button>';
+        if(isUnlocked && !isConfirmed) content += '<button class="dp-btn dp-btn-sage dp-btn-sm" onclick="confirmOrder(\''+order.id+'\')">Confirm</button>';
+        if(isUnlocked) content += '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openInvoice(\''+order.id+'\')">Invoice</button>';
+        content += '</div></div>';
+      });
+      content += '</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Value</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
 
-    myOrders.forEach(function(order){
-      var isUnlocked  = !!state.unlocked[order.id];
-      var isConfirmed = !!state.confirmed[order.id];
-      var sub = order.items.reduce(function(s,i){return s+(i.qtyCases||1)*(i.pricePerCase||0);},0);
-      var unlockFee = order.unlockFee || calcOrderUnlockFee(sub);
-      content += '<tr>'
-        + '<td style="font-family:monospace;font-size:12px;color:var(--muted)">'+order.id+'</td>'
-        + '<td>'+(isUnlocked
-            ? '<div style="font-weight:600;font-size:13px">'+order.customer+'</div><div style="font-size:11px;color:var(--muted)">'+order.email+'</div>'
-            : '<div style="font-size:13px;color:var(--muted);font-style:italic">Locked — pay $'+unlockFee+' to reveal</div>')
-          +'</td>'
-        + '<td style="font-size:13px">'+order.items.length+' item'+(order.items.length>1?'s':'')+'</td>'
-        + '<td style="font-weight:600;font-size:13px">$'+sub.toFixed(2)+'</td>'
-        + '<td>'+(isConfirmed?'<span class="dp-badge dp-badge-green">Confirmed</span>':isUnlocked?'<span class="dp-badge dp-badge-blue">Unlocked</span>':'<span class="dp-badge dp-badge-amber">Locked</span>')+'</td>'
-        + '<td><div style="display:flex;gap:6px">'
-          + (!isUnlocked?'<button class="dp-btn dp-btn-wine dp-btn-sm" onclick="setState({payModal:\''+order.id+'\'})">Unlock</button>':'')
-          + (isUnlocked&&!isConfirmed?'<button class="dp-btn dp-btn-sage dp-btn-sm" onclick="doConfirm(\''+order.id+'\')">✓ Confirm</button>':'')
-          + (isUnlocked?'<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openInvoice(\''+order.id+'\')">Invoice</button>':'')
-          + (isUnlocked?'<a href="mailto:'+order.email+'?subject=Your order — '+ev.name+'" class="dp-btn dp-btn-ghost dp-btn-sm" style="text-decoration:none">Email</a>':'')
-        + '</div></td>'
-        + '</tr>';
-    });
-    content += '</tbody></table></div>';
+      if(myOrders.length===0) {
+        content += '<tr><td colspan="6"><div class="dp-empty"><div class="dp-empty-icon"></div><div class="dp-empty-text">No orders yet</div></div></td></tr>';
+      }
+
+      myOrders.forEach(function(order){
+        var isUnlocked  = !!state.unlocked[order.id];
+        var isConfirmed = !!state.confirmed[order.id];
+        var sub = order.items.reduce(function(s,i){return s+(i.qtyCases||1)*(i.pricePerCase||0);},0);
+        var unlockFee = order.unlockFee || calcOrderUnlockFee(sub);
+        content += '<tr>'
+          + '<td style="font-family:monospace;font-size:12px;color:var(--muted)">'+order.id+'</td>'
+          + '<td>'+(isUnlocked
+              ? '<div style="font-weight:600;font-size:13px">'+order.customer+'</div><div style="font-size:11px;color:var(--muted)">'+order.email+'</div>'
+              : '<div style="font-size:13px;color:var(--muted);font-style:italic">Locked — pay $'+unlockFee+' to reveal</div>')
+            +'</td>'
+          + '<td style="font-size:13px">'+order.items.length+' item'+(order.items.length>1?'s':'')+'</td>'
+          + '<td style="font-weight:600;font-size:13px">$'+sub.toFixed(2)+'</td>'
+          + '<td>'+(isConfirmed?'<span class="dp-badge dp-badge-green">Confirmed</span>':isUnlocked?'<span class="dp-badge dp-badge-blue">Unlocked</span>':'<span class="dp-badge dp-badge-amber">Locked</span>')+'</td>'
+          + '<td><div style="display:flex;gap:6px">'
+            + (!isUnlocked?'<button class="dp-btn dp-btn-wine dp-btn-sm" onclick="setState({payModal:\''+order.id+'\'})">Unlock</button>':'')
+            + (isUnlocked&&!isConfirmed?'<button class="dp-btn dp-btn-sage dp-btn-sm" onclick="doConfirm(\''+order.id+'\')">✓ Confirm</button>':'')
+            + (isUnlocked?'<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openInvoice(\''+order.id+'\')">Invoice</button>':'')
+            + (isUnlocked?'<a href="mailto:'+order.email+'?subject=Your order — '+ev.name+'" class="dp-btn dp-btn-ghost dp-btn-sm" style="text-decoration:none">Email</a>':'')
+          + '</div></td>'
+          + '</tr>';
+      });
+      content += '</tbody></table>';
+    }
+    content += '</div>';
 
     // Expanded order details (if openOrder set)
     if(state.openOrder && state.unlocked[state.openOrder]) {
@@ -3005,13 +3048,25 @@ function coordEventListHTML() {
     return '<span class="dp-badge dp-badge-gray">Past</span>';
   }
 
+  var coordMobileCards = '';
   var rows = myEvents.map(function(ev) {
     var totalSold = ev.tiers.reduce(function(s,t){return s+t.sold;},0);
     var totalCap  = ev.tiers.reduce(function(s,t){return s+t.capacity;},0);
     var grossRev  = ev.tiers.reduce(function(s,t){return s+t.price*t.sold;},0);
+    var ticketRev = grossRev;
     var submitted = ev.agents.filter(function(a){return a.submitted;}).length;
     var pctSold   = pct(totalSold, totalCap);
     var dotColor  = ev.status==='active'?'#4A8A6A':ev.status==='upcoming'?'#2A4A6A':'#CCC';
+    var sc = ev.status==='active'?'dp-badge-green':ev.status==='upcoming'?'dp-badge-blue':'dp-badge-gray';
+    coordMobileCards += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+    coordMobileCards += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+    coordMobileCards += '<div style="font-size:14px;font-weight:700">'+ev.name+'</div>';
+    coordMobileCards += '<span class="dp-badge '+sc+'">'+ev.status+'</span>';
+    coordMobileCards += '</div>';
+    coordMobileCards += '<div style="font-size:12px;color:#888;margin-bottom:6px">'+ev.date+' · '+ev.venue+'</div>';
+    coordMobileCards += '<div style="font-size:13px;font-weight:600;margin-bottom:8px">'+totalSold+'/'+totalCap+' tickets · $'+ticketRev.toFixed(0)+' revenue</div>';
+    coordMobileCards += '<button class="dp-btn dp-btn-primary dp-btn-sm" style="width:100%" onclick="openCoordEvent('+ev.id+')">Manage →</button>';
+    coordMobileCards += '</div>';
     return '<tr class="dp-event-row" style="cursor:pointer" onclick="setState({coordSelectedEventId:'+ev.id+',coordTab:\'overview\'})" onmouseenter="this.style.background=\'#FDFAF7\'" onmouseleave="this.style.background=\'\'">'
       + '<td style="padding:14px 16px;width:10px"><div class="dp-event-dot" style="background:'+dotColor+'"></div></td>'
       + '<td style="padding:14px 8px 14px 0;min-width:220px"><div style="font-size:14px;font-weight:600;color:#1A1A1A;margin-bottom:2px">'+ev.name+'</div><div style="font-size:12px;color:var(--muted)">'+ev.date+' · '+ev.venue+'</div></td>'
@@ -3058,13 +3113,15 @@ function coordEventListHTML() {
     // Events table
     +     '<div class="dp-card">'
     +       '<div class="dp-card-header"><span class="dp-card-title">All Events</span></div>'
-    +       '<table class="dp-table">'
-    +         '<thead><tr>'
-    +           '<th style="width:10px"></th>'
-    +           '<th>Event</th><th>Status</th><th>Tickets</th><th>Revenue</th><th>Agents</th><th></th>'
-    +         '</tr></thead>'
-    +         '<tbody>'+rows+'</tbody>'
-    +       '</table>'
+    +       (isMobile()
+          ? '<div style="padding:12px">'+coordMobileCards+'</div>'
+          : '<table class="dp-table">'
+          +   '<thead><tr>'
+          +     '<th style="width:10px"></th>'
+          +     '<th>Event</th><th>Status</th><th>Tickets</th><th>Revenue</th><th>Agents</th><th></th>'
+          +   '</tr></thead>'
+          +   '<tbody>'+rows+'</tbody>'
+          + '</table>')
     +       (myEvents.length===0?'<div class="dp-empty"><div class="dp-empty-icon"></div><div class="dp-empty-text">No events yet</div><button class="dp-btn dp-btn-primary" onclick="setState({coordSelectedEventId:-1,coordTab:\'create\'})">Create your first event</button></div>':'')
     +     '</div>'
     +   '</div>'
@@ -3162,19 +3219,34 @@ function coordPortalHTML() {
   else if(tab==='agents') {
     content += '<div class="dp-card">';
     content += '<div class="dp-card-header"><span class="dp-card-title">Agents</span><div style="display:flex;gap:8px"><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="sendAgentReminder(state.selectedEventId)">Send reminders</button><button class="dp-btn dp-btn-primary dp-btn-sm" onclick="showInviteAgentModal(state.selectedEventId||state.coordSelectedEventId||1)">+ Invite Agent</button></div></div>';
-    content += '<table class="dp-table"><thead><tr><th>Agent</th><th>Firm</th><th>Listing fee</th><th>Submission</th><th>Products</th><th>Actions</th></tr></thead><tbody>';
-    EV.agents.forEach(function(agent){
-      var agentProds = EV.products.filter(function(p){return p.agentEmail===agent.email;});
-      content += '<tr>'
-        + '<td><div style="font-weight:600;font-size:13px">'+agent.name+'</div><div style="font-size:11px;color:var(--muted)">'+agent.email+'</div></td>'
-        + '<td style="font-size:13px">'+agent.firm+'</td>'
-        + '<td><span class="dp-badge '+(agent.paid?'dp-badge-green':'dp-badge-amber')+'">$'+agent.listingFee+' '+(agent.paid?'paid':'unpaid')+'</span></td>'
-        + '<td><span class="dp-badge '+(agent.submitted?'dp-badge-green':'dp-badge-amber')+'">'+(agent.submitted?'✓ Submitted':'Pending')+'</span></td>'
-        + '<td style="font-size:13px">'+agentProds.length+' products</td>'
-        + '<td><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="sendAgentReminder(state.selectedEventId)">Remind</button></td>'
-        + '</tr>';
-    });
-    content += '</tbody></table></div>';
+    if(isMobile()) {
+      content += '<div style="padding:12px">';
+      EV.agents.forEach(function(agent){
+        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+        content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+agent.firm+'</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:8px">'+agent.email+'</div>';
+        content += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+        content += '<span class="dp-badge '+(agent.submitted?'dp-badge-green':'dp-badge-gray')+'">'+(agent.submitted?'Submitted':'Pending')+'</span>';
+        content += '<span class="dp-badge '+(agent.paid?'dp-badge-green':'dp-badge-amber')+'">'+(agent.paid?'Fee paid':'Unpaid')+'</span>';
+        content += '</div></div>';
+      });
+      content += '</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Agent</th><th>Firm</th><th>Listing fee</th><th>Submission</th><th>Products</th><th>Actions</th></tr></thead><tbody>';
+      EV.agents.forEach(function(agent){
+        var agentProds = EV.products.filter(function(p){return p.agentEmail===agent.email;});
+        content += '<tr>'
+          + '<td><div style="font-weight:600;font-size:13px">'+agent.name+'</div><div style="font-size:11px;color:var(--muted)">'+agent.email+'</div></td>'
+          + '<td style="font-size:13px">'+agent.firm+'</td>'
+          + '<td><span class="dp-badge '+(agent.paid?'dp-badge-green':'dp-badge-amber')+'">$'+agent.listingFee+' '+(agent.paid?'paid':'unpaid')+'</span></td>'
+          + '<td><span class="dp-badge '+(agent.submitted?'dp-badge-green':'dp-badge-amber')+'">'+(agent.submitted?'✓ Submitted':'Pending')+'</span></td>'
+          + '<td style="font-size:13px">'+agentProds.length+' products</td>'
+          + '<td><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="sendAgentReminder(state.selectedEventId)">Remind</button></td>'
+          + '</tr>';
+      });
+      content += '</tbody></table>';
+    }
+    content += '</div>';
   }
 
   else if(tab==='suppliers') {
@@ -3770,22 +3842,38 @@ function adminPortalHTML() {
     // Active coordinators
     content += '<div class="dp-card"><div class="dp-card-header"><span class="dp-card-title">Event Hosts</span>';
     content += '<button class="dp-btn dp-btn-primary dp-btn-sm" onclick="showInviteCoordModal()">+ Invite Event Host</button></div>';
-    content += '<table class="dp-table"><thead><tr><th>Event Host</th><th>Organisation</th><th>Events run</th><th>Revenue generated</th><th>Joined</th><th>Status</th><th></th></tr></thead><tbody>';
-    state.coordinators.forEach(function(coord){
-      content += '<tr>'
-        + '<td><div style="font-weight:600;font-size:13px">'+coord.name+'</div><div style="font-size:11px;color:var(--muted)">'+coord.email+'</div></td>'
-        + '<td style="font-size:13px">'+coord.org+'</td>'
-        + '<td style="font-size:13px;font-weight:600">'+coord.events+'</td>'
-        + '<td style="font-size:13px;font-weight:600;color:#4A8A6A">$'+coord.revenue.toLocaleString()+'</td>'
-        + '<td style="font-size:12px;color:var(--muted)">'+coord.joined+'</td>'
-        + '<td><span class="dp-badge dp-badge-green">Active</span></td>'
-        + '<td><div style="display:flex;gap:6px">'
-        + '<button class="dp-btn dp-btn-ghost dp-btn-sm" data-name="'+coord.name+'" onclick="showFeeSettingsModal(this.dataset.name)">Fee settings</button>'
-        + '<button class="dp-btn dp-btn-danger dp-btn-sm" data-name="'+coord.name+'" onclick="suspendCoordinator(this.dataset.name)">Suspend</button>'
-        + '</div></td>'
-        + '</tr>';
-    });
-    content += '</tbody></table></div>';
+    if(isMobile()) {
+      content += '<div style="padding:12px">';
+      state.coordinators.forEach(function(coord){
+        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+        content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+coord.name+'</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:6px">'+coord.email+' · '+coord.org+'</div>';
+        content += '<div style="font-size:12px;margin-bottom:8px">'+coord.events+' events · $'+coord.revenue.toLocaleString()+' rev</div>';
+        content += '<div style="display:flex;gap:8px">';
+        content += '<button class="dp-btn dp-btn-ghost dp-btn-sm" data-name="'+coord.name+'" onclick="showFeeSettingsModal(this.dataset.name)">Fee settings</button>';
+        content += '<button class="dp-btn dp-btn-danger dp-btn-sm" data-name="'+coord.name+'" onclick="suspendCoordinator(this.dataset.name)">Suspend</button>';
+        content += '</div></div>';
+      });
+      content += '</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Event Host</th><th>Organisation</th><th>Events run</th><th>Revenue generated</th><th>Joined</th><th>Status</th><th></th></tr></thead><tbody>';
+      state.coordinators.forEach(function(coord){
+        content += '<tr>'
+          + '<td><div style="font-weight:600;font-size:13px">'+coord.name+'</div><div style="font-size:11px;color:var(--muted)">'+coord.email+'</div></td>'
+          + '<td style="font-size:13px">'+coord.org+'</td>'
+          + '<td style="font-size:13px;font-weight:600">'+coord.events+'</td>'
+          + '<td style="font-size:13px;font-weight:600;color:#4A8A6A">$'+coord.revenue.toLocaleString()+'</td>'
+          + '<td style="font-size:12px;color:var(--muted)">'+coord.joined+'</td>'
+          + '<td><span class="dp-badge dp-badge-green">Active</span></td>'
+          + '<td><div style="display:flex;gap:6px">'
+          + '<button class="dp-btn dp-btn-ghost dp-btn-sm" data-name="'+coord.name+'" onclick="showFeeSettingsModal(this.dataset.name)">Fee settings</button>'
+          + '<button class="dp-btn dp-btn-danger dp-btn-sm" data-name="'+coord.name+'" onclick="suspendCoordinator(this.dataset.name)">Suspend</button>'
+          + '</div></td>'
+          + '</tr>';
+      });
+      content += '</tbody></table>';
+    }
+    content += '</div>';
   }
 
   // ── EVENTS ────────────────────────────────────────────────────────
@@ -3794,24 +3882,41 @@ function adminPortalHTML() {
     content += '<div style="display:flex;gap:8px">';
     content += '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="(function(){var a=document.createElement(\'a\');a.href=URL.createObjectURL(new Blob([[\'Event,Host,Date,Tickets,Revenue,Status\'].concat(EVENTS.map(function(e){return e.name+\',The Tasting Collective,\'+e.date+\',\'+e.tiers.reduce(function(s,t){return s+t.sold;},0)+\',\'+e.tiers.reduce(function(s,t){return s+calcTicketFee(t.price)*t.sold;},0)+\',\'+e.status;})).join(\'\\n\')],{type:\'text/csv\'}));a.download=\'platform-events.csv\';a.click();})()">⬇ Export CSV</button>';
     content += '</div></div>';
-    content += '<table class="dp-table"><thead><tr><th>Event</th><th>Event Host</th><th>Date</th><th>Tickets</th><th>Platform revenue</th><th>Fee override</th><th>Status</th></tr></thead><tbody>';
-    EVENTS.forEach(function(ev){
-      var ticketRev  = ev.tiers.reduce(function(s,t){return s+calcTicketFee(t.price)*t.sold;},0);
-      var unlockRev  = ev.orders.reduce(function(s,o){return s+pouredFee(o.items.reduce(function(a,i){return a+(i.qtyCases||1)*(i.pricePerCase||0);},0));},0);
-      var totalRev   = ticketRev + unlockRev;
-      var isCustom   = !!state.feeOverrides[ev.id];
-      var sc = ev.status==='active'?'dp-badge-green':ev.status==='upcoming'?'dp-badge-blue':'dp-badge-gray';
-      content += '<tr>'
-        + '<td><div style="font-weight:600;font-size:13px">'+ev.name+'</div><div style="font-size:11px;color:var(--muted)">'+ev.agents.length+' agents · '+ev.products.length+' products</div></td>'
-        + '<td style="font-size:12px;color:var(--muted)">The Tasting Collective</td>'
-        + '<td style="font-size:12px;color:var(--muted)">'+ev.date+'</td>'
-        + '<td style="font-size:13px">'+ev.tiers.reduce(function(s,t){return s+t.sold;},0)+' / '+ev.tiers.reduce(function(s,t){return s+t.capacity;},0)+'</td>'
-        + '<td style="font-weight:600;color:#4A8A6A">$'+totalRev.toFixed(0)+'</td>'
-        + '<td>'+(isCustom?'<span class="dp-badge dp-badge-amber">Custom</span>':'<span class="dp-badge dp-badge-gray">Default</span>')+'</td>'
-        + '<td><span class="dp-badge '+sc+'">'+ev.status+'</span></td>'
-        + '</tr>';
-    });
-    content += '</tbody></table></div>';
+    if(isMobile()) {
+      content += '<div style="padding:12px">';
+      EVENTS.forEach(function(ev){
+        var ticketRev  = ev.tiers.reduce(function(s,t){return s+calcTicketFee(t.price)*t.sold;},0);
+        var sc = ev.status==='active'?'dp-badge-green':ev.status==='upcoming'?'dp-badge-blue':'dp-badge-gray';
+        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+        content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+ev.name+'</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:6px">'+ev.date+' · The Tasting Collective</div>';
+        content += '<div style="display:flex;justify-content:space-between;align-items:center">';
+        content += '<span style="font-size:12px">$'+ticketRev.toFixed(0)+' rev</span>';
+        content += '<span class="dp-badge '+sc+'">'+ev.status+'</span>';
+        content += '</div></div>';
+      });
+      content += '</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Event</th><th>Event Host</th><th>Date</th><th>Tickets</th><th>Platform revenue</th><th>Fee override</th><th>Status</th></tr></thead><tbody>';
+      EVENTS.forEach(function(ev){
+        var ticketRev  = ev.tiers.reduce(function(s,t){return s+calcTicketFee(t.price)*t.sold;},0);
+        var unlockRev  = ev.orders.reduce(function(s,o){return s+pouredFee(o.items.reduce(function(a,i){return a+(i.qtyCases||1)*(i.pricePerCase||0);},0));},0);
+        var totalRev   = ticketRev + unlockRev;
+        var isCustom   = !!state.feeOverrides[ev.id];
+        var sc = ev.status==='active'?'dp-badge-green':ev.status==='upcoming'?'dp-badge-blue':'dp-badge-gray';
+        content += '<tr>'
+          + '<td><div style="font-weight:600;font-size:13px">'+ev.name+'</div><div style="font-size:11px;color:var(--muted)">'+ev.agents.length+' agents · '+ev.products.length+' products</div></td>'
+          + '<td style="font-size:12px;color:var(--muted)">The Tasting Collective</td>'
+          + '<td style="font-size:12px;color:var(--muted)">'+ev.date+'</td>'
+          + '<td style="font-size:13px">'+ev.tiers.reduce(function(s,t){return s+t.sold;},0)+' / '+ev.tiers.reduce(function(s,t){return s+t.capacity;},0)+'</td>'
+          + '<td style="font-weight:600;color:#4A8A6A">$'+totalRev.toFixed(0)+'</td>'
+          + '<td>'+(isCustom?'<span class="dp-badge dp-badge-amber">Custom</span>':'<span class="dp-badge dp-badge-gray">Default</span>')+'</td>'
+          + '<td><span class="dp-badge '+sc+'">'+ev.status+'</span></td>'
+          + '</tr>';
+      });
+      content += '</tbody></table>';
+    }
+    content += '</div>';
   }
 
   // ── ANALYTICS ─────────────────────────────────────────────────────
