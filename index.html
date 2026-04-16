@@ -1,4 +1,4 @@
-<!-- poured v21 -->
+<!-- poured v22 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -625,7 +625,7 @@ window.addEventListener('load', function() {
 // ─── SUPABASE ──────────────────────────────────────────────────────────────────
 var _sb=null,LIVE_MODE=false;
 var AUTH={signIn:async function(){return{user:null,error:null};},signOut:async function(){},getProfile:async function(){return null;}};
-var DB={listEvents:async function(){return window.EVENTS||[];},getEvent:async function(id){return(window.EVENTS||[]).find(function(e){return e.id===id||e.id===parseInt(id);})||null;},createEvent:async function(){alert('Add Supabase keys to create real events.');return null;},publishEvent:async function(){},uploadCSV:async function(){alert('Add Supabase keys to upload.');return null;},approveProduct:async function(){},editProduct:async function(){},submitOrder:async function(){},unlockOrder:async function(){},confirmOrder:async function(){},saveRating:async function(){},toggleSaved:async function(){if(window.toggleFav)window.toggleFav(arguments[0]);},joinWaitlist:async function(){}};
+var DB={listEvents:async function(){return window.EVENTS||[];},getEvent:async function(id){return(window.EVENTS||[]).find(function(e){return e.id===id||e.id===parseInt(id);})||null;},createEvent:async function(){showToast('Connect Supabase to create real events');return null;},publishEvent:async function(){},uploadCSV:async function(){showToast('Connect Supabase to upload products');return null;},approveProduct:async function(){},editProduct:async function(){},submitOrder:async function(){},unlockOrder:async function(){},confirmOrder:async function(){},saveRating:async function(){},toggleSaved:async function(){if(window.toggleFav)window.toggleFav(arguments[0]);},joinWaitlist:async function(){}};
 (function(){var U='YOUR_SUPABASE_URL',A='YOUR_SUPABASE_ANON_KEY';if(U==='YOUR_SUPABASE_URL')return;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';s.onload=function(){_sb=supabase.createClient(U,A);LIVE_MODE=true;AUTH.signIn=async function(e,p){var r=await _sb.auth.signInWithPassword({email:e,password:p});return{user:r.data&&r.data.user,error:r.error};};AUTH.signOut=async function(){await _sb.auth.signOut();};AUTH.getProfile=async function(){var u=await _sb.auth.getUser();if(!u.data||!u.data.user)return null;var p=await _sb.from('profiles').select('*').eq('id',u.data.user.id).single();return p.data;};DB.listEvents=async function(){var r=await _sb.from('events').select('*,ticket_tiers(*),agent_listings(count),products(count)').order('date');return r.data||window.EVENTS||[];};DB.getEvent=async function(id){var r=await _sb.from('events').select('*,ticket_tiers(*),agent_listings(*,profiles(full_name,email,company)),products(*,product_ratings(score,note,customer_id))').eq('id',id).single();return r.data;};console.log('Poured: Supabase connected');};s.onerror=function(){console.warn('Poured: SDK load failed');};document.head.appendChild(s);})();
 
 // ─── COLOURS & CONSTANTS ────────────────────────────────────────────────────
@@ -804,6 +804,8 @@ let state = {
   adminTab: "dashboard",
   adminSelectedCoordId: null,
   feeOverrides: {},   // eventId -> {ticketFlat, ticketPct, unlockPct, unlockCap, submissionFee, featuredFee}
+  globalFees: {ticketFlat:1.75, ticketPct:6, unlockPct:1.25, unlockCap:50, submissionFee:1.00, featured:75},
+  orderContact: null,
   coordinators: [
     {id:'c003', name:'The Tasting Collective', email:'coordinator@tasting.ca', org:'The Tasting Collective', events:4, revenue:18200, status:'active', joined:'2025-01-15'},
     {id:'c004', name:'ITA Canada', email:'events@itacanada.ca', org:'ITA Canada', events:2, revenue:9400, status:'active', joined:'2025-02-01'},
@@ -2809,6 +2811,25 @@ window.injectMobileNav = function(portal) {
     var btn = document.createElement('button');
     btn.className = 'dp-mobile-nav-item';
     btn.setAttribute('data-action', item.action);
+    var isActive = false;
+    if(portal === 'coordinator') {
+      if(item.action === 'coordHome' && !state.coordSelectedEventId) isActive = true;
+      if(item.action === 'coordOverview' && state.coordTab === 'overview') isActive = true;
+      if(item.action === 'coordDoor' && state.coordTab === 'door') isActive = true;
+      if(item.action === 'coordAgents' && state.coordTab === 'agents') isActive = true;
+      if(item.action === 'coordPayout' && state.coordTab === 'payout') isActive = true;
+    } else if(portal === 'agent') {
+      if(item.action === 'agentHome' && !state.selectedEventId) isActive = true;
+      if(item.action === 'agentOrders' && state.agentTab === 'orders') isActive = true;
+      if(item.action === 'agentSuppliers' && state.agentTab === 'suppliers') isActive = true;
+      if(item.action === 'agentUpload' && state.agentTab === 'upload') isActive = true;
+    } else if(portal === 'admin') {
+      if(item.action === 'adminDashboard' && state.adminTab === 'dashboard') isActive = true;
+      if(item.action === 'adminCoords' && state.adminTab === 'coordinators') isActive = true;
+      if(item.action === 'adminEvents' && state.adminTab === 'events') isActive = true;
+      if(item.action === 'adminFees' && state.adminTab === 'fees') isActive = true;
+    }
+    if(isActive) btn.classList.add('active');
     btn.innerHTML = '<span class="dp-mobile-nav-icon">'+item.icon+'</span><span>'+item.label+'</span>';
     btn.onclick = function(){ mobileNavAction(item.action); };
     nav.appendChild(btn);
