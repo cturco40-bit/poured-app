@@ -1,5 +1,5 @@
-// Poured — Service Worker (network-first with cache fallback)
-var CACHE = 'poured-v16';
+// Poured — Service Worker (stale-while-revalidate)
+var CACHE = 'poured-v17';
 var ASSETS = ['./', './index.html'];
 
 self.addEventListener('install', function(e) {
@@ -28,23 +28,23 @@ self.addEventListener('fetch', function(e) {
   if (e.request.method !== 'GET') return;
   if (!e.request.url.startsWith(self.location.origin)) return;
 
-  // Network-first: try network, fall back to cache (offline support)
+  // Stale-while-revalidate: serve cache instantly, update in background
   e.respondWith(
-    fetch(e.request).then(function(res) {
-      if (res && res.status === 200 && res.type === 'basic') {
-        var clone = res.clone();
-        caches.open(CACHE).then(function(cache) {
-          cache.put(e.request, clone);
-        });
-      }
-      return res;
-    }).catch(function() {
-      return caches.match(e.request);
+    caches.open(CACHE).then(function(cache) {
+      return cache.match(e.request).then(function(cached) {
+        var fetchPromise = fetch(e.request).then(function(res) {
+          if (res && res.status === 200 && res.type === 'basic') {
+            cache.put(e.request, res.clone());
+          }
+          return res;
+        }).catch(function() { return cached; });
+
+        return cached || fetchPromise;
+      });
     })
   );
 });
 
-// Notify clients when a new version activates
 self.addEventListener('message', function(e) {
   if (e.data === 'skipWaiting') self.skipWaiting();
 });
