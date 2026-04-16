@@ -1,4 +1,4 @@
-<!-- poured v12 -->
+<!-- poured v13 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -157,8 +157,6 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   .dp-stats-2 { grid-template-columns: 1fr 1fr; }
   .dp-grid-2,
   .dp-grid-3 { grid-template-columns: 1fr; }
-  .dp-table { font-size: 11px; }
-  .dp-table th, .dp-table td { padding: 8px 8px; }
   .dp-card-header {
     flex-wrap: wrap;
     gap: 8px;
@@ -2164,39 +2162,76 @@ function agentPortalHTML() {
     content += '<div style="display:flex;gap:8px">';
     content += '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="printPourSheet(\''+AGENT_EMAIL+'\')">Print Pour Sheet</button>';
     content += '</div></div>';
-    content += '<table class="dp-table"><thead><tr><th>Supplier</th><th>Country</th><th>Products</th><th>Price range</th><th>Available</th><th>Actions</th></tr></thead><tbody>';
     var supplierGroups = {};
     myProds.forEach(function(p){if(!supplierGroups[p.supplier])supplierGroups[p.supplier]=[];supplierGroups[p.supplier].push(p);});
-    Object.keys(supplierGroups).forEach(function(sup){
-      var prods = supplierGroups[sup];
-      var minP  = Math.min.apply(null,prods.map(function(p){return p.pricePerBottle;}));
-      var maxP  = Math.max.apply(null,prods.map(function(p){return p.pricePerBottle;}));
-      var avail = prods.filter(function(p){return p.avail==='In Stock';}).length;
-      content += '<tr>'
-        + '<td style="font-weight:600;font-size:13px">'+sup+'</td>'
-        + '<td style="font-size:12px;color:var(--muted)">'+(prods[0]||{country:''}).country+'</td>'
-        + '<td style="font-size:13px">'+prods.length+'</td>'
-        + '<td style="font-size:13px">$'+minP+'–$'+maxP+'/btl</td>'
-        + '<td><span class="dp-badge dp-badge-green">'+avail+' in stock</span></td>'
-        + '<td><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="dlSupplierCSV(\''+sup+'\')">⬇ CSV</button></td>'
-        + '</tr>';
-    });
-    content += '</tbody></table>';
+    if(isMobile()) {
+      content += '<div style="padding:12px">';
+      Object.keys(supplierGroups).forEach(function(sup){
+        var prods = supplierGroups[sup];
+        var minP  = Math.min.apply(null,prods.map(function(p){return p.pricePerBottle;}));
+        var maxP  = Math.max.apply(null,prods.map(function(p){return p.pricePerBottle;}));
+        var avail = prods.filter(function(p){return p.avail==='In Stock';}).length;
+        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+        content += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+        content += '<span style="font-size:14px;font-weight:700">'+sup+'</span>';
+        content += '<span class="dp-badge dp-badge-green">'+avail+' in stock</span>';
+        content += '</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:6px">'+(prods[0]||{country:''}).country+' · '+prods.length+' products · $'+minP+'–$'+maxP+'/btl</div>';
+        content += '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="dlSupplierCSV(\''+sup+'\')">⬇ CSV</button>';
+        content += '</div>';
+      });
+      content += '</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Supplier</th><th>Country</th><th>Products</th><th>Price range</th><th>Available</th><th>Actions</th></tr></thead><tbody>';
+      Object.keys(supplierGroups).forEach(function(sup){
+        var prods = supplierGroups[sup];
+        var minP  = Math.min.apply(null,prods.map(function(p){return p.pricePerBottle;}));
+        var maxP  = Math.max.apply(null,prods.map(function(p){return p.pricePerBottle;}));
+        var avail = prods.filter(function(p){return p.avail==='In Stock';}).length;
+        content += '<tr>'
+          + '<td style="font-weight:600;font-size:13px">'+sup+'</td>'
+          + '<td style="font-size:12px;color:var(--muted)">'+(prods[0]||{country:''}).country+'</td>'
+          + '<td style="font-size:13px">'+prods.length+'</td>'
+          + '<td style="font-size:13px">$'+minP+'–$'+maxP+'/btl</td>'
+          + '<td><span class="dp-badge dp-badge-green">'+avail+' in stock</span></td>'
+          + '<td><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="dlSupplierCSV(\''+sup+'\')">⬇ CSV</button></td>'
+          + '</tr>';
+      });
+      content += '</tbody></table>';
+    }
     // Products detail
     content += '<div style="border-top:1px solid #F5F0EA;margin-top:8px">';
-    content += '<table class="dp-table"><thead><tr><th>Product</th><th>Supplier</th><th>Category</th><th>Price/btl</th><th>Price/case</th><th>Availability</th><th></th></tr></thead><tbody>';
-    myProds.forEach(function(p){
-      content += '<tr>'
-        + '<td><div style="font-weight:600;font-size:13px">'+p.name+(p.vintage?' '+p.vintage:'')+'</div><div style="font-size:11px;color:var(--muted)">'+p.abv+'% · '+p.caseSize+'btl · '+p.bottleSizeMl+'mL</div></td>'
-        + '<td style="font-size:12px;color:var(--muted)">'+p.supplier+'</td>'
-        + '<td style="font-size:12px;color:var(--muted)">'+p.category+'</td>'
-        + '<td style="font-size:13px;font-weight:600">$'+p.pricePerBottle+'</td>'
-        + '<td style="font-size:13px;font-weight:600;color:#7A1020">$'+p.pricePerCase+'</td>'
-        + '<td><span class="dp-badge '+(p.avail==='In Stock'?'dp-badge-green':'dp-badge-amber')+'">'+p.avail+'</span></td>'
-        + '<td><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openEditProduct('+p.id+')">Edit</button></td>'
-        + '</tr>';
-    });
-    content += '</tbody></table></div></div>';
+    if(isMobile()) {
+      content += '<div style="padding:12px">';
+      myProds.forEach(function(p){
+        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+        content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+p.name+(p.vintage?' '+p.vintage:'')+'</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:4px">'+p.supplier+' · '+p.category+'</div>';
+        content += '<div style="font-size:11px;color:#888;margin-bottom:8px">'+p.abv+'% · '+p.caseSize+'btl · '+p.bottleSizeMl+'mL</div>';
+        content += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+        content += '<div><span style="font-size:13px;font-weight:600">$'+p.pricePerBottle+'/btl</span> <span style="font-size:13px;font-weight:600;color:#7A1020">$'+p.pricePerCase+'/case</span></div>';
+        content += '<span class="dp-badge '+(p.avail==='In Stock'?'dp-badge-green':'dp-badge-amber')+'">'+p.avail+'</span>';
+        content += '</div>';
+        content += '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openEditProduct('+p.id+')">Edit</button>';
+        content += '</div>';
+      });
+      content += '</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Product</th><th>Supplier</th><th>Category</th><th>Price/btl</th><th>Price/case</th><th>Availability</th><th></th></tr></thead><tbody>';
+      myProds.forEach(function(p){
+        content += '<tr>'
+          + '<td><div style="font-weight:600;font-size:13px">'+p.name+(p.vintage?' '+p.vintage:'')+'</div><div style="font-size:11px;color:var(--muted)">'+p.abv+'% · '+p.caseSize+'btl · '+p.bottleSizeMl+'mL</div></td>'
+          + '<td style="font-size:12px;color:var(--muted)">'+p.supplier+'</td>'
+          + '<td style="font-size:12px;color:var(--muted)">'+p.category+'</td>'
+          + '<td style="font-size:13px;font-weight:600">$'+p.pricePerBottle+'</td>'
+          + '<td style="font-size:13px;font-weight:600;color:#7A1020">$'+p.pricePerCase+'</td>'
+          + '<td><span class="dp-badge '+(p.avail==='In Stock'?'dp-badge-green':'dp-badge-amber')+'">'+p.avail+'</span></td>'
+          + '<td><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openEditProduct('+p.id+')">Edit</button></td>'
+          + '</tr>';
+      });
+      content += '</tbody></table>';
+    }
+    content += '</div></div>';
   }
 
   else if(tab==='upload') {
@@ -2236,19 +2271,37 @@ function agentPortalHTML() {
     content += '</div></div>';
     content += '<div class="dp-card">';
     content += '<div class="dp-card-header"><span class="dp-card-title">All Orders — '+ev.name+'</span></div>';
-    content += '<table class="dp-table"><thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Value</th><th>Status</th></tr></thead><tbody>';
-    myOrders.forEach(function(o){
-      var sub = o.items.reduce(function(s,i){return s+(i.qtyCases||1)*(i.pricePerCase||0);},0);
-      content += '<tr>'
-        + '<td style="font-family:monospace;font-size:12px;color:var(--muted)">'+o.id+'</td>'
-        + '<td style="font-weight:600;font-size:13px">'+(state.unlocked[o.id]?o.customer:'[Locked]')+'</td>'
-        + '<td style="font-size:13px">'+o.items.length+' items</td>'
-        + '<td style="font-weight:600">$'+sub.toFixed(2)+'</td>'
-        + '<td><span class="dp-badge '+(state.confirmed[o.id]?'dp-badge-green':state.unlocked[o.id]?'dp-badge-blue':'dp-badge-amber')+'">'+(state.confirmed[o.id]?'Confirmed':state.unlocked[o.id]?'Unlocked':'Locked')+'</span></td>'
-        + '</tr>';
-    });
-    if(myOrders.length===0) content += '<tr><td colspan="5"><div class="dp-empty"><div class="dp-empty-icon"></div><div class="dp-empty-text">No orders yet</div></div></td></tr>';
-    content += '</tbody></table></div></div>';
+    if(isMobile()) {
+      content += '<div style="padding:12px">';
+      myOrders.forEach(function(o){
+        var sub = o.items.reduce(function(s,i){return s+(i.qtyCases||1)*(i.pricePerCase||0);},0);
+        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+        content += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+        content += '<span style="font-size:14px;font-weight:700">'+(state.unlocked[o.id]?o.customer:'[Locked]')+'</span>';
+        content += '<span class="dp-badge '+(state.confirmed[o.id]?'dp-badge-green':state.unlocked[o.id]?'dp-badge-blue':'dp-badge-amber')+'">'+(state.confirmed[o.id]?'Confirmed':state.unlocked[o.id]?'Unlocked':'Locked')+'</span>';
+        content += '</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:4px">'+o.id+' · '+o.items.length+' items</div>';
+        content += '<div style="font-size:13px;font-weight:600">$'+sub.toFixed(2)+'</div>';
+        content += '</div>';
+      });
+      if(myOrders.length===0) content += '<div class="dp-empty"><div class="dp-empty-icon"></div><div class="dp-empty-text">No orders yet</div></div>';
+      content += '</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Value</th><th>Status</th></tr></thead><tbody>';
+      myOrders.forEach(function(o){
+        var sub = o.items.reduce(function(s,i){return s+(i.qtyCases||1)*(i.pricePerCase||0);},0);
+        content += '<tr>'
+          + '<td style="font-family:monospace;font-size:12px;color:var(--muted)">'+o.id+'</td>'
+          + '<td style="font-weight:600;font-size:13px">'+(state.unlocked[o.id]?o.customer:'[Locked]')+'</td>'
+          + '<td style="font-size:13px">'+o.items.length+' items</td>'
+          + '<td style="font-weight:600">$'+sub.toFixed(2)+'</td>'
+          + '<td><span class="dp-badge '+(state.confirmed[o.id]?'dp-badge-green':state.unlocked[o.id]?'dp-badge-blue':'dp-badge-amber')+'">'+(state.confirmed[o.id]?'Confirmed':state.unlocked[o.id]?'Unlocked':'Locked')+'</span></td>'
+          + '</tr>';
+      });
+      if(myOrders.length===0) content += '<tr><td colspan="5"><div class="dp-empty"><div class="dp-empty-icon"></div><div class="dp-empty-text">No orders yet</div></div></td></tr>';
+      content += '</tbody></table>';
+    }
+    content += '</div></div>';
   }
 
   // ── SHELL ────────────────────────────────────────────────────────
@@ -3182,27 +3235,60 @@ function coordPortalHTML() {
     content += '<div class="dp-grid-2" style="margin-bottom:20px">';
     content += '<div class="dp-card">';
     content += '<div class="dp-card-header"><span class="dp-card-title">Ticket Tiers</span></div>';
-    content += '<table class="dp-table"><thead><tr><th>Tier</th><th>Price</th><th>Sold</th><th>Revenue</th><th></th></tr></thead><tbody>';
-    EV.tiers.forEach(function(t){
-      var tierRev = t.price * t.sold;
-      var pct2    = pct(t.sold, t.capacity);
-      content += '<tr><td style="font-weight:600">'+t.label+'</td>'
-        + '<td>$'+t.price+'</td>'
-        + '<td><div style="font-size:13px;margin-bottom:4px">'+t.sold+' / '+t.capacity+'</div><div class="dp-progress" style="width:80px"><div class="dp-progress-fill" style="width:'+pct2+'%"></div></div></td>'
-        + '<td style="font-weight:600;color:#7A1020">$'+tierRev.toLocaleString()+'</td>'
-        + '<td><span class="dp-badge '+(t.sold>=t.capacity?'dp-badge-red':'dp-badge-green')+'">'+(t.sold>=t.capacity?'Sold out':'Available')+'</span></td>'
-        + '</tr>';
-    });
-    content += '</tbody></table></div>';
+    if(isMobile()) {
+      content += '<div style="padding:12px">';
+      EV.tiers.forEach(function(t){
+        var tierRev = t.price * t.sold;
+        var pct2    = pct(t.sold, t.capacity);
+        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+        content += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+        content += '<span style="font-size:14px;font-weight:700">'+t.label+'</span>';
+        content += '<span class="dp-badge '+(t.sold>=t.capacity?'dp-badge-red':'dp-badge-green')+'">'+(t.sold>=t.capacity?'Sold out':'Available')+'</span>';
+        content += '</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:6px">$'+t.price+' · '+t.sold+' / '+t.capacity+' sold</div>';
+        content += '<div class="dp-progress" style="margin-bottom:6px"><div class="dp-progress-fill" style="width:'+pct2+'%"></div></div>';
+        content += '<div style="font-size:13px;font-weight:600;color:#7A1020">$'+tierRev.toLocaleString()+' revenue</div>';
+        content += '</div>';
+      });
+      content += '</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Tier</th><th>Price</th><th>Sold</th><th>Revenue</th><th></th></tr></thead><tbody>';
+      EV.tiers.forEach(function(t){
+        var tierRev = t.price * t.sold;
+        var pct2    = pct(t.sold, t.capacity);
+        content += '<tr><td style="font-weight:600">'+t.label+'</td>'
+          + '<td>$'+t.price+'</td>'
+          + '<td><div style="font-size:13px;margin-bottom:4px">'+t.sold+' / '+t.capacity+'</div><div class="dp-progress" style="width:80px"><div class="dp-progress-fill" style="width:'+pct2+'%"></div></div></td>'
+          + '<td style="font-weight:600;color:#7A1020">$'+tierRev.toLocaleString()+'</td>'
+          + '<td><span class="dp-badge '+(t.sold>=t.capacity?'dp-badge-red':'dp-badge-green')+'">'+(t.sold>=t.capacity?'Sold out':'Available')+'</span></td>'
+          + '</tr>';
+      });
+      content += '</tbody></table>';
+    }
+    content += '</div>';
 
     // Top suppliers
     content += '<div class="dp-card">';
     content += '<div class="dp-card-header"><span class="dp-card-title">Top Suppliers</span><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="(function(){var a=document.createElement(\'a\');a.href=URL.createObjectURL(new Blob([[\'Supplier,Agent,Views,Orders\'].concat(allStats.map(function(s){return s.supplier+\',\'+s.agent+\',\'+s.totalViews+\',\'+s.totalOrders;})).join(\'\\n\')],{type:\'text/csv\'}));a.download=\'report.csv\';a.click();})()">⬇ Export CSV</button></div>';
-    content += '<table class="dp-table"><thead><tr><th>Supplier</th><th>Agent</th><th>Products</th><th>Views</th><th>Orders</th></tr></thead><tbody>';
-    allStats.slice(0,8).forEach(function(s){
-      content += '<tr><td style="font-weight:600">'+s.supplier+'</td><td style="color:var(--muted)">'+s.agent+'</td><td>'+s.products+'</td><td>'+s.totalViews+'</td><td style="font-weight:600;color:#7A1020">'+s.totalOrders+'</td></tr>';
-    });
-    content += '</tbody></table></div>';
+    if(isMobile()) {
+      content += '<div style="padding:12px">';
+      allStats.slice(0,8).forEach(function(s){
+        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+        content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+s.supplier+'</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:8px">'+s.agent+'</div>';
+        content += '<div style="display:flex;gap:12px;font-size:12px;color:#555">';
+        content += '<span>'+s.products+' products</span><span>'+s.totalViews+' views</span><span style="font-weight:600;color:#7A1020">'+s.totalOrders+' orders</span>';
+        content += '</div></div>';
+      });
+      content += '</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Supplier</th><th>Agent</th><th>Products</th><th>Views</th><th>Orders</th></tr></thead><tbody>';
+      allStats.slice(0,8).forEach(function(s){
+        content += '<tr><td style="font-weight:600">'+s.supplier+'</td><td style="color:var(--muted)">'+s.agent+'</td><td>'+s.products+'</td><td>'+s.totalViews+'</td><td style="font-weight:600;color:#7A1020">'+s.totalOrders+'</td></tr>';
+      });
+      content += '</tbody></table>';
+    }
+    content += '</div>';
     content += '</div>'; // grid-2
 
     // Quick actions
@@ -3252,18 +3338,33 @@ function coordPortalHTML() {
   else if(tab==='suppliers') {
     content += '<div class="dp-card">';
     content += '<div class="dp-card-header"><span class="dp-card-title">Supplier Tables</span><div style="font-size:12px;color:var(--muted)">'+EV.products.length+' products across '+allStats.length+' suppliers</div></div>';
-    content += '<table class="dp-table"><thead><tr><th>Supplier</th><th>Country</th><th>Agent</th><th>Products</th><th>Views</th><th>Orders</th></tr></thead><tbody>';
-    allStats.forEach(function(s){
-      content += '<tr>'
-        + '<td style="font-weight:600;font-size:13px">'+s.supplier+'</td>'
-        + '<td style="font-size:12px;color:var(--muted)">'+(EV.products.find(function(p){return p.supplier===s.supplier;})||{country:''}).country+'</td>'
-        + '<td style="font-size:12px;color:var(--muted)">'+s.agent+'</td>'
-        + '<td>'+s.products+'</td>'
-        + '<td>'+s.totalViews+'</td>'
-        + '<td style="font-weight:600;color:#7A1020">'+s.totalOrders+'</td>'
-        + '</tr>';
-    });
-    content += '</tbody></table></div>';
+    if(isMobile()) {
+      content += '<div style="padding:12px">';
+      allStats.forEach(function(s){
+        var country = (EV.products.find(function(p){return p.supplier===s.supplier;})||{country:''}).country;
+        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+        content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+s.supplier+'</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:8px">'+s.agent+(country?' · '+country:'')+'</div>';
+        content += '<div style="display:flex;gap:12px;font-size:12px;color:#555">';
+        content += '<span>'+s.products+' products</span><span>'+s.totalViews+' views</span><span style="font-weight:600;color:#7A1020">'+s.totalOrders+' orders</span>';
+        content += '</div></div>';
+      });
+      content += '</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Supplier</th><th>Country</th><th>Agent</th><th>Products</th><th>Views</th><th>Orders</th></tr></thead><tbody>';
+      allStats.forEach(function(s){
+        content += '<tr>'
+          + '<td style="font-weight:600;font-size:13px">'+s.supplier+'</td>'
+          + '<td style="font-size:12px;color:var(--muted)">'+(EV.products.find(function(p){return p.supplier===s.supplier;})||{country:''}).country+'</td>'
+          + '<td style="font-size:12px;color:var(--muted)">'+s.agent+'</td>'
+          + '<td>'+s.products+'</td>'
+          + '<td>'+s.totalViews+'</td>'
+          + '<td style="font-weight:600;color:#7A1020">'+s.totalOrders+'</td>'
+          + '</tr>';
+      });
+      content += '</tbody></table>';
+    }
+    content += '</div>';
   }
 
   else if(tab==='approvals') {
@@ -3274,23 +3375,42 @@ function coordPortalHTML() {
     content += '<span class="dp-badge dp-badge-amber">'+pendingCount+' pending</span>';
     content += '<span class="dp-badge dp-badge-green">'+EV.products.filter(function(p){return state.coordApprovals[p.id]==='approved';}).length+' approved</span>';
     content += '</div></div>';
-    content += '<table class="dp-table"><thead><tr><th>Product</th><th>Supplier</th><th>Agent</th><th>Category</th><th>Price/case</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
-    EV.products.forEach(function(prod){
-      var st = state.coordApprovals[prod.id];
-      content += '<tr>'
-        + '<td><div style="font-weight:600;font-size:13px">'+prod.name+(prod.vintage?' '+prod.vintage:'')+'</div><div style="font-size:11px;color:var(--muted)">'+prod.abv+'% · '+prod.caseSize+'btl</div></td>'
-        + '<td style="font-size:13px">'+prod.supplier+'</td>'
-        + '<td style="font-size:12px;color:var(--muted)">'+prod.agent+'</td>'
-        + '<td style="font-size:12px;color:var(--muted)">'+prod.category+'</td>'
-        + '<td style="font-size:13px;font-weight:600">$'+prod.pricePerCase+'</td>'
-        + '<td>'+(st==='approved'?'<span class="dp-badge dp-badge-green">Approved</span>':st==='rejected'?'<span class="dp-badge dp-badge-red">Rejected</span>':'<span class="dp-badge dp-badge-amber">Pending</span>')+'</td>'
-        + '<td><div style="display:flex;gap:6px">'
-        + (st?'<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="delete state.coordApprovals['+prod.id+'];render()">Reset</button>'
-          :'<button class="dp-btn dp-btn-danger dp-btn-sm" onclick="rejectProduct('+prod.id+')">Reject</button><button class="dp-btn dp-btn-sage dp-btn-sm" onclick="approveProduct('+prod.id+')">Approve</button>')
-        + '</div></td>'
-        + '</tr>';
-    });
-    content += '</tbody></table></div>';
+    if(isMobile()) {
+      content += '<div style="padding:12px">';
+      EV.products.forEach(function(prod){
+        var st = state.coordApprovals[prod.id];
+        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+        content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+prod.name+(prod.vintage?' '+prod.vintage:'')+'</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:4px">'+prod.supplier+' · '+prod.agent+'</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:8px">'+prod.category+' · $'+prod.pricePerCase+'/case</div>';
+        content += '<div style="display:flex;justify-content:space-between;align-items:center">';
+        content += (st==='approved'?'<span class="dp-badge dp-badge-green">Approved</span>':st==='rejected'?'<span class="dp-badge dp-badge-red">Rejected</span>':'<span class="dp-badge dp-badge-amber">Pending</span>');
+        content += '<div style="display:flex;gap:6px">';
+        content += (st?'<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="delete state.coordApprovals['+prod.id+'];render()">Reset</button>'
+          :'<button class="dp-btn dp-btn-danger dp-btn-sm" onclick="rejectProduct('+prod.id+')">Reject</button><button class="dp-btn dp-btn-sage dp-btn-sm" onclick="approveProduct('+prod.id+')">Approve</button>');
+        content += '</div></div></div>';
+      });
+      content += '</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Product</th><th>Supplier</th><th>Agent</th><th>Category</th><th>Price/case</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+      EV.products.forEach(function(prod){
+        var st = state.coordApprovals[prod.id];
+        content += '<tr>'
+          + '<td><div style="font-weight:600;font-size:13px">'+prod.name+(prod.vintage?' '+prod.vintage:'')+'</div><div style="font-size:11px;color:var(--muted)">'+prod.abv+'% · '+prod.caseSize+'btl</div></td>'
+          + '<td style="font-size:13px">'+prod.supplier+'</td>'
+          + '<td style="font-size:12px;color:var(--muted)">'+prod.agent+'</td>'
+          + '<td style="font-size:12px;color:var(--muted)">'+prod.category+'</td>'
+          + '<td style="font-size:13px;font-weight:600">$'+prod.pricePerCase+'</td>'
+          + '<td>'+(st==='approved'?'<span class="dp-badge dp-badge-green">Approved</span>':st==='rejected'?'<span class="dp-badge dp-badge-red">Rejected</span>':'<span class="dp-badge dp-badge-amber">Pending</span>')+'</td>'
+          + '<td><div style="display:flex;gap:6px">'
+          + (st?'<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="delete state.coordApprovals['+prod.id+'];render()">Reset</button>'
+            :'<button class="dp-btn dp-btn-danger dp-btn-sm" onclick="rejectProduct('+prod.id+')">Reject</button><button class="dp-btn dp-btn-sage dp-btn-sm" onclick="approveProduct('+prod.id+')">Approve</button>')
+          + '</div></td>'
+          + '</tr>';
+      });
+      content += '</tbody></table>';
+    }
+    content += '</div>';
   }
 
   else if(tab==='door') {
@@ -3313,34 +3433,68 @@ function coordPortalHTML() {
     content += '<div class="dp-card">';
     content += '<div class="dp-card-header"><span class="dp-card-title">Door Check-in</span><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="showToast(\"Camera scanning available in installed PWA\")">Scan QR</button></div>';
     content += '<div style="padding:12px 16px;border-bottom:1px solid #F5F0EA"><input class="dp-input" id="checkin-search" placeholder="Search by name or ticket number..." oninput="render()" style="max-width:320px"></div>';
-    content += '<table class="dp-table"><thead><tr><th>Attendee</th><th>Tier</th><th>Ticket</th><th>Status</th><th></th></tr></thead><tbody>';
     var search = '';
-    attendees.filter(function(a){return !search||a.name.toLowerCase().includes(search)||a.ticket.toLowerCase().includes(search);}).forEach(function(a){
-      var isIn = !!(state.checkedIn && state.checkedIn[a.id]);
-      content += '<tr>'
-        + '<td style="font-weight:600;font-size:13px">'+a.name+'</td>'
-        + '<td style="font-size:12px;color:var(--muted)">'+a.tier+'</td>'
-        + '<td style="font-family:monospace;font-size:12px;color:var(--muted)">'+a.ticket+'</td>'
-        + '<td>'+(isIn?'<span class="dp-badge dp-badge-green">Arrived</span>':'<span class="dp-badge dp-badge-gray">Not arrived</span>')+'</td>'
-        + '<td><button class="dp-btn '+(isIn?'dp-btn-ghost':'dp-btn-primary')+' dp-btn-sm" onclick="checkIn(\''+a.id+'\')">'+(isIn?'Undo':'Check in')+'</button></td>'
-        + '</tr>';
-    });
-    content += '</tbody></table></div>';
+    if(isMobile()) {
+      content += '<div style="padding:12px">';
+      attendees.filter(function(a){return !search||a.name.toLowerCase().includes(search)||a.ticket.toLowerCase().includes(search);}).forEach(function(a){
+        var isIn = !!(state.checkedIn && state.checkedIn[a.id]);
+        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+        content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+a.name+'</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:8px">'+a.tier+' · '+a.ticket+'</div>';
+        content += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+        content += (isIn?'<span class="dp-badge dp-badge-green">Arrived</span>':'<span class="dp-badge dp-badge-gray">Not arrived</span>');
+        content += '</div>';
+        content += '<button class="dp-btn '+(isIn?'dp-btn-ghost':'dp-btn-primary')+'" style="width:100%;padding:10px" onclick="checkIn(\''+a.id+'\')">'+(isIn?'Undo':'Check in')+'</button>';
+        content += '</div>';
+      });
+      content += '</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Attendee</th><th>Tier</th><th>Ticket</th><th>Status</th><th></th></tr></thead><tbody>';
+      attendees.filter(function(a){return !search||a.name.toLowerCase().includes(search)||a.ticket.toLowerCase().includes(search);}).forEach(function(a){
+        var isIn = !!(state.checkedIn && state.checkedIn[a.id]);
+        content += '<tr>'
+          + '<td style="font-weight:600;font-size:13px">'+a.name+'</td>'
+          + '<td style="font-size:12px;color:var(--muted)">'+a.tier+'</td>'
+          + '<td style="font-family:monospace;font-size:12px;color:var(--muted)">'+a.ticket+'</td>'
+          + '<td>'+(isIn?'<span class="dp-badge dp-badge-green">Arrived</span>':'<span class="dp-badge dp-badge-gray">Not arrived</span>')+'</td>'
+          + '<td><button class="dp-btn '+(isIn?'dp-btn-ghost':'dp-btn-primary')+' dp-btn-sm" onclick="checkIn(\''+a.id+'\')">'+(isIn?'Undo':'Check in')+'</button></td>'
+          + '</tr>';
+      });
+      content += '</tbody></table>';
+    }
+    content += '</div>';
     // Trade verify
     content += '<div class="dp-card">';
     content += '<div class="dp-card-header"><span class="dp-card-title">Trade Credential Verification</span></div>';
-    content += '<table class="dp-table"><thead><tr><th>Name</th><th>Company</th><th>Credential</th><th>Status</th><th></th></tr></thead><tbody>';
-    attendees.filter(function(a){return a.trade;}).forEach(function(a){
-      var isIn = !!(state.checkedIn && state.checkedIn[a.id]);
-      content += '<tr>'
-        + '<td style="font-weight:600;font-size:13px">'+a.name+'</td>'
-        + '<td style="font-size:12px;color:var(--muted)">Company</td>'
-        + '<td style="font-size:12px;color:#4A8A6A">'+a.cred+'</td>'
-        + '<td>'+(isIn?'<span class="dp-badge dp-badge-green">Admitted</span>':'<span class="dp-badge dp-badge-blue">Verified</span>')+'</td>'
-        + '<td>'+(isIn?'':'<button class="dp-btn dp-btn-sage dp-btn-sm" onclick="verifyTrade(\''+a.id+'\')">Admit</button>')+'</td>'
-        + '</tr>';
-    });
-    content += '</tbody></table></div>';
+    if(isMobile()) {
+      content += '<div style="padding:12px">';
+      attendees.filter(function(a){return a.trade;}).forEach(function(a){
+        var isIn = !!(state.checkedIn && state.checkedIn[a.id]);
+        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+        content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+a.name+'</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:4px">'+a.cred+'</div>';
+        content += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:'+(isIn?'0':'10')+'px">';
+        content += (isIn?'<span class="dp-badge dp-badge-green">Admitted</span>':'<span class="dp-badge dp-badge-blue">Verified</span>');
+        content += '</div>';
+        if(!isIn) content += '<button class="dp-btn dp-btn-sage" style="width:100%;padding:10px" onclick="verifyTrade(\''+a.id+'\')">Admit</button>';
+        content += '</div>';
+      });
+      content += '</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Name</th><th>Company</th><th>Credential</th><th>Status</th><th></th></tr></thead><tbody>';
+      attendees.filter(function(a){return a.trade;}).forEach(function(a){
+        var isIn = !!(state.checkedIn && state.checkedIn[a.id]);
+        content += '<tr>'
+          + '<td style="font-weight:600;font-size:13px">'+a.name+'</td>'
+          + '<td style="font-size:12px;color:var(--muted)">Company</td>'
+          + '<td style="font-size:12px;color:#4A8A6A">'+a.cred+'</td>'
+          + '<td>'+(isIn?'<span class="dp-badge dp-badge-green">Admitted</span>':'<span class="dp-badge dp-badge-blue">Verified</span>')+'</td>'
+          + '<td>'+(isIn?'':'<button class="dp-btn dp-btn-sage dp-btn-sm" onclick="verifyTrade(\''+a.id+'\')">Admit</button>')+'</td>'
+          + '</tr>';
+      });
+      content += '</tbody></table>';
+    }
+    content += '</div>';
     content += '</div>'; // grid-2
   }
 
@@ -3365,11 +3519,26 @@ function coordPortalHTML() {
       + '<span>Net payout</span><span style="color:#4A8A6A">$'+netPayout.toFixed(2)+'</span></div>';
     content += '</div></div>';
     content += '<div class="dp-card"><div class="dp-card-header"><span class="dp-card-title">Payout History</span></div>';
-    content += '<table class="dp-table"><thead><tr><th>Event</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>';
-    [['Grand Cru Autumn 2024','15 Nov 2024','$9,840.00'],['Wines of Summer 2024','28 Jun 2024','$6,205.50']].forEach(function(row){
-      content += '<tr><td style="font-weight:600;font-size:13px">'+row[0]+'</td><td style="color:var(--muted);font-size:12px">'+row[1]+'</td><td style="font-weight:600">'+row[2]+'</td><td><span class="dp-badge dp-badge-green">Paid</span></td></tr>';
-    });
-    content += '</tbody></table></div>';
+    if(isMobile()) {
+      content += '<div style="padding:12px">';
+      [['Grand Cru Autumn 2024','15 Nov 2024','$9,840.00'],['Wines of Summer 2024','28 Jun 2024','$6,205.50']].forEach(function(row){
+        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+        content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+row[0]+'</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:8px">'+row[1]+'</div>';
+        content += '<div style="display:flex;justify-content:space-between;align-items:center">';
+        content += '<span style="font-size:14px;font-weight:600">'+row[2]+'</span>';
+        content += '<span class="dp-badge dp-badge-green">Paid</span>';
+        content += '</div></div>';
+      });
+      content += '</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Event</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>';
+      [['Grand Cru Autumn 2024','15 Nov 2024','$9,840.00'],['Wines of Summer 2024','28 Jun 2024','$6,205.50']].forEach(function(row){
+        content += '<tr><td style="font-weight:600;font-size:13px">'+row[0]+'</td><td style="color:var(--muted);font-size:12px">'+row[1]+'</td><td style="font-weight:600">'+row[2]+'</td><td><span class="dp-badge dp-badge-green">Paid</span></td></tr>';
+      });
+      content += '</tbody></table>';
+    }
+    content += '</div>';
     content += '</div>';
   }
 
@@ -3767,25 +3936,59 @@ function adminPortalHTML() {
     // Revenue breakdown
     content += '<div class="dp-grid-2" style="margin-bottom:20px">';
     content += '<div class="dp-card"><div class="dp-card-header"><span class="dp-card-title">Revenue by Stream</span></div>';
-    content += '<table class="dp-table"><thead><tr><th>Stream</th><th>Rate</th><th>Est. this month</th></tr></thead><tbody>';
-    [
-      ['Ticket fees','$1.75 + 6% per ticket','$3,200'],
-      ['Order unlock fees','1.25% capped $50','$1,840'],
-      ['Submission fees','$1.00 + HST per order','$620'],
-    ].forEach(function(row){
-      content += '<tr><td style="font-weight:600;font-size:13px">'+row[0]+'</td><td style="font-size:12px;color:var(--muted)">'+row[1]+'</td><td style="font-weight:600;color:#4A8A6A">'+row[2]+'</td></tr>';
-    });
-    content += '</tbody></table></div>';
+    if(isMobile()) {
+      content += '<div style="padding:12px">';
+      [
+        ['Ticket fees','$1.75 + 6% per ticket','$3,200'],
+        ['Order unlock fees','1.25% capped $50','$1,840'],
+        ['Submission fees','$1.00 + HST per order','$620'],
+      ].forEach(function(row){
+        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+        content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+row[0]+'</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:6px">'+row[1]+'</div>';
+        content += '<div style="font-size:14px;font-weight:600;color:#4A8A6A">'+row[2]+'</div>';
+        content += '</div>';
+      });
+      content += '</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Stream</th><th>Rate</th><th>Est. this month</th></tr></thead><tbody>';
+      [
+        ['Ticket fees','$1.75 + 6% per ticket','$3,200'],
+        ['Order unlock fees','1.25% capped $50','$1,840'],
+        ['Submission fees','$1.00 + HST per order','$620'],
+      ].forEach(function(row){
+        content += '<tr><td style="font-weight:600;font-size:13px">'+row[0]+'</td><td style="font-size:12px;color:var(--muted)">'+row[1]+'</td><td style="font-weight:600;color:#4A8A6A">'+row[2]+'</td></tr>';
+      });
+      content += '</tbody></table>';
+    }
+    content += '</div>';
 
     // Recent events
     content += '<div class="dp-card"><div class="dp-card-header"><span class="dp-card-title">Recent Events</span></div>';
-    content += '<table class="dp-table"><thead><tr><th>Event</th><th>Event Host</th><th>Revenue</th><th>Status</th></tr></thead><tbody>';
-    EVENTS.forEach(function(ev){
-      var ticketRev = ev.tiers.reduce(function(s,t){return s+calcTicketFee(t.price)*t.sold;},0);
-      var sc = ev.status==='active'?'dp-badge-green':ev.status==='upcoming'?'dp-badge-blue':'dp-badge-gray';
-      content += '<tr><td style="font-weight:600;font-size:13px">'+ev.name+'</td><td style="font-size:12px;color:var(--muted)">The Tasting Collective</td><td style="font-weight:600;color:#4A8A6A">$'+ticketRev.toFixed(0)+'</td><td><span class="dp-badge '+sc+'">'+ev.status+'</span></td></tr>';
-    });
-    content += '</tbody></table></div>';
+    if(isMobile()) {
+      content += '<div style="padding:12px">';
+      EVENTS.forEach(function(ev){
+        var ticketRev = ev.tiers.reduce(function(s,t){return s+calcTicketFee(t.price)*t.sold;},0);
+        var sc = ev.status==='active'?'dp-badge-green':ev.status==='upcoming'?'dp-badge-blue':'dp-badge-gray';
+        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
+        content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+ev.name+'</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:6px">The Tasting Collective</div>';
+        content += '<div style="display:flex;justify-content:space-between;align-items:center">';
+        content += '<span style="font-size:14px;font-weight:600;color:#4A8A6A">$'+ticketRev.toFixed(0)+'</span>';
+        content += '<span class="dp-badge '+sc+'">'+ev.status+'</span>';
+        content += '</div></div>';
+      });
+      content += '</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Event</th><th>Event Host</th><th>Revenue</th><th>Status</th></tr></thead><tbody>';
+      EVENTS.forEach(function(ev){
+        var ticketRev = ev.tiers.reduce(function(s,t){return s+calcTicketFee(t.price)*t.sold;},0);
+        var sc = ev.status==='active'?'dp-badge-green':ev.status==='upcoming'?'dp-badge-blue':'dp-badge-gray';
+        content += '<tr><td style="font-weight:600;font-size:13px">'+ev.name+'</td><td style="font-size:12px;color:var(--muted)">The Tasting Collective</td><td style="font-weight:600;color:#4A8A6A">$'+ticketRev.toFixed(0)+'</td><td><span class="dp-badge '+sc+'">'+ev.status+'</span></td></tr>';
+      });
+      content += '</tbody></table>';
+    }
+    content += '</div>';
     content += '</div>';
   }
 
@@ -3813,28 +4016,33 @@ function adminPortalHTML() {
 
     // Per-event overrides
     content += '<div class="dp-card"><div class="dp-card-header"><span class="dp-card-title">Per-Event Fee Overrides</span><span style="font-size:12px;color:var(--muted)">Override any fee for a specific event</span></div>';
-    content += '<table class="dp-table"><thead><tr><th>Event</th><th>Event Host</th><th>Ticket flat</th><th>Ticket %</th><th>Unlock %</th><th>Unlock cap</th><th>Submission</th><th></th></tr></thead><tbody>';
+    if(isMobile()) {
+      content += '<div style="padding:16px;color:#888;font-size:13px">Per-event overrides are managed on desktop.</div>';
+    } else {
+      content += '<table class="dp-table"><thead><tr><th>Event</th><th>Event Host</th><th>Ticket flat</th><th>Ticket %</th><th>Unlock %</th><th>Unlock cap</th><th>Submission</th><th></th></tr></thead><tbody>';
 
-    EVENTS.forEach(function(ev){
-      var ov = state.feeOverrides[ev.id] || {};
-      var isCustom = !!state.feeOverrides[ev.id];
-      content += '<tr>'
-        + '<td><div style="font-weight:600;font-size:13px">'+ev.name+'</div>'
-        + (isCustom?'<span class="dp-badge dp-badge-amber" style="margin-top:4px">Custom fees</span>':'')
-        + '</td>'
-        + '<td style="font-size:12px;color:var(--muted)">The Tasting Collective</td>'
-        + '<td><div style="display:flex;align-items:center;gap:3px"><span style="font-size:11px;color:var(--muted)">$</span><input id="fee-ticketFlat-'+ev.id+'" class="dp-input" type="number" step="0.25" value="'+(ov.ticketFlat||1.75)+'" style="width:64px;padding:5px 8px;font-size:12px"></div></td>'
-        + '<td><div style="display:flex;align-items:center;gap:3px"><input id="fee-ticketPct-'+ev.id+'" class="dp-input" type="number" step="0.5" value="'+(ov.ticketPct||6)+'" style="width:52px;padding:5px 8px;font-size:12px"><span style="font-size:11px;color:var(--muted)">%</span></div></td>'
-        + '<td><div style="display:flex;align-items:center;gap:3px"><input id="fee-unlockPct-'+ev.id+'" class="dp-input" type="number" step="0.25" value="'+(ov.unlockPct||1.25)+'" style="width:52px;padding:5px 8px;font-size:12px"><span style="font-size:11px;color:var(--muted)">%</span></div></td>'
-        + '<td><div style="display:flex;align-items:center;gap:3px"><span style="font-size:11px;color:var(--muted)">$</span><input id="fee-unlockCap-'+ev.id+'" class="dp-input" type="number" step="5" value="'+(ov.unlockCap||50)+'" style="width:56px;padding:5px 8px;font-size:12px"></div></td>'
-        + '<td><div style="display:flex;align-items:center;gap:3px"><span style="font-size:11px;color:var(--muted)">$</span><input id="fee-submissionFee-'+ev.id+'" class="dp-input" type="number" step="0.25" value="'+(ov.submissionFee||1.00)+'" style="width:56px;padding:5px 8px;font-size:12px"></div></td>'
-        + '<td style="text-align:right"><div style="display:flex;gap:6px;justify-content:flex-end">'
-        + '<button class="dp-btn dp-btn-primary dp-btn-sm" onclick="saveFeeOverride('+ev.id+')">Save</button>'
-        + (isCustom?'<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="var o=Object.assign({},state.feeOverrides);delete o['+ev.id+'];setState({feeOverrides:o})">Reset</button>':'')
-        + '</div></td>'
-        + '</tr>';
-    });
-    content += '</tbody></table></div>';
+      EVENTS.forEach(function(ev){
+        var ov = state.feeOverrides[ev.id] || {};
+        var isCustom = !!state.feeOverrides[ev.id];
+        content += '<tr>'
+          + '<td><div style="font-weight:600;font-size:13px">'+ev.name+'</div>'
+          + (isCustom?'<span class="dp-badge dp-badge-amber" style="margin-top:4px">Custom fees</span>':'')
+          + '</td>'
+          + '<td style="font-size:12px;color:var(--muted)">The Tasting Collective</td>'
+          + '<td><div style="display:flex;align-items:center;gap:3px"><span style="font-size:11px;color:var(--muted)">$</span><input id="fee-ticketFlat-'+ev.id+'" class="dp-input" type="number" step="0.25" value="'+(ov.ticketFlat||1.75)+'" style="width:64px;padding:5px 8px;font-size:12px"></div></td>'
+          + '<td><div style="display:flex;align-items:center;gap:3px"><input id="fee-ticketPct-'+ev.id+'" class="dp-input" type="number" step="0.5" value="'+(ov.ticketPct||6)+'" style="width:52px;padding:5px 8px;font-size:12px"><span style="font-size:11px;color:var(--muted)">%</span></div></td>'
+          + '<td><div style="display:flex;align-items:center;gap:3px"><input id="fee-unlockPct-'+ev.id+'" class="dp-input" type="number" step="0.25" value="'+(ov.unlockPct||1.25)+'" style="width:52px;padding:5px 8px;font-size:12px"><span style="font-size:11px;color:var(--muted)">%</span></div></td>'
+          + '<td><div style="display:flex;align-items:center;gap:3px"><span style="font-size:11px;color:var(--muted)">$</span><input id="fee-unlockCap-'+ev.id+'" class="dp-input" type="number" step="5" value="'+(ov.unlockCap||50)+'" style="width:56px;padding:5px 8px;font-size:12px"></div></td>'
+          + '<td><div style="display:flex;align-items:center;gap:3px"><span style="font-size:11px;color:var(--muted)">$</span><input id="fee-submissionFee-'+ev.id+'" class="dp-input" type="number" step="0.25" value="'+(ov.submissionFee||1.00)+'" style="width:56px;padding:5px 8px;font-size:12px"></div></td>'
+          + '<td style="text-align:right"><div style="display:flex;gap:6px;justify-content:flex-end">'
+          + '<button class="dp-btn dp-btn-primary dp-btn-sm" onclick="saveFeeOverride('+ev.id+')">Save</button>'
+          + (isCustom?'<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="var o=Object.assign({},state.feeOverrides);delete o['+ev.id+'];setState({feeOverrides:o})">Reset</button>':'')
+          + '</div></td>'
+          + '</tr>';
+      });
+      content += '</tbody></table>';
+    }
+    content += '</div>';
   }
 
   // ── COORDINATORS ─────────────────────────────────────────────────
