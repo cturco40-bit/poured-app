@@ -1,4 +1,4 @@
-<!-- poured v7 -->
+<!-- poured v8 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -114,6 +114,41 @@ body.dp{
   font-family:var(--font); font-size:13px;
 }
 body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--font);}
+
+/* ── MOBILE RESPONSIVE FOR DESKTOP PORTALS ──────────────── */
+@media (max-width: 768px) {
+  body.dp {
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+  .dp-shell { flex-direction: column; }
+  .dp-sidebar { display: none; }
+  .dp-sidebar.mobile-open {
+    display: flex;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    width: 260px;
+    box-shadow: 4px 0 20px rgba(0,0,0,.3);
+  }
+  .dp-sidebar-wrap { width: auto; }
+  .dp-main { width: 100%; }
+  .dp-content {
+    padding: 12px;
+    overflow-y: visible;
+    height: auto;
+  }
+  .dp-topbar { padding: 0 12px; }
+  .dp-topbar-title { font-size: 13px; }
+  #mobile-menu-btn { display: block !important; }
+  .dp-stats-4,
+  .dp-stats-3 { grid-template-columns: 1fr 1fr; }
+  .dp-grid-2,
+  .dp-grid-3 { grid-template-columns: 1fr; }
+  .dp-table { font-size: 11px; }
+  .dp-table th, .dp-table td { padding: 8px 10px; }
+}
 
 .dp-shell{display:flex;height:100vh;overflow:hidden;}
 
@@ -2488,6 +2523,41 @@ window.toggleSidebar = function() {
   }
 };
 
+window.toggleMobileSidebar = function() {
+  var sb = document.getElementById('dp-sidebar');
+  var overlay = document.getElementById('sidebar-overlay');
+  if(sb) sb.classList.toggle('mobile-open');
+  if(overlay) overlay.style.display = sb && sb.classList.contains('mobile-open') ? 'block' : 'none';
+};
+
+window.closeMobileSidebar = function() {
+  var sb = document.getElementById('dp-sidebar');
+  var overlay = document.getElementById('sidebar-overlay');
+  if(sb) sb.classList.remove('mobile-open');
+  if(overlay) overlay.style.display = 'none';
+};
+
+// Inject hamburger button into .dp-topbar and overlay into body after each desktop-portal render
+function injectMobileChrome() {
+  if(!document.body.classList.contains('dp')) return;
+  var topbar = document.querySelector('.dp-topbar');
+  if(topbar && !document.getElementById('mobile-menu-btn')) {
+    var btn = document.createElement('button');
+    btn.id = 'mobile-menu-btn';
+    btn.setAttribute('onclick','toggleMobileSidebar()');
+    btn.style.cssText = 'display:none;background:none;border:none;cursor:pointer;padding:4px 8px;margin-right:8px;font-size:22px;color:var(--ink);line-height:1';
+    btn.textContent = '\u2630';
+    topbar.insertBefore(btn, topbar.firstChild);
+  }
+  if(!document.getElementById('sidebar-overlay')) {
+    var ov = document.createElement('div');
+    ov.id = 'sidebar-overlay';
+    ov.setAttribute('onclick','closeMobileSidebar()');
+    ov.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99';
+    document.body.appendChild(ov);
+  }
+}
+
 window.goPortal = function(el) {
   var p = el.getAttribute('data-portal');
   if(p) setState({portal: p});
@@ -3822,11 +3892,11 @@ function render() {
     return;
   }
   if(p === 'admin') { app.innerHTML = loginShell('Platform Admin','-','admin@pouredevents.com','admin2025','admin','#7A1020'); return; }
-  if(p === 'admin_in') { document.body.classList.add('dp'); app.innerHTML = adminPortalHTML(); return; }
+  if(p === 'admin_in') { document.body.classList.add('dp'); app.innerHTML = adminPortalHTML(); injectMobileChrome(); return; }
   if(p === 'agent') { document.body.classList.remove('dp'); app.innerHTML = loginShell('Agent / Producer','','sophie@maisonprestige.ca','agent2025','agent','#7A1020'); return; }
-  if(p === 'agent_in') { document.body.classList.add('dp'); app.innerHTML = agentPortalHTML(); return; }
+  if(p === 'agent_in') { document.body.classList.add('dp'); app.innerHTML = agentPortalHTML(); injectMobileChrome(); return; }
   if(p === 'coordinator') { document.body.classList.remove('dp'); app.innerHTML = loginShell('Event Host','','coordinator@tasting.ca','coord2025','coordinator','#1D4ED8'); return; }
-  if(p === 'coordinator_in') { document.body.classList.add('dp'); app.innerHTML = coordPortalHTML(); return; }
+  if(p === 'coordinator_in') { document.body.classList.add('dp'); app.innerHTML = coordPortalHTML(); injectMobileChrome(); return; }
   if(p === 'customer') { document.body.classList.remove('dp'); app.innerHTML = loginShell('Attendee','','jane@example.com','jane2025','customer','#2a7a4a'); return; }
   if(p === 'customer_in') { document.body.classList.remove('dp'); app.innerHTML = custPortalHTML(); app.style.paddingBottom='0'; return; }
   if(p === 'coordinator_signup') { document.body.classList.remove('dp'); app.innerHTML = signupShell('Event Host','coordinator','#1D4ED8'); return; }
