@@ -1,4 +1,4 @@
-<!-- poured v4 -->
+<!-- poured v5 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1305,7 +1305,7 @@ function headerHTML(title='', onSignOut='', onBack='') {
     + '<div style="display:flex;align-items:center;gap:10px">'
     + (onBack ? '<button onclick="'+onBack+'" style="background:rgba(255,255,255,.12);border:none;border-radius:4px;color:rgba(255,255,255,.8);font-size:11px;cursor:pointer;padding:4px 10px;font-family:Nunito Sans,sans-serif;font-weight:700;letter-spacing:.06em">← Back</button>' : '')
     + logoSVG
-    + '<span style="font-size:15px;font-weight:900;color:#FFFFFF;letter-spacing:.18em;text-transform:uppercase;font-family:Nunito Sans,sans-serif">POURED</span>'
+    + '<span style="font-size:15px;font-weight:900;color:#FFFFFF;letter-spacing:.16em;text-transform:uppercase;font-family:Nunito Sans,sans-serif">POURED</span>'
     + '</div>'
     + (onSignOut ? '<button onclick="'+onSignOut+'" style="background:rgba(255,255,255,.12);border:none;border-radius:4px;padding:5px 10px;color:rgba(255,255,255,.7);font-size:10px;font-family:Nunito Sans,sans-serif;cursor:pointer;font-weight:700;letter-spacing:.08em">Sign out</button>' : '')
     + '</div>';
@@ -3267,8 +3267,11 @@ function custEventListHTML() {
   var discover=EVENTS.filter(function(e){return e.status==='upcoming'||e.status==='active';});
   var lists={discover:discover,upcoming:upcoming,mytickets:myTickets};
   var current=lists[state.custListTab]||discover;
-  function sColor(s){return s==='active'?B.sage:s==='upcoming'?B.slate:'#888';}
-  function sLabel(s){return s==='active'?'● Live':s==='upcoming'?'Upcoming':'Past';}
+  function statusBadge(s){
+    if(s==='active') return '<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;background:rgba(42,122,74,.2);color:#4ABA7A;text-transform:uppercase;letter-spacing:.06em;margin-left:8px">● Live</span>';
+    if(s==='upcoming') return '<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;background:rgba(42,90,138,.2);color:#6A9ACA;text-transform:uppercase;letter-spacing:.06em;margin-left:8px">Upcoming</span>';
+    return '<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;background:#F0F0F0;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-left:8px">Past</span>';
+  }
   function eventCard(ev){
     var hasTicket=myTickets.some(function(e){return e.id===ev.id;});
     var totalSold=ev.tiers.reduce(function(s,t){return s+t.sold;},0);
@@ -3276,21 +3279,21 @@ function custEventListHTML() {
     var paidTiers=ev.tiers.filter(function(t){return t.price>0;});
     var lowestPrice=paidTiers.length?paidTiers.reduce(function(m,t){return t.price<m?t.price:m;},9999):9999;
     var pctSold=pct(totalSold,totalCap);
-    var h='<div style="background:#fff;border-radius:16px;overflow:hidden;margin-bottom:12px;border:1px solid '+B.mist+'">';
-    h+='<div style="background:'+B.ink+';padding:14px 16px">';
+    var h='<div style="background:#FFFFFF;border:1px solid #E5E5E5;border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06)">';
+    h+='<div style="background:#1A1A1A;padding:14px 16px">';
     h+='<div style="display:flex;justify-content:space-between;align-items:flex-start">';
-    h+='<div style="flex:1"><div style="font-size:13px;font-weight:800;color:#FFFFFF;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:Nunito Sans,sans-serif">'+ev.name+'</div>';
-    h+='<div style="font-size:11px;color:rgba(255,255,255,.6);font-weight:500">'+ev.date+' · '+ev.venue+'</div></div>';
-    h+='<span style="font-size:10px;padding:3px 9px;border-radius:20px;background:'+sColor(ev.status)+'22;color:'+sColor(ev.status)+';margin-left:8px">'+sLabel(ev.status)+'</span>';
-    h+='</div></div><div style="padding:12px 16px">';
-    if(ev.status!=='past'){h+='<div style="height:3px;background:'+B.linen+';border-radius:2px;margin-bottom:12px"><div style="height:100%;width:'+pctSold+'%;background:'+B.wine+';border-radius:2px"></div></div>';}
+    h+='<div style="flex:1"><div style="font-size:14px;font-weight:800;color:#FFFFFF;text-transform:uppercase;letter-spacing:.06em;font-style:normal;font-family:Nunito Sans,sans-serif">'+ev.name+'</div>';
+    h+='<div style="font-size:11px;color:rgba(255,255,255,.55);font-weight:500;margin-top:3px">'+ev.date+' · '+ev.venue+'</div></div>';
+    h+=statusBadge(ev.status);
+    h+='</div></div><div style="padding:14px 16px;background:#FFFFFF">';
+    if(ev.status!=='past'){h+='<div style="height:3px;background:#F0F0F0;border-radius:2px;margin-bottom:12px"><div style="height:100%;width:'+pctSold+'%;background:#7A1020;border-radius:2px"></div></div>';}
     if(hasTicket){
-      h+='<div style="background:#EBF5EE;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:'+B.sage+'">✓ You have a ticket</div>';
-      h+='<button data-evid="'+ev.id+'" onclick="openCustEvent(parseInt(this.dataset.evid))" style="width:100%;padding:11px;border-radius:10px;border:none;background:'+B.ink+';color:'+B.cream+';font-size:13px;font-family:Nunito Sans,sans-serif;cursor:pointer;font-weight:700">'+(ev.status==='active'?'Browse & Order →':'View My Ticket →')+'</button>';
+      h+='<div style="background:#EBF5EE;color:#2a7a4a;font-size:12px;font-weight:700;padding:8px 12px;border-radius:6px;margin-bottom:10px">✓ You have a ticket</div>';
+      h+='<button data-evid="'+ev.id+'" onclick="openCustEvent(parseInt(this.dataset.evid))" style="width:100%;padding:13px;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:10px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;font-family:Nunito Sans,sans-serif;cursor:pointer">'+(ev.status==='active'?'Browse & Order →':'View My Ticket →')+'</button>';
     } else {
-      if(lowestPrice<9999)h+='<div style="font-size:16px;font-weight:700;color:'+B.pour+';margin-bottom:8px">from $'+lowestPrice+'</div>';
-      paidTiers.forEach(function(t){h+='<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid '+B.linen+'"><div><div style="font-size:13px;font-weight:700;color:#1A1A1A;text-transform:uppercase;letter-spacing:.04em">'+t.label+'</div><div style="font-size:11px;color:'+B.cork+'">'+t.sold+'/'+t.capacity+'</div></div><div style="font-size:14px;font-weight:800;color:#7A1020">$'+(t.price+calcTicketFee(t.price)).toFixed(0)+'</div></div>';});
-      h+='<button onclick="purchaseTicket(state.selectedEventId,t.id,t.price)" style="width:100%;padding:11px;border-radius:10px;border:none;background:'+B.wine+';color:'+B.cream+';font-size:13px;font-family:Nunito Sans,sans-serif;cursor:pointer;font-weight:700;margin-top:10px">Buy Tickets →</button>';
+      if(lowestPrice<9999)h+='<div style="font-size:16px;font-weight:800;color:#7A1020;margin-bottom:8px">from $'+lowestPrice+'</div>';
+      paidTiers.forEach(function(t){h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #F5F5F5"><div><div style="font-size:13px;font-weight:700;color:#1A1A1A;text-transform:uppercase;letter-spacing:.04em">'+t.label+'</div><div style="font-size:11px;color:#888;font-weight:500;margin-top:2px">'+t.sold+'/'+t.capacity+'</div></div><div style="font-size:14px;font-weight:800;color:#7A1020">$'+(t.price+calcTicketFee(t.price)).toFixed(0)+'</div></div>';});
+      h+='<button data-evid="'+ev.id+'" onclick="purchaseTicket(parseInt(this.dataset.evid))" style="width:100%;padding:13px;background:#7A1020;color:#FFFFFF;border:none;border-radius:10px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-top:12px">Buy Tickets →</button>';
     }
     h+='</div></div>';
     return h;
@@ -3317,32 +3320,31 @@ function custPortalHTML() {
   const cats = ["all",...new Set(EV.products.map(p=>p.category))];
   const tabs = [["ticket","My Ticket"],["browse","Browse"],["saved",`Saved(${Object.keys(state.favs||{}).length})`],["notes","Notes"],["order","Order"],["history","History"]];
 
-  const ticketTab = state.custTab==='ticket' ? `<div style="padding:16px">
-    <div style="background:#fff;border-radius:18px;overflow:hidden;border:1.5px solid ${B.pour}33">
-      <div style="background:${B.ink};padding:18px 20px">
-        <div style="font-size:10px;color:var(--muted);letter-spacing:.18em;margin-bottom:4px">${EV.date} · ${EV.time}</div>
-        <div class="cust-headline" style="font-size:15px;color:#FFFFFF;margin-bottom:4px">${EV.name}</div>
-        <div style="font-size:12px;color:${B.cork};margin-bottom:10px">${EV.venue} · ${EV.address}</div>
-        <div style="display:flex;gap:6px">${[...new Set(EV.products.map(p=>p.category))].map(c=>`<span style="font-size:20px">${IC[c]||''}</span>`).join('')}</div>
+  const ticketTab = state.custTab==='ticket' ? `<div style="padding:16px;background:#FFFFFF">
+    <div style="background:#FFFFFF;border:1.5px solid #E5E5E5;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+      <div style="background:#1A1A1A;padding:18px 20px">
+        <div style="font-size:10px;color:rgba(255,255,255,.55);font-weight:600;letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px">${EV.date} · ${EV.time}</div>
+        <div style="font-size:16px;font-weight:800;color:#FFFFFF;text-transform:uppercase;letter-spacing:.06em;font-style:normal;font-family:Nunito Sans,sans-serif;margin-bottom:4px">${EV.name}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.55);font-weight:500">${EV.venue} · ${EV.address}</div>
       </div>
-      <div style="display:flex;align-items:center;background:${B.linen};padding:0 16px">
-        <div style="width:16px;height:16px;border-radius:50%;background:${B.cream};border:1px solid ${B.mist};margin-left:-24px"></div>
-        <div style="flex:1;border-top:1px dashed ${B.mist};margin:0 8px"></div>
-        <div style="width:16px;height:16px;border-radius:50%;background:${B.cream};border:1px solid ${B.mist};margin-right:-24px"></div>
+      <div style="display:flex;align-items:center;background:#F8F8F8;padding:0 16px">
+        <div style="width:16px;height:16px;border-radius:50%;background:#FFFFFF;border:1px solid #E5E5E5;margin-left:-24px"></div>
+        <div style="flex:1;border-top:1px dashed #E5E5E5;margin:0 8px"></div>
+        <div style="width:16px;height:16px;border-radius:50%;background:#FFFFFF;border:1px solid #E5E5E5;margin-right:-24px"></div>
       </div>
-      <div style="padding:16px 20px 18px;background:${B.linen}">
+      <div style="padding:16px 20px 18px;background:#F8F8F8">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
           <div>
-            <div style="font-size:10px;color:${B.cork};letter-spacing:.14em;margin-bottom:4px">PASSCODE</div>
-            <div style="font-size:26px;font-weight:700;color:${B.pour};letter-spacing:.22em;font-style:italic">${EV.passcode}</div>
+            <div style="font-size:10px;font-weight:800;color:#888;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">Passcode</div>
+            <div style="font-size:28px;font-weight:900;color:#7A1020;letter-spacing:.2em;text-transform:uppercase;font-family:Nunito Sans,sans-serif">${EV.passcode}</div>
           </div>
           <div style="text-align:right">
-            <div style="font-size:10px;color:${B.cork};letter-spacing:.1em;margin-bottom:4px">PAID</div>
-            <div style="font-size:18px;font-weight:700">$170.00</div>
+            <div style="font-size:10px;font-weight:800;color:#888;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">Paid</div>
+            <div style="font-size:18px;font-weight:800;color:#1A1A1A">$170.00</div>
           </div>
         </div>
-        <div style="font-size:11px;color:${B.cork};margin-bottom:12px">${tables.length} supplier tables · ${EV.products.length} products · ${EV.agents.filter(a=>a.submitted).length} agents</div>
-        <button onclick="setCustTab('browse')" style="width:100%;padding:12px 20px;border-radius:10px;border:none;background:${B.wine};color:${B.cream};font-size:14px;font-family:Nunito Sans,sans-serif;cursor:pointer">Browse Tonight's Products →</button>
+        <div style="font-size:11px;color:#555;font-weight:500;margin-bottom:14px">${tables.length} supplier tables · ${EV.products.length} products · ${EV.agents.filter(a=>a.submitted).length} agents</div>
+        <button onclick="setCustTab('browse')" style="width:100%;padding:13px;background:#7A1020;color:#FFFFFF;border:none;border-radius:10px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;font-family:Nunito Sans,sans-serif;cursor:pointer">Browse Tonight's Products →</button>
       </div>
     </div>
   </div>` : '';
