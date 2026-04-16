@@ -1,4 +1,4 @@
-<!-- poured v8 -->
+<!-- poured v9 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -123,16 +123,21 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     min-height: 100vh;
   }
   .dp-shell { flex-direction: column; }
-  .dp-sidebar { display: none; }
-  .dp-sidebar.mobile-open {
-    display: flex;
+  .dp-sidebar-wrap { display: none; }
+  .dp-sidebar-wrap.mobile-open {
+    display: block;
     position: fixed;
     top: 0; left: 0; bottom: 0;
     z-index: 100;
     width: 260px;
     box-shadow: 4px 0 20px rgba(0,0,0,.3);
   }
-  .dp-sidebar-wrap { width: auto; }
+  .dp-sidebar-wrap.mobile-open .dp-sidebar {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+  }
+  .dp-sidebar-wrap.mobile-open .dp-collapse-btn { display: none; }
   .dp-main { width: 100%; }
   .dp-content {
     padding: 12px;
@@ -2524,16 +2529,16 @@ window.toggleSidebar = function() {
 };
 
 window.toggleMobileSidebar = function() {
-  var sb = document.getElementById('dp-sidebar');
+  var wrap = document.querySelector('.dp-sidebar-wrap');
   var overlay = document.getElementById('sidebar-overlay');
-  if(sb) sb.classList.toggle('mobile-open');
-  if(overlay) overlay.style.display = sb && sb.classList.contains('mobile-open') ? 'block' : 'none';
+  if(wrap) wrap.classList.toggle('mobile-open');
+  if(overlay) overlay.style.display = wrap && wrap.classList.contains('mobile-open') ? 'block' : 'none';
 };
 
 window.closeMobileSidebar = function() {
-  var sb = document.getElementById('dp-sidebar');
+  var wrap = document.querySelector('.dp-sidebar-wrap');
   var overlay = document.getElementById('sidebar-overlay');
-  if(sb) sb.classList.remove('mobile-open');
+  if(wrap) wrap.classList.remove('mobile-open');
   if(overlay) overlay.style.display = 'none';
 };
 
