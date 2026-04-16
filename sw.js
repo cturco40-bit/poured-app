@@ -2,7 +2,7 @@
 // Deploy this file to the root of your GitHub Pages repo alongside poured-full.html
 // It will be available at https://app.pouredevents.com/sw.js
 
-var CACHE = 'poured-v10';
+var CACHE = 'poured-v11';
 var ASSETS = [
   './',
   './index.html'

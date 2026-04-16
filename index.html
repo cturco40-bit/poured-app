@@ -1,4 +1,4 @@
-<!-- poured v10 -->
+<!-- poured v11 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -777,12 +777,6 @@ let state = {
 
 // ── 1. QR DOOR CHECK-IN ──────────────────────────────────────────────────
 window.toggleQR = () => setState({qrMode: !state.qrMode});
-window.checkIn = (attendeeId) => {
-  const s = {...(state.checkedIn||{})};
-  if(s[attendeeId]) delete s[attendeeId]; else s[attendeeId]=true;
-  state.checkedIn = s;
-  render();
-};
 function qrCheckinHTML(EV) {
   var attendees = EV.attendees || [
     {id:1, name:'Jane Thompson',    tier:'General Admission', email:'jane@example.com',    ticket:'T-0042', admitted:false, paid:true},
@@ -938,8 +932,6 @@ function orderHistoryHTML() {
 }
 
 // ── 7. AGENT INVOICE MODAL ────────────────────────────────────────────────
-window.openInvoice = (orderId) => setState({invoiceModal:orderId});
-window.closeInvoice = () => setState({invoiceModal:null});
 function invoiceModalHTML(myOrders) {
   if(!state.invoiceModal) return '';
   const order = myOrders.find(o=>o.id===state.invoiceModal);
@@ -991,8 +983,6 @@ Note: Poured facilitates order introductions only. This is a direct sale between
 }
 
 // ── 8. WINE EDIT (Agent) ─────────────────────────────────────────────────
-window.openEditProduct = (prodId) => setState({agentEditProduct:prodId});
-window.closeEditProduct = () => setState({agentEditProduct:null});
 window.saveProductEdit = () => {
   const id = state.agentEditProduct;
   if(!id) return;
@@ -1037,8 +1027,6 @@ function editProductModalHTML(ev) {
 }
 
 // ── 9. APPROVE / REJECT WINE SUBMISSIONS (Coordinator) ───────────────────
-window.approveProduct = (id) => { state.coordApprovals={...state.coordApprovals,[id]:'approved'}; render(); };
-window.rejectProduct  = (id) => { state.coordApprovals={...state.coordApprovals,[id]:'rejected'}; render(); };
 function approvalPanelHTML(products) {
   const pending = products.filter(p=>!state.coordApprovals[p.id]);
   const approved = products.filter(p=>state.coordApprovals[p.id]==='approved');
@@ -1078,8 +1066,6 @@ function approvalPanelHTML(products) {
 }
 
 // ── 10. EVENT DUPLICATION (Coordinator) ──────────────────────────────────
-window.openDupModal = () => setState({dupModal:true});
-window.closeDupModal = () => setState({dupModal:false});
 window.duplicateEvent = () => {
   showToast('Event duplicated — update the date and deadline before publishing');
   setState({dupModal:false});
@@ -1199,10 +1185,6 @@ function payoutDashboardHTML(ev) {
 }
 
 // ── 13. SMART SERVE / TRADE CHECK-IN ─────────────────────────────────────
-window.verifyTrade = (id) => {
-  state.checkedIn = {...(state.checkedIn||{}), [id]:true};
-  render();
-};
 function tradeVerifyHTML(ev) {
   const tradeAttendees = [
     {id:"t001",name:"Sophie Beaumont",company:"Maison Prestige Imports",credential:"ORCA Member",verified:true},
@@ -1718,14 +1700,6 @@ function supplierCardHTML(s, expanded, toggleFn, downloadable=false) {
     ${body}
   </div>`;
 }
-window.dlSupplierCSV = function(supplierName) {
-  const s = supplierStats(EV.products, EV.orders).find(x=>x.supplier===supplierName);
-  if(!s) return;
-  const rows = s.products.map(p=>[s.supplier,p.name,p.views,p.orders].join(','));
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));
-  a.download = supplierName.replace(/\s+/g,'_')+'.csv'; a.click();
-};
 
 // ─── PRODUCT CARD (Customer) ──────────────────────────────────────────────────
 function productCardHTML(prod) {
@@ -2549,12 +2523,6 @@ window.resetAdminFees = function() {
 };
 
 // Expand all suppliers
-window.expandAllSuppliers = function() {
-  var ev = EVENTS.find(function(e){return e.id===state.selectedEventId;}) || EVENTS[0];
-  var exp = {};
-  if(ev && ev.products) ev.products.forEach(function(p){exp[p.supplier]=true;});
-  setState({expandedSuppliers: exp});
-};
 
 // Collapse all suppliers (was using new Set() — wrong)
 window.collapseAllSuppliers = function() {
@@ -2572,6 +2540,23 @@ window.toggleSidebar = function() {
   }
 };
 
+window.mobileNavAction = function(action) {
+  switch(action) {
+    case 'coordHome':      setState({coordSelectedEventId:null}); break;
+    case 'coordDoor':      setCoordTab('door'); break;
+    case 'coordAgents':    setCoordTab('agents'); break;
+    case 'coordPayout':    setCoordTab('payout'); break;
+    case 'agentHome':      setState({selectedEventId:null, portal:'agent_in'}); break;
+    case 'agentOrders':    setAgentTab('orders'); break;
+    case 'agentSuppliers': setAgentTab('suppliers'); break;
+    case 'agentUpload':    setAgentTab('upload'); break;
+    case 'adminDashboard': setAdminTab('dashboard'); break;
+    case 'adminCoords':    setAdminTab('coordinators'); break;
+    case 'adminEvents':    setAdminTab('events'); break;
+    case 'adminFees':      setAdminTab('fees'); break;
+  }
+};
+
 window.injectMobileNav = function(portal) {
   var existingNav = document.getElementById('dp-mobile-nav');
   if(existingNav) existingNav.remove();
@@ -2580,24 +2565,24 @@ window.injectMobileNav = function(portal) {
   var navItems = [];
   if(portal === 'coordinator') {
     navItems = [
-      {label:'Events',   icon:'\u2630', fn:"setState({coordSelectedEventId:null})"},
-      {label:'Check-in', icon:'\u2713', fn:"setCoordTab('door')"},
-      {label:'Agents',   icon:'\u25CE', fn:"setCoordTab('agents')"},
-      {label:'Payout',   icon:'$',       fn:"setCoordTab('payout')"}
+      {label:'Events',   icon:'\u2630', action:'coordHome'},
+      {label:'Check-in', icon:'\u2713', action:'coordDoor'},
+      {label:'Agents',   icon:'\u25CE', action:'coordAgents'},
+      {label:'Payout',   icon:'$',       action:'coordPayout'}
     ];
   } else if(portal === 'agent') {
     navItems = [
-      {label:'Events',  icon:'\u2630', fn:"backToAgentList()"},
-      {label:'Orders',  icon:'\u25A1', fn:"setAgentTab('orders')"},
-      {label:'Wines',   icon:'\u25C8', fn:"setAgentTab('suppliers')"},
-      {label:'Upload',  icon:'\u2191', fn:"setAgentTab('upload')"}
+      {label:'Events',  icon:'\u2630', action:'agentHome'},
+      {label:'Orders',  icon:'\u25A1', action:'agentOrders'},
+      {label:'Wines',   icon:'\u25C8', action:'agentSuppliers'},
+      {label:'Upload',  icon:'\u2191', action:'agentUpload'}
     ];
   } else if(portal === 'admin') {
     navItems = [
-      {label:'Dashboard', icon:'\u2630', fn:"setAdminTab('dashboard')"},
-      {label:'Hosts',     icon:'\u25CE', fn:"setAdminTab('coordinators')"},
-      {label:'Events',    icon:'\u25A1', fn:"setAdminTab('events')"},
-      {label:'Fees',      icon:'$',       fn:"setAdminTab('fees')"}
+      {label:'Dashboard', icon:'\u2630', action:'adminDashboard'},
+      {label:'Hosts',     icon:'\u25CE', action:'adminCoords'},
+      {label:'Events',    icon:'\u25A1', action:'adminEvents'},
+      {label:'Fees',      icon:'$',       action:'adminFees'}
     ];
   }
 
@@ -2611,7 +2596,8 @@ window.injectMobileNav = function(portal) {
     var btn = document.createElement('button');
     btn.className = 'dp-mobile-nav-item';
     btn.innerHTML = '<span class="dp-mobile-nav-icon">'+item.icon+'</span><span>'+item.label+'</span>';
-    btn.onclick = new Function(item.fn);
+    btn.setAttribute('data-action', item.action);
+    btn.onclick = function(){ mobileNavAction(this.getAttribute('data-action')); };
     nav.appendChild(btn);
   });
 
@@ -2666,17 +2652,6 @@ window.dlSupplierCSV = function(supplier) {
 };
 window.openDupModal = function() { setState({dupModal:true}); };
 window.openEditProduct = function(id) { setState({editProductId:id}); };
-window.toggleSupplierTable = function(id) {
-  var expanded = state.expandedSuppliers || {};
-  expanded[id] = !expanded[id];
-  setState({expandedSuppliers: expanded});
-};
-window.expandAllSuppliers = function() {
-  var ev = EVENTS.find(function(e){return e.id===state.selectedEventId;})||EV;
-  var expanded = {};
-  ev.products.forEach(function(p){expanded[p.supplier]=true;});
-  setState({expandedSuppliers:expanded});
-};
 window.printPourSheet = function(email) {
   var ev = EVENTS.find(function(e){return e.id===state.selectedEventId;})||EV;
   var prods = ev.products.filter(function(p){return !email||p.agentEmail===email;});
@@ -2687,11 +2662,6 @@ window.printPourSheet = function(email) {
   html += '</' + 'table></' + 'body></' + 'html>';
   var w = window.open('','_blank');
   if(w){w.document.write(html);w.document.close();w.print();}
-};
-window.toggleAgent = function(id) {
-  var expanded = state.expandedAgents || {};
-  expanded[id] = !expanded[id];
-  setState({expandedAgents: expanded});
 };
 window.addToCart = function(productId, qty) {
   var cart = state.cart ? JSON.parse(JSON.stringify(state.cart)) : [];
@@ -2720,29 +2690,7 @@ window.toggleFav = function(productId) {
   favs[productId] = !favs[productId];
   setState({favs:favs});
 };
-window.setBrowseMode = function(m) { setState({browseMode:m}); };
-window.setCatFilter  = function(cat) { setState({catFilter:cat}); };
 window.setDraft      = function(k,v) { var d=Object.assign({},state.draft); d[k]=v; setState({draft:d}); };
-window.genPasscode = function() {
-  var p = Math.random().toString(36).substr(2,6).toUpperCase();
-  state.draft.passcode = p;
-  // Update the input field directly without full re-render
-  var el = document.querySelector('[data-field="passcode"]');
-  if(el){ el.value = p; }
-  else { setState({draft: Object.assign({},state.draft,{passcode:p})}); }
-};
-window.resetCreate = function() {
-  setState({createStep:1, createDone:false, draft:{
-    name:'',date:'',endDate:'',venue:'',address:'',city:'',description:'',
-    categories:[],passcode:'',maxAttendees:'',submissionDeadline:'',
-    tiers:[
-      {id:1,label:'General Admission',price:85,capacity:200,sold:0,enabled:true,perks:['Open bar tasting']},
-      {id:2,label:'VIP Reserve',price:165,capacity:50,sold:0,enabled:false,perks:['VIP lounge','Masterclass']},
-      {id:3,label:'Trade',price:0,capacity:100,sold:0,enabled:true,perks:['Credential required']},
-    ],
-    agents:[], settings:{}
-  }});
-};
 window.updateTier = function(id, key, val) {
   var tiers = state.draft.tiers.map(function(t){
     if(t.id===id) return Object.assign({},t,{[key]:val});
@@ -2750,9 +2698,6 @@ window.updateTier = function(id, key, val) {
   });
   setState({draft: Object.assign({},state.draft,{tiers:tiers})});
 };
-window.setTierEnabled = function(id,val) { updateTier(id,'enabled',val==='true'||val===true); };
-window.setTierField   = function(id,key,val) { updateTier(id,key,val); };
-window.setCreateStep  = function(n) { setState({createStep:n}); };
 window.openPayModal   = function(orderId) { setState({payModal:orderId}); };
 window.acceptInvite   = function(evId) {
   showToast('Invitation accepted — upload your wines to get started');
@@ -3358,6 +3303,13 @@ function coordPortalHTML() {
 
   else if(tab==='create') {
     content += '<div style="max-width:720px">'+createEventHTML()+'</div>';
+  }
+
+  else if(tab==='postemail') {
+    content += '<div class="dp-card"><div class="dp-card-header"><span class="dp-card-title">Post-Event Email</span></div>';
+    content += '<div style="padding:20px"><div style="color:var(--muted);font-size:13px">Compose and send a follow-up email to all ticket holders after the event. This feature will be available once email sending is connected via Resend.</div>';
+    content += '<button class="dp-btn dp-btn-ghost" style="margin-top:16px" onclick="showToast(\'Email sending not yet connected\')">Preview email template</button>';
+    content += '</div></div>';
   }
 
   // ── SHELL ────────────────────────────────────────────────────────
