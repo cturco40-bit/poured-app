@@ -1,4 +1,4 @@
-<!-- poured v13 -->
+<!-- poured v14 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -125,6 +125,9 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     height: auto;
     min-height: 100vh;
     min-height: -webkit-fill-available;
+    max-width: 480px;
+    margin: 0 auto;
+    overflow-x: hidden;
   }
   .dp-shell {
     display: block;
@@ -142,15 +145,32 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   .dp-topbar {
     padding: 0 14px;
     height: 48px;
+    background: linear-gradient(135deg, #7A1020 0%, #9B1A2A 100%);
+    border-bottom: none;
+    box-shadow: 0 2px 8px rgba(122,16,32,.25);
   }
-  .dp-topbar-title { font-size: 13px; }
+  .dp-topbar-title {
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: .1em;
+  }
   .dp-topbar-sub { display: none; }
+  .dp-topbar-actions .dp-btn {
+    background: rgba(255,255,255,.15);
+    color: #FFFFFF;
+    border: none;
+    font-size: 10px;
+  }
+  .dp-topbar-actions .dp-btn:hover {
+    background: rgba(255,255,255,.25);
+  }
   .dp-content {
     overflow-y: visible;
     height: auto;
     padding: 12px;
     padding-bottom: 80px;
-    background: #F5F5F5;
+    background: #FFFFFF;
   }
   .dp-stats-4,
   .dp-stats-3,
@@ -165,8 +185,10 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     display: flex;
     position: fixed;
     bottom: 0;
-    left: 0;
-    right: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 480px;
+    width: 100%;
     background: #FFFFFF;
     border-top: 1px solid #E5E5E5;
     z-index: 200;
