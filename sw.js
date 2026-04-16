@@ -1,50 +1,16 @@
-// Poured — Service Worker (stale-while-revalidate)
-var CACHE = 'poured-v23';
-var ASSETS = ['./', './index.html'];
-
-self.addEventListener('install', function(e) {
-  e.waitUntil(
-    caches.open(CACHE).then(function(cache) {
-      return cache.addAll(ASSETS);
-    })
-  );
-  self.skipWaiting();
-});
-
+// Self-destructing service worker — clears all caches and unregisters itself.
+// This fixes any phone stuck on an old cached version.
+self.addEventListener('install', function() { self.skipWaiting(); });
 self.addEventListener('activate', function(e) {
   e.waitUntil(
     caches.keys().then(function(keys) {
-      return Promise.all(
-        keys
-          .filter(function(k) { return k !== CACHE; })
-          .map(function(k) { return caches.delete(k); })
-      );
+      return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+    }).then(function() {
+      return self.registration.unregister();
+    }).then(function() {
+      return self.clients.matchAll();
+    }).then(function(clients) {
+      clients.forEach(function(c) { c.navigate(c.url); });
     })
   );
-  self.clients.claim();
-});
-
-self.addEventListener('fetch', function(e) {
-  if (e.request.method !== 'GET') return;
-  if (!e.request.url.startsWith(self.location.origin)) return;
-
-  // Stale-while-revalidate: serve cache instantly, update in background
-  e.respondWith(
-    caches.open(CACHE).then(function(cache) {
-      return cache.match(e.request).then(function(cached) {
-        var fetchPromise = fetch(e.request).then(function(res) {
-          if (res && res.status === 200 && res.type === 'basic') {
-            cache.put(e.request, res.clone());
-          }
-          return res;
-        }).catch(function() { return cached; });
-
-        return cached || fetchPromise;
-      });
-    })
-  );
-});
-
-self.addEventListener('message', function(e) {
-  if (e.data === 'skipWaiting') self.skipWaiting();
 });
