@@ -1,4 +1,4 @@
-<!-- poured v22 -->
+<!-- poured v23 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -526,6 +526,10 @@ if ('serviceWorker' in navigator) {
   if (swOrigin === 'https:' || swOrigin === 'http:') {
     navigator.serviceWorker.register('./sw.js').then(function(reg) {
       console.log('Poured: Service worker registered');
+      // Force-check for updates immediately on every page load
+      reg.update();
+      // Check again every 60 seconds while app is open
+      setInterval(function(){ reg.update(); }, 60000);
       reg.addEventListener('updatefound', function() {
         var newWorker = reg.installing;
         if (!newWorker) return;
