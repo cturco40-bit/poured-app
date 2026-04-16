@@ -1,4 +1,4 @@
-<!-- poured v26 -->
+<!-- poured v27 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -528,52 +528,42 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 })();
 
 // ── SERVICE WORKER (offline support) ─────────────────────────────────────────
-// Service Worker — only registers on real HTTP/HTTPS origins (not blob:, file:, or localhost)
-// On pouredevents.com the SW file is served at /sw.js — see sw.js in the repo
+// ── SERVICE WORKER ─────────────────────────────────────────
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').then(function(reg) {
-    reg.update();
-    setInterval(function(){ reg.update(); }, 60000);
+  navigator.serviceWorker.register('/sw.js').then(function(reg) {
+    console.log('Poured: SW registered');
+    setInterval(function() { reg.update(); }, 60000);
     reg.addEventListener('updatefound', function() {
       var newWorker = reg.installing;
-      if(!newWorker) return;
-      newWorker.addEventListener('statechange', function() {
-        if(newWorker.state === 'activated') {
-          showUpdateBanner();
-        }
-      });
+      if (newWorker) {
+        newWorker.addEventListener('statechange', function() {
+          if (newWorker.state === 'activated') {
+            showUpdateBanner();
+          }
+        });
+      }
     });
+  }).catch(function(err) {
+    console.warn('Poured: SW registration failed', err);
   });
   navigator.serviceWorker.addEventListener('message', function(event) {
-    if(event.data && event.data.type === 'SW_UPDATED') {
+    if (event.data && event.data.type === 'SW_UPDATED') {
       showUpdateBanner();
     }
   });
 }
 
 function showUpdateBanner() {
-  if(document.getElementById('update-banner')) return;
-  var bar = document.createElement('div');
-  bar.id = 'update-banner';
-  bar.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);max-width:480px;width:100%;z-index:10000;background:#1A1A1A;color:#fff;padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top,0px));display:flex;align-items:center;justify-content:space-between;font-family:Nunito Sans,sans-serif;font-size:12px;box-shadow:0 2px 12px rgba(0,0,0,.3);box-sizing:border-box';
-  var txt = document.createElement('span');
-  txt.textContent = 'Update available';
-  txt.style.cssText = 'font-weight:600;letter-spacing:.04em';
-  var btns = document.createElement('div');
-  btns.style.cssText = 'display:flex;gap:8px;align-items:center';
-  var refresh = document.createElement('button');
-  refresh.textContent = 'Refresh';
-  refresh.style.cssText = 'background:#7A1020;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:Nunito Sans,sans-serif';
-  refresh.onclick = function(){ window.location.reload(); };
-  var dismiss = document.createElement('button');
-  dismiss.textContent = '\u00D7';
-  dismiss.style.cssText = 'background:none;border:none;color:rgba(255,255,255,.5);font-size:18px;cursor:pointer;padding:0 4px;line-height:1';
-  dismiss.onclick = function(){ bar.remove(); };
-  btns.appendChild(refresh);
-  btns.appendChild(dismiss);
-  bar.appendChild(txt);
-  bar.appendChild(btns);
-  document.body.appendChild(bar);
+  if (document.getElementById('update-banner')) return;
+  var banner = document.createElement('div');
+  banner.id = 'update-banner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:10000;background:#1A1A1A;color:#fff;padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top,0px));display:flex;align-items:center;justify-content:space-between;font-family:Nunito Sans,sans-serif;font-size:13px;max-width:480px;margin:0 auto;box-shadow:0 2px 12px rgba(0,0,0,.4)';
+  banner.innerHTML = '<span style="font-weight:600">New version available</span>'
+    + '<div style="display:flex;gap:8px;align-items:center">'
+    + '<button onclick="window.location.reload()" style="padding:6px 14px;border-radius:6px;border:none;background:#7A1020;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:Nunito Sans,sans-serif">Refresh</button>'
+    + '<button onclick="document.getElementById(\'update-banner\').remove()" style="background:none;border:none;color:#888;font-size:18px;cursor:pointer;padding:4px">\u00D7</button>'
+    + '</div>';
+  document.body.insertBefore(banner, document.body.firstChild);
 }
 
 // ── ADD TO HOME SCREEN PROMPT ─────────────────────────────────────────────────
