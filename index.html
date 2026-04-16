@@ -1,4 +1,4 @@
-<!-- poured v6 -->
+<!-- poured v7 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,6 +39,7 @@
 }
 *{-webkit-font-smoothing:antialiased;}
 
+html,body{background:#FFFFFF;}
 html{
   height:-webkit-fill-available;
   overflow-x:hidden;
@@ -3325,12 +3326,13 @@ function custEventListHTML() {
     h+='</div></div>';
     return h;
   }
-  var html='<div style="min-height:100vh;background:#FFFFFF;padding-bottom:60px">';
+  var html='<div style="min-height:100vh;background:#FFFFFF">';
   html+=headerHTML('My Tickets','signOutCust()','setState({portal:"home"})');
-  html+='<div style="padding:0 16px 12px">';
+  html+='<div style="background:#FFFFFF">';
   html+=tabBar([['discover','Discover'],['upcoming','Upcoming'],['mytickets','My Tickets ('+myTickets.length+')']], state.custListTab,'setCustListTab');
-  html+='</div><div style="padding:0 16px">';
-  if(!current.length){html+='<div style="text-align:center;padding:48px 20px;color:'+B.cork+'"><div style="font-size:36px;margin-bottom:12px;opacity:.3">○</div><div style="font-style:italic">No events here yet.</div></div>';}
+  html+='</div>';
+  html+='<div style="background:#FFFFFF;min-height:100vh;padding:16px 16px 80px">';
+  if(!current.length){html+='<div style="text-align:center;padding:48px 20px;color:'+B.cork+'"><div style="font-size:36px;margin-bottom:12px;opacity:.3">○</div><div>No events here yet.</div></div>';}
   else{current.forEach(function(ev){html+=eventCard(ev);});}
   html+='</div></div>';
   return html;
