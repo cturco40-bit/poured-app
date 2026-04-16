@@ -1,4 +1,4 @@
-<!-- poured v27 -->
+<!-- poured v28 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -199,25 +199,49 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     gap: 8px;
   }
   .dp-stat {
-    padding: 10px 10px;
+    padding: 10px 12px;
     min-width: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
   }
   .dp-stat-val {
-    font-size: 18px;
+    font-size: 20px;
     letter-spacing: -0.5px;
     line-height: 1.1;
-    margin-bottom: 4px;
+    margin-bottom: 0;
+    flex-shrink: 0;
   }
   .dp-stat-label {
-    font-size: 9px;
+    font-size: 10px;
     letter-spacing: .02em;
-    line-height: 1.4;
+    line-height: 1.3;
     word-break: break-word;
     overflow-wrap: break-word;
-    hyphens: auto;
+    min-width: 0;
+    flex: 1;
   }
   .dp-stat-sub {
     font-size: 10px;
+    width: 100%;
+    margin-top: 2px;
+  }
+  .dp-card {
+    overflow: hidden;
+    word-break: break-word;
+  }
+  .dp-card-title {
+    font-size: 12px;
+  }
+  .dp-btn {
+    white-space: nowrap;
+    font-size: 11px;
+  }
+  .dp-badge {
+    font-size: 9px;
+    white-space: nowrap;
   }
   .dp-mobile-nav {
     display: flex;
@@ -376,7 +400,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 }
 .dp-stat:hover::before{opacity:1;}
 .dp-stat-val{font-size:28px;font-weight:800;color:var(--ink);line-height:1;margin-bottom:6px;letter-spacing:-1px;font-family:'Nunito Sans',sans-serif;}
-.dp-stat-label{text-transform:uppercase;letter-spacing:.06em;font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.dp-stat-label{text-transform:uppercase;letter-spacing:.08em;font-size:10px;color:var(--muted);font-weight:700;}
 .dp-stat-sub{font-size:11px;color:var(--muted);margin-top:5px;font-weight:500;}
 
 /* GRID */
