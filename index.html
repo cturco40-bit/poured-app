@@ -4381,19 +4381,7 @@ function adminPortalHTML() {
 }
 
 
-// ── iOS PWA install hint ────────────────────────────────────────────────────
-var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-var isInStandalone = ('standalone' in window.navigator) && window.navigator.standalone;
-if(isIos && !isInStandalone) {
-  setTimeout(function(){
-    if(document.getElementById('ios-banner')) return;
-    var b = document.createElement('div');
-    b.id = 'ios-banner';
-    b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#7A1020;color:#fff;padding:12px 16px 20px;font-family:Nunito Sans,sans-serif;font-size:12px;z-index:9999;box-shadow:0 -2px 12px rgba(0,0,0,.3)';
-    b.innerHTML = '<div style="display:flex;align-items:flex-start;justify-content:space-between"><div><div style="font-weight:800;font-size:13px;margin-bottom:3px;letter-spacing:.04em">Install POURED</div><div style="opacity:.8">Tap <strong>Share</strong> then <strong>Add to Home Screen</strong></div></div><button onclick="this.parentElement.parentElement.remove()" style="background:rgba(255,255,255,.2);border:none;border-radius:50%;width:22px;height:22px;color:#fff;font-size:14px;cursor:pointer;flex-shrink:0;margin-left:12px">×</button></div>';
-    document.body.appendChild(b);
-  }, 4000);
-}
+// iOS PWA install hint — handled by the unified banner at line 607
 
 // ─── MAIN RENDER ──────────────────────────────────────────────────────────────
 function render() {
