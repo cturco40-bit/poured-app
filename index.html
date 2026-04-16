@@ -1,4 +1,4 @@
-<!-- poured v9 -->
+<!-- poured v10 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -115,44 +115,88 @@ body.dp{
 }
 body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--font);}
 
+/* ── MOBILE BOTTOM NAV (shown only on mobile DP portals) ─ */
+.dp-mobile-nav { display: none; }
+
 /* ── MOBILE RESPONSIVE FOR DESKTOP PORTALS ──────────────── */
 @media (max-width: 768px) {
   body.dp {
     overflow-y: auto;
     height: auto;
     min-height: 100vh;
+    min-height: -webkit-fill-available;
   }
-  .dp-shell { flex-direction: column; }
-  .dp-sidebar-wrap { display: none; }
-  .dp-sidebar-wrap.mobile-open {
+  .dp-shell {
     display: block;
-    position: fixed;
-    top: 0; left: 0; bottom: 0;
-    z-index: 100;
-    width: 260px;
-    box-shadow: 4px 0 20px rgba(0,0,0,.3);
+    height: auto;
+    min-height: 100vh;
   }
-  .dp-sidebar-wrap.mobile-open .dp-sidebar {
-    display: flex;
+  .dp-sidebar { display: none !important; }
+  .dp-sidebar-wrap { display: none !important; }
+  .dp-collapse-btn { display: none !important; }
+  .dp-main {
     width: 100%;
-    max-width: 100%;
+    height: auto;
+    display: block;
   }
-  .dp-sidebar-wrap.mobile-open .dp-collapse-btn { display: none; }
-  .dp-main { width: 100%; }
+  .dp-topbar {
+    padding: 0 14px;
+    height: 48px;
+  }
+  .dp-topbar-title { font-size: 13px; }
+  .dp-topbar-sub { display: none; }
   .dp-content {
-    padding: 12px;
     overflow-y: visible;
     height: auto;
+    padding: 12px;
+    padding-bottom: 80px;
+    background: #F5F5F5;
   }
-  .dp-topbar { padding: 0 12px; }
-  .dp-topbar-title { font-size: 13px; }
-  #mobile-menu-btn { display: block !important; }
   .dp-stats-4,
-  .dp-stats-3 { grid-template-columns: 1fr 1fr; }
+  .dp-stats-3,
+  .dp-stats-2 { grid-template-columns: 1fr 1fr; }
   .dp-grid-2,
   .dp-grid-3 { grid-template-columns: 1fr; }
   .dp-table { font-size: 11px; }
-  .dp-table th, .dp-table td { padding: 8px 10px; }
+  .dp-table th, .dp-table td { padding: 8px 8px; }
+  .dp-card-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .dp-mobile-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #FFFFFF;
+    border-top: 1px solid #E5E5E5;
+    z-index: 200;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .dp-mobile-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: 'Nunito Sans', sans-serif;
+    color: #888888;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    gap: 3px;
+  }
+  .dp-mobile-nav-item.active { color: #7A1020; }
+  .dp-mobile-nav-icon {
+    font-size: 18px;
+    line-height: 1;
+  }
 }
 
 .dp-shell{display:flex;height:100vh;overflow:hidden;}
@@ -2528,40 +2572,51 @@ window.toggleSidebar = function() {
   }
 };
 
-window.toggleMobileSidebar = function() {
-  var wrap = document.querySelector('.dp-sidebar-wrap');
-  var overlay = document.getElementById('sidebar-overlay');
-  if(wrap) wrap.classList.toggle('mobile-open');
-  if(overlay) overlay.style.display = wrap && wrap.classList.contains('mobile-open') ? 'block' : 'none';
-};
+window.injectMobileNav = function(portal) {
+  var existingNav = document.getElementById('dp-mobile-nav');
+  if(existingNav) existingNav.remove();
+  if(window.innerWidth > 768) return;
 
-window.closeMobileSidebar = function() {
-  var wrap = document.querySelector('.dp-sidebar-wrap');
-  var overlay = document.getElementById('sidebar-overlay');
-  if(wrap) wrap.classList.remove('mobile-open');
-  if(overlay) overlay.style.display = 'none';
-};
+  var navItems = [];
+  if(portal === 'coordinator') {
+    navItems = [
+      {label:'Events',   icon:'\u2630', fn:"setState({coordSelectedEventId:null})"},
+      {label:'Check-in', icon:'\u2713', fn:"setCoordTab('door')"},
+      {label:'Agents',   icon:'\u25CE', fn:"setCoordTab('agents')"},
+      {label:'Payout',   icon:'$',       fn:"setCoordTab('payout')"}
+    ];
+  } else if(portal === 'agent') {
+    navItems = [
+      {label:'Events',  icon:'\u2630', fn:"backToAgentList()"},
+      {label:'Orders',  icon:'\u25A1', fn:"setAgentTab('orders')"},
+      {label:'Wines',   icon:'\u25C8', fn:"setAgentTab('suppliers')"},
+      {label:'Upload',  icon:'\u2191', fn:"setAgentTab('upload')"}
+    ];
+  } else if(portal === 'admin') {
+    navItems = [
+      {label:'Dashboard', icon:'\u2630', fn:"setAdminTab('dashboard')"},
+      {label:'Hosts',     icon:'\u25CE', fn:"setAdminTab('coordinators')"},
+      {label:'Events',    icon:'\u25A1', fn:"setAdminTab('events')"},
+      {label:'Fees',      icon:'$',       fn:"setAdminTab('fees')"}
+    ];
+  }
 
-// Inject hamburger button into .dp-topbar and overlay into body after each desktop-portal render
-function injectMobileChrome() {
-  if(!document.body.classList.contains('dp')) return;
-  var topbar = document.querySelector('.dp-topbar');
-  if(topbar && !document.getElementById('mobile-menu-btn')) {
+  if(!navItems.length) return;
+
+  var nav = document.createElement('div');
+  nav.id = 'dp-mobile-nav';
+  nav.className = 'dp-mobile-nav';
+
+  navItems.forEach(function(item) {
     var btn = document.createElement('button');
-    btn.id = 'mobile-menu-btn';
-    btn.setAttribute('onclick','toggleMobileSidebar()');
-    btn.style.cssText = 'display:none;background:none;border:none;cursor:pointer;padding:4px 8px;margin-right:8px;font-size:22px;color:var(--ink);line-height:1';
-    btn.textContent = '\u2630';
-    topbar.insertBefore(btn, topbar.firstChild);
-  }
-  if(!document.getElementById('sidebar-overlay')) {
-    var ov = document.createElement('div');
-    ov.id = 'sidebar-overlay';
-    ov.setAttribute('onclick','closeMobileSidebar()');
-    ov.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99';
-    document.body.appendChild(ov);
-  }
-}
+    btn.className = 'dp-mobile-nav-item';
+    btn.innerHTML = '<span class="dp-mobile-nav-icon">'+item.icon+'</span><span>'+item.label+'</span>';
+    btn.onclick = new Function(item.fn);
+    nav.appendChild(btn);
+  });
+
+  document.body.appendChild(nav);
+};
 
 window.goPortal = function(el) {
   var p = el.getAttribute('data-portal');
@@ -3897,11 +3952,11 @@ function render() {
     return;
   }
   if(p === 'admin') { app.innerHTML = loginShell('Platform Admin','-','admin@pouredevents.com','admin2025','admin','#7A1020'); return; }
-  if(p === 'admin_in') { document.body.classList.add('dp'); app.innerHTML = adminPortalHTML(); injectMobileChrome(); return; }
+  if(p === 'admin_in') { document.body.classList.add('dp'); app.innerHTML = adminPortalHTML(); injectMobileNav('admin'); return; }
   if(p === 'agent') { document.body.classList.remove('dp'); app.innerHTML = loginShell('Agent / Producer','','sophie@maisonprestige.ca','agent2025','agent','#7A1020'); return; }
-  if(p === 'agent_in') { document.body.classList.add('dp'); app.innerHTML = agentPortalHTML(); injectMobileChrome(); return; }
+  if(p === 'agent_in') { document.body.classList.add('dp'); app.innerHTML = agentPortalHTML(); injectMobileNav('agent'); return; }
   if(p === 'coordinator') { document.body.classList.remove('dp'); app.innerHTML = loginShell('Event Host','','coordinator@tasting.ca','coord2025','coordinator','#1D4ED8'); return; }
-  if(p === 'coordinator_in') { document.body.classList.add('dp'); app.innerHTML = coordPortalHTML(); injectMobileChrome(); return; }
+  if(p === 'coordinator_in') { document.body.classList.add('dp'); app.innerHTML = coordPortalHTML(); injectMobileNav('coordinator'); return; }
   if(p === 'customer') { document.body.classList.remove('dp'); app.innerHTML = loginShell('Attendee','','jane@example.com','jane2025','customer','#2a7a4a'); return; }
   if(p === 'customer_in') { document.body.classList.remove('dp'); app.innerHTML = custPortalHTML(); app.style.paddingBottom='0'; return; }
   if(p === 'coordinator_signup') { document.body.classList.remove('dp'); app.innerHTML = signupShell('Event Host','coordinator','#1D4ED8'); return; }
