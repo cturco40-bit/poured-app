@@ -1,4 +1,4 @@
-<!-- poured v20 -->
+<!-- poured v21 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -180,8 +180,14 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     overflow-y: visible;
     height: auto;
     padding: 12px;
-    padding-bottom: 80px;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 16px));
     background: #FFFFFF;
+  }
+  .dp-content [style*="max-width:720px"],
+  .dp-content [style*="max-width:700px"],
+  .dp-content [style*="max-width:600px"] {
+    max-width: 100% !important;
+    width: 100% !important;
   }
   .dp-stats-4,
   .dp-stats-3,
@@ -193,18 +199,22 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     gap: 8px;
   }
   .dp-stat {
-    padding: 10px 12px;
+    padding: 10px 10px;
+    min-width: 0;
   }
   .dp-stat-val {
-    font-size: 20px;
+    font-size: 18px;
     letter-spacing: -0.5px;
     line-height: 1.1;
+    margin-bottom: 4px;
   }
   .dp-stat-label {
-    font-size: 8px;
-    letter-spacing: .04em;
-    line-height: 1.3;
+    font-size: 9px;
+    letter-spacing: .02em;
+    line-height: 1.4;
     word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
   }
   .dp-stat-sub {
     font-size: 10px;
@@ -220,7 +230,8 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     background: #FFFFFF;
     border-top: 1px solid #E5E5E5;
     z-index: 200;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: max(env(safe-area-inset-bottom), 16px);
+    min-height: calc(56px + env(safe-area-inset-bottom, 16px));
   }
   .dp-mobile-nav-item {
     flex: 1;
@@ -546,8 +557,11 @@ function showUpdateBanner(reg) {
 window.applyUpdate = function() {
   if (window._pendingReg && window._pendingReg.waiting) {
     window._pendingReg.waiting.postMessage('skipWaiting');
+    setTimeout(function(){ window.location.reload(); }, 500);
   } else {
-    window.location.reload();
+    caches.keys().then(function(keys){
+      return Promise.all(keys.map(function(k){ return caches.delete(k); }));
+    }).then(function(){ window.location.reload(); });
   }
 };
 
@@ -2722,13 +2736,17 @@ window.toggleSidebar = function() {
 window.mobileNavAction = function(action) {
   switch(action) {
     case 'coordHome':      setState({coordSelectedEventId:null}); break;
+    case 'coordCreate':    setState({coordSelectedEventId:-1, coordTab:'create'}); break;
+    case 'coordOverview':  setCoordTab('overview'); break;
     case 'coordDoor':      setCoordTab('door'); break;
     case 'coordAgents':    setCoordTab('agents'); break;
     case 'coordPayout':    setCoordTab('payout'); break;
+    case 'coordSignOut':   signOutCoord(); break;
     case 'agentHome':      setState({selectedEventId:null, portal:'agent_in'}); break;
     case 'agentOrders':    setAgentTab('orders'); break;
     case 'agentSuppliers': setAgentTab('suppliers'); break;
     case 'agentUpload':    setAgentTab('upload'); break;
+    case 'agentSignOut':   signOutAgent(); break;
     case 'adminDashboard': setAdminTab('dashboard'); break;
     case 'adminCoords':    setAdminTab('coordinators'); break;
     case 'adminEvents':    setAdminTab('events'); break;
@@ -2737,25 +2755,41 @@ window.mobileNavAction = function(action) {
 };
 
 window.injectMobileNav = function(portal) {
-  var existingNav = document.getElementById('dp-mobile-nav');
-  if(existingNav) existingNav.remove();
   if(window.innerWidth > 768) return;
+  var existing = document.getElementById('dp-mobile-nav');
+  if(existing) existing.remove();
 
   var navItems = [];
+
   if(portal === 'coordinator') {
-    navItems = [
-      {label:'Events',   icon:'\u2630', action:'coordHome'},
-      {label:'Check-in', icon:'\u2713', action:'coordDoor'},
-      {label:'Agents',   icon:'\u25CE', action:'coordAgents'},
-      {label:'Payout',   icon:'$',       action:'coordPayout'}
-    ];
+    if(state.coordSelectedEventId && state.coordSelectedEventId !== -1) {
+      navItems = [
+        {label:'Overview',  icon:'\u2630', action:'coordOverview'},
+        {label:'Check-in',  icon:'\u2713', action:'coordDoor'},
+        {label:'Agents',    icon:'\u25CE', action:'coordAgents'},
+        {label:'Payout',    icon:'$',       action:'coordPayout'}
+      ];
+    } else {
+      navItems = [
+        {label:'My Events', icon:'\u2630', action:'coordHome'},
+        {label:'New Event', icon:'+',       action:'coordCreate'},
+        {label:'Sign out',  icon:'\u2192', action:'coordSignOut'}
+      ];
+    }
   } else if(portal === 'agent') {
-    navItems = [
-      {label:'Events',  icon:'\u2630', action:'agentHome'},
-      {label:'Orders',  icon:'\u25A1', action:'agentOrders'},
-      {label:'Wines',   icon:'\u25C8', action:'agentSuppliers'},
-      {label:'Upload',  icon:'\u2191', action:'agentUpload'}
-    ];
+    if(state.selectedEventId) {
+      navItems = [
+        {label:'Orders',  icon:'\u25A1', action:'agentOrders'},
+        {label:'Wines',   icon:'\u25C8', action:'agentSuppliers'},
+        {label:'Upload',  icon:'\u2191', action:'agentUpload'},
+        {label:'Back',    icon:'\u2190', action:'agentHome'}
+      ];
+    } else {
+      navItems = [
+        {label:'My Events', icon:'\u2630', action:'agentHome'},
+        {label:'Sign out',  icon:'\u2192', action:'agentSignOut'}
+      ];
+    }
   } else if(portal === 'admin') {
     navItems = [
       {label:'Dashboard', icon:'\u2630', action:'adminDashboard'},
@@ -2774,9 +2808,9 @@ window.injectMobileNav = function(portal) {
   navItems.forEach(function(item) {
     var btn = document.createElement('button');
     btn.className = 'dp-mobile-nav-item';
-    btn.innerHTML = '<span class="dp-mobile-nav-icon">'+item.icon+'</span><span>'+item.label+'</span>';
     btn.setAttribute('data-action', item.action);
-    btn.onclick = function(){ mobileNavAction(this.getAttribute('data-action')); };
+    btn.innerHTML = '<span class="dp-mobile-nav-icon">'+item.icon+'</span><span>'+item.label+'</span>';
+    btn.onclick = function(){ mobileNavAction(item.action); };
     nav.appendChild(btn);
   });
 

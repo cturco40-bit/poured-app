@@ -1,5 +1,5 @@
 // Poured — Service Worker (stale-while-revalidate)
-var CACHE = 'poured-v20';
+var CACHE = 'poured-v21';
 var ASSETS = ['./', './index.html'];
 
 self.addEventListener('install', function(e) {
