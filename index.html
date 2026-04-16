@@ -1,4 +1,4 @@
-<!-- poured v18 -->
+<!-- poured v19 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -159,14 +159,22 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     letter-spacing: .1em;
   }
   .dp-topbar-sub { display: none; }
+  .dp-topbar-actions {
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+  }
   .dp-topbar-actions .dp-btn {
-    background: rgba(255,255,255,.15);
-    color: #FFFFFF;
-    border: none;
-    font-size: 10px;
+    display: inline-flex !important;
+    background: rgba(255,255,255,.15) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    font-size: 10px !important;
+    padding: 6px 10px !important;
+    border-radius: 6px !important;
   }
   .dp-topbar-actions .dp-btn:hover {
-    background: rgba(255,255,255,.25);
+    background: rgba(255,255,255,.25) !important;
   }
   .dp-content {
     overflow-y: visible;
@@ -2077,6 +2085,7 @@ function agentEventListHTML() {
     +     '<div><div class="dp-topbar-title" style="text-transform:uppercase;letter-spacing:.1em">My Events</div><div class="dp-topbar-sub">'+myListings.length+' events · '+totalOrders+' total orders</div></div>'
     +     '<div class="dp-topbar-actions">'
     +       (newOrders>0?'<span class="dp-badge dp-badge-red">'+newOrders+' new orders</span>':'')
+    +       '<button class="dp-btn" onclick="signOutAgent()">Sign out</button>'
     +     '</div>'
     +   '</div>'
     +   '<div class="dp-content">'
@@ -2405,6 +2414,8 @@ function agentPortalHTML() {
     +       '<div class="dp-topbar-sub">'+ev.date+' · '+ev.venue+'</div></div>'
     +     '<div class="dp-topbar-actions">'
     +       (newCount>0?'<span class="dp-badge dp-badge-red" style="padding:5px 10px;font-size:12px">'+newCount+' new order'+(newCount>1?'s':'')+'</span>':'')
+    +       '<button class="dp-btn" onclick="backToAgentList()">← Back</button>'
+    +       '<button class="dp-btn" onclick="signOutAgent()">Sign out</button>'
     +     '</div>'
     +   '</div>'
     +   '<div class="dp-content">'+content+'</div>'
@@ -3225,6 +3236,7 @@ function coordEventListHTML() {
     +     '<div><div class="dp-topbar-title" style="text-transform:uppercase;letter-spacing:.1em">My Events</div><div class="dp-topbar-sub">'+myEvents.length+' events · '+active.length+' live now</div></div>'
     +     '<div class="dp-topbar-actions">'
     +       '<button class="dp-btn dp-btn-primary" onclick="setState({coordSelectedEventId:-1,coordTab:\'create\'})">+ Create New Event</button>'
+    +       '<button class="dp-btn" onclick="signOutCoord()">Sign out</button>'
     +     '</div>'
     +   '</div>'
     +   '<div class="dp-content">'
@@ -3657,6 +3669,8 @@ function coordPortalHTML() {
     +     '<div class="dp-topbar-actions">'
     +       '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openDupModal()">⎘ Duplicate</button>'
     +       '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="setCoordTab(\'postemail\')">Post-event email</button>'
+    +       '<button class="dp-btn" onclick="backToCoordList()">← Back</button>'
+    +       '<button class="dp-btn" onclick="signOutCoord()">Sign out</button>'
     +     '</div>'
     +   '</div>'
     +   '<div class="dp-content">'+content+'</div>'
@@ -4250,7 +4264,7 @@ function adminPortalHTML() {
     +   '<div class="dp-topbar">'
     +     '<div><div class="dp-topbar-title" style="text-transform:uppercase;letter-spacing:.1em">Platform Admin</div>'
     +       '<div class="dp-topbar-sub">Beverage Events</div></div>'
-    +     '<div class="dp-topbar-actions"></div>'
+    +     '<div class="dp-topbar-actions"><button class="dp-btn" onclick="signOutAdmin()">Sign out</button></div>'
     +   '</div>'
     +   '<div class="dp-content">'+content+'</div>'
     + '</div>'
