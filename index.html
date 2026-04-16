@@ -1,4 +1,4 @@
-<!-- poured v14 -->
+<!-- poured v15 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -103,6 +103,9 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--wine);outline-of
   min-height:-webkit-fill-available;
   overflow-x:hidden;
   position:relative;
+  border:none;
+  outline:none;
+  box-shadow:none;
 }
 .cust-headline{font-family:'Nunito Sans',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.06em;}
 
@@ -145,9 +148,9 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   .dp-topbar {
     padding: 0 14px;
     height: 48px;
-    background: linear-gradient(135deg, #7A1020 0%, #9B1A2A 100%);
+    background: #1A1A1A;
     border-bottom: none;
-    box-shadow: 0 2px 8px rgba(122,16,32,.25);
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
   }
   .dp-topbar-title {
     color: #FFFFFF;
@@ -180,6 +183,21 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   .dp-card-header {
     flex-wrap: wrap;
     gap: 8px;
+  }
+  .dp-stat {
+    padding: 10px 12px;
+  }
+  .dp-stat-val {
+    font-size: 20px;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+  .dp-stat-label {
+    font-size: 9px;
+    letter-spacing: .06em;
+  }
+  .dp-stat-sub {
+    font-size: 10px;
   }
   .dp-mobile-nav {
     display: flex;
@@ -1419,7 +1437,7 @@ function toggleSwitch(key, val, label, desc='') {
 
 // ─── HEADER ───────────────────────────────────────────────────────────────────
 function headerHTML(title='', onSignOut='', onBack='') {
-  return '<div style="background:linear-gradient(135deg,#7A1020 0%,#9B1A2A 100%);padding:14px 18px 0;box-shadow:0 2px 12px rgba(122,16,32,.35)">'
+  return '<div style="background:#1A1A1A;padding:14px 18px 0;box-shadow:0 2px 12px rgba(0,0,0,.35)">'
     + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
     + '<div style="display:flex;align-items:center;gap:10px">'
     + (onBack ? '<button onclick="'+onBack+'" style="background:rgba(255,255,255,.12);border:none;border-radius:4px;color:rgba(255,255,255,.8);font-size:11px;cursor:pointer;padding:4px 10px;font-family:Nunito Sans,sans-serif;font-weight:700;letter-spacing:.06em">← Back</button>' : '')
@@ -1451,7 +1469,7 @@ function tabBar(tabs, activeId, setFn) {
 function loginShell(role, icon, demoEmail, demoPw, portalId, accentColor) {
   return '<div style="min-height:100vh;background:#FFFFFF;display:flex;flex-direction:column">'
     // Wine header
-    + '<div style="background:linear-gradient(135deg,#7A1020 0%,#9B1A2A 100%);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(122,16,32,.3)">'
+    + '<div style="background:#1A1A1A;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.3)">'
     + '<button onclick="setState({portal:\'home\'})" style="background:rgba(255,255,255,.15);border:none;border-radius:6px;color:#fff;font-size:11px;cursor:pointer;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;font-family:inherit">← Back</button>'
     + '<div style="display:flex;align-items:center;gap:9px">' + logoSVG
     + '<span style="font-size:16px;font-weight:900;color:#fff;letter-spacing:.16em;font-family:Nunito Sans,sans-serif">POURED</span></div>'
@@ -1490,7 +1508,7 @@ function loginShell(role, icon, demoEmail, demoPw, portalId, accentColor) {
 function signupShell(role, portalId, accentColor) {
   return '<div style="min-height:100vh;background:#FFFFFF;display:flex;flex-direction:column">'
     // Wine header
-    + '<div style="background:linear-gradient(135deg,#7A1020 0%,#9B1A2A 100%);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(122,16,32,.3)">'
+    + '<div style="background:#1A1A1A;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.3)">'
     + '<button onclick="setState({portal:\''+portalId+'\'})" style="background:rgba(255,255,255,.15);border:none;border-radius:6px;color:#fff;font-size:11px;cursor:pointer;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;font-family:inherit">← Back</button>'
     + '<div style="display:flex;align-items:center;gap:9px">' + logoSVG
     + '<span style="font-size:16px;font-weight:900;color:#fff;letter-spacing:.16em;font-family:Nunito Sans,sans-serif">POURED</span></div>'
@@ -3903,7 +3921,7 @@ function custPortalHTML() {
   const detailModal = state.detail ? detailModalHTML(state.detail) : '';
 
   return `<div style="padding-bottom:80px">
-    <div style="background:linear-gradient(135deg,#7A1020 0%,#9B1A2A 100%);padding:14px 16px 0;box-shadow:0 2px 8px rgba(122,16,32,.25)">
+    <div style="background:#1A1A1A;padding:14px 16px 0;box-shadow:0 2px 8px rgba(0,0,0,.25)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:10px">
           <button onclick="backToCustList()" style="background:rgba(255,255,255,.15);border:none;border-radius:5px;color:#fff;font-size:11px;cursor:pointer;padding:5px 10px;font-weight:700;letter-spacing:.06em;font-family:Nunito Sans,sans-serif">← Back</button>
