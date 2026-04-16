@@ -1,4 +1,4 @@
-<!-- poured v15 -->
+<!-- poured v16 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -503,13 +503,43 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 if ('serviceWorker' in navigator) {
   var swOrigin = window.location.protocol;
   if (swOrigin === 'https:' || swOrigin === 'http:') {
-    navigator.serviceWorker.register('./sw.js').then(function() {
+    navigator.serviceWorker.register('./sw.js').then(function(reg) {
       console.log('Poured: Service worker registered');
+      reg.addEventListener('updatefound', function() {
+        var newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', function() {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateBanner(reg);
+          }
+        });
+      });
     }).catch(function(err) {
-      // Silently skip if sw.js not yet deployed — app still works offline via cache
+      // Silently skip if sw.js not yet deployed
+    });
+    navigator.serviceWorker.addEventListener('controllerchange', function() {
+      window.location.reload();
     });
   }
 }
+
+function showUpdateBanner(reg) {
+  if (document.getElementById('pwa-update-banner')) return;
+  var bar = document.createElement('div');
+  bar.id = 'pwa-update-banner';
+  bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:10000;background:#1A1A1A;color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;font-family:Nunito Sans,sans-serif;font-size:13px;box-shadow:0 2px 12px rgba(0,0,0,.3)';
+  bar.innerHTML = '<span>New version available</span><button onclick="applyUpdate()" style="background:#7A1020;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Nunito Sans,sans-serif">Refresh</button>';
+  document.body.appendChild(bar);
+  window._pendingReg = reg;
+}
+
+window.applyUpdate = function() {
+  if (window._pendingReg && window._pendingReg.waiting) {
+    window._pendingReg.waiting.postMessage('skipWaiting');
+  } else {
+    window.location.reload();
+  }
+};
 
 // ── ADD TO HOME SCREEN PROMPT ─────────────────────────────────────────────────
 var deferredPrompt = null;
