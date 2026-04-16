@@ -133,9 +133,10 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     overflow-x: hidden;
   }
   .dp-shell {
-    display: block;
-    height: auto;
+    display: block !important;
+    height: auto !important;
     min-height: 100vh;
+    overflow: visible !important;
   }
   .dp-sidebar { display: none !important; }
   .dp-sidebar-wrap { display: none !important; }
@@ -147,10 +148,15 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   }
   .dp-topbar {
     padding: 0 14px;
-    height: 48px;
+    padding-top: max(env(safe-area-inset-top, 0px), 12px);
+    min-height: calc(48px + env(safe-area-inset-top, 0px));
+    height: auto;
     background: #1A1A1A !important;
     border-bottom: none !important;
     box-shadow: 0 2px 8px rgba(0,0,0,.25) !important;
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
   .dp-topbar-title {
     color: #FFFFFF !important;
@@ -169,8 +175,8 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     background: rgba(255,255,255,.15) !important;
     color: #FFFFFF !important;
     border: none !important;
-    font-size: 10px !important;
-    padding: 6px 10px !important;
+    font-size: 9px !important;
+    padding: 4px 8px !important;
     border-radius: 6px !important;
   }
   .dp-topbar-actions .dp-btn:hover {
@@ -183,6 +189,8 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     padding-bottom: calc(80px + env(safe-area-inset-bottom, 16px));
     background: #FFFFFF;
   }
+  .dp-content * { max-width: 100%; box-sizing: border-box; }
+  .dp-content table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .dp-content [style*="max-width:720px"],
   .dp-content [style*="max-width:700px"],
   .dp-content [style*="max-width:600px"] {
@@ -193,55 +201,31 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   .dp-stats-3,
   .dp-stats-2 { grid-template-columns: 1fr 1fr; gap: 8px; }
   .dp-grid-2,
-  .dp-grid-3 { grid-template-columns: 1fr; }
+  .dp-grid-3 { grid-template-columns: 1fr !important; }
   .dp-card-header {
     flex-wrap: wrap;
     gap: 8px;
   }
   .dp-stat {
-    padding: 10px 12px;
+    padding: 10px 10px;
     min-width: 0;
-    display: flex;
-    flex-direction: row;
-    align-items: baseline;
-    gap: 8px;
-    flex-wrap: wrap;
   }
   .dp-stat-val {
-    font-size: 20px;
+    font-size: 18px;
     letter-spacing: -0.5px;
     line-height: 1.1;
-    margin-bottom: 0;
-    flex-shrink: 0;
+    margin-bottom: 4px;
   }
   .dp-stat-label {
-    font-size: 10px;
+    font-size: 9px;
     letter-spacing: .02em;
-    line-height: 1.3;
+    line-height: 1.4;
     word-break: break-word;
     overflow-wrap: break-word;
-    min-width: 0;
-    flex: 1;
+    hyphens: auto;
   }
   .dp-stat-sub {
     font-size: 10px;
-    width: 100%;
-    margin-top: 2px;
-  }
-  .dp-card {
-    overflow: hidden;
-    word-break: break-word;
-  }
-  .dp-card-title {
-    font-size: 12px;
-  }
-  .dp-btn {
-    white-space: nowrap;
-    font-size: 11px;
-  }
-  .dp-badge {
-    font-size: 9px;
-    white-space: nowrap;
   }
   .dp-mobile-nav {
     display: flex;
@@ -284,15 +268,6 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   .dp-shell { overflow-x: hidden; }
   .dp-main { overflow-x: hidden; max-width: 100vw; }
   .dp-content { overflow-x: hidden; box-sizing: border-box; }
-  .dp-topbar {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .dp-content * {
-    max-width: 100%;
-    box-sizing: border-box;
-  }
 }
 
 .dp-shell{display:flex;height:100vh;overflow:hidden;}
@@ -400,7 +375,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 }
 .dp-stat:hover::before{opacity:1;}
 .dp-stat-val{font-size:28px;font-weight:800;color:var(--ink);line-height:1;margin-bottom:6px;letter-spacing:-1px;font-family:'Nunito Sans',sans-serif;}
-.dp-stat-label{text-transform:uppercase;letter-spacing:.08em;font-size:10px;color:var(--muted);font-weight:700;}
+.dp-stat-label{text-transform:uppercase;letter-spacing:.06em;font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
 .dp-stat-sub{font-size:11px;color:var(--muted);margin-top:5px;font-weight:500;}
 
 /* GRID */
@@ -551,11 +526,11 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   if (link) link.href = url;
 })();
 
-// ── SERVICE WORKER (offline support) ─────────────────────────────────────────
-// ── SERVICE WORKER ─────────────────────────────────────────
+// ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').then(function(reg) {
     console.log('Poured: SW registered');
+    reg.update();
     setInterval(function() { reg.update(); }, 60000);
     reg.addEventListener('updatefound', function() {
       var newWorker = reg.installing;
@@ -582,10 +557,10 @@ function showUpdateBanner() {
   var banner = document.createElement('div');
   banner.id = 'update-banner';
   banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:10000;background:#1A1A1A;color:#fff;padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top,0px));display:flex;align-items:center;justify-content:space-between;font-family:Nunito Sans,sans-serif;font-size:13px;max-width:480px;margin:0 auto;box-shadow:0 2px 12px rgba(0,0,0,.4)';
-  banner.innerHTML = '<span style="font-weight:600">New version available</span>'
+  banner.innerHTML = '<span style="font-weight:600">Update available</span>'
     + '<div style="display:flex;gap:8px;align-items:center">'
     + '<button onclick="window.location.reload()" style="padding:6px 14px;border-radius:6px;border:none;background:#7A1020;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:Nunito Sans,sans-serif">Refresh</button>'
-    + '<button onclick="document.getElementById(\'update-banner\').remove()" style="background:none;border:none;color:#888;font-size:18px;cursor:pointer;padding:4px">\u00D7</button>'
+    + '<button onclick="document.getElementById(\'update-banner\').remove()" style="background:none;border:none;color:#888;font-size:18px;cursor:pointer;padding:4px">\u00d7</button>'
     + '</div>';
   document.body.insertBefore(banner, document.body.firstChild);
 }
@@ -656,6 +631,15 @@ var DB={listEvents:async function(){return window.EVENTS||[];},getEvent:async fu
 // ─── COLOURS & CONSTANTS ────────────────────────────────────────────────────
 const B = { ink:"#1A1A1A", wine:"#7A1020", pour:"#7A1020", gold:"#888888", cream:"#FFFFFF", linen:"#F8F8F8", mist:"#EFEFEF", cork:"#888888", sage:"#2a7a4a", slate:"#2a5a8a", amber:"#888888" };
 function isMobile() { return window.innerWidth < 768; }
+function mobileStatGrid(stats) {
+  // stats = [{value:'0', label:'New Orders', color:'#1A1A1A'}, ...]
+  return '<div class="dp-card" style="padding:16px;margin-bottom:12px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 24px">'
+    + stats.map(function(s) {
+      return '<div><div style="font-size:22px;font-weight:800;color:'+(s.color||'#1A1A1A')+'">'+s.value+'</div>'
+        + '<div style="font-size:11px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:2px">'+s.label+'</div></div>';
+    }).join('')
+    + '</div></div>';
+}
 const HST = 0.13;
 const ORDER_FEE_PCT = 0.0125;
 const ORDER_FEE_CAP = 50;
@@ -1518,7 +1502,7 @@ function toggleSwitch(key, val, label, desc='') {
 
 // ─── HEADER ───────────────────────────────────────────────────────────────────
 function headerHTML(title='', onSignOut='', onBack='') {
-  return '<div style="background:#1A1A1A;padding:14px 18px 0;box-shadow:0 2px 12px rgba(0,0,0,.35);position:sticky;top:0;z-index:100">'
+  return '<div style="background:#1A1A1A;padding:14px 18px 0;box-shadow:0 2px 12px rgba(0,0,0,.35)">'
     + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
     + '<div style="display:flex;align-items:center;gap:10px">'
     + (onBack ? '<button onclick="'+onBack+'" style="background:rgba(255,255,255,.12);border:none;border-radius:4px;color:rgba(255,255,255,.8);font-size:11px;cursor:pointer;padding:4px 10px;font-family:Nunito Sans,sans-serif;font-weight:700;letter-spacing:.06em">← Back</button>' : '')
@@ -1526,7 +1510,7 @@ function headerHTML(title='', onSignOut='', onBack='') {
     + '<span style="font-size:15px;font-weight:900;color:#FFFFFF;letter-spacing:.16em;text-transform:uppercase;font-family:Nunito Sans,sans-serif">POURED</span>'
     + '</div>'
     + (onSignOut ? '<button onclick="'+onSignOut+'" style="background:rgba(255,255,255,.12);border:none;border-radius:4px;padding:5px 10px;color:rgba(255,255,255,.7);font-size:10px;font-family:Nunito Sans,sans-serif;cursor:pointer;font-weight:700;letter-spacing:.08em">Sign out</button>' : '')
-    + '</div>';
+    + '</div></div>';
 }
 
 function tabBar(tabs, activeId, setFn) {
@@ -1534,7 +1518,7 @@ function tabBar(tabs, activeId, setFn) {
     var id=t[0], label=t[1];
     var active = activeId===id;
     return '<button onclick="'+setFn+'(\''+id+'\')" style="'
-      + 'flex:0 0 auto;padding:11px 10px;border:none;cursor:pointer;white-space:nowrap;'
+      + 'flex:0 0 auto;padding:11px 14px;border:none;cursor:pointer;white-space:nowrap;'
       + 'background:'+(active?'#FFFFFF':'transparent')+';'
       + 'color:'+(active?'#1A1A1A':'#888888')+';'
       + 'border-bottom:2px solid '+(active?'#7A1020':'transparent')+';'
@@ -1542,7 +1526,7 @@ function tabBar(tabs, activeId, setFn) {
       + 'letter-spacing:.08em;text-transform:uppercase;transition:all .15s'
       + '">'+label+'</button>';
   }).join('');
-  return '<div style="display:flex;background:#FFFFFF;border-bottom:1px solid #EBEBEB;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap">'+btns+'</div>';
+  return '<div style="display:flex;background:#FFFFFF;border-bottom:1px solid #EBEBEB;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none">'+btns+'</div>';
 }
 
 
@@ -2130,12 +2114,17 @@ function agentEventListHTML() {
     +     '</div>'
     +   '</div>'
     +   '<div class="dp-content">'
-    +     '<div class="dp-stats dp-stats-4" style="margin-bottom:24px">'
+    +     (isMobile() ? mobileStatGrid([
+            {value:myListings.length+'', label:'Total Events'},
+            {value:active.length+'', label:'Live Now', color:'#2a7a4a'},
+            {value:newOrders+'', label:'New Orders', color:newOrders>0?'#7A1020':'#1A1A1A'},
+            {value:totalOrders+'', label:'Total Orders'}
+          ]) : '<div class="dp-stats dp-stats-4" style="margin-bottom:24px">'
     +       '<div class="dp-stat"><div class="dp-stat-val">'+myListings.length+'</div><div class="dp-stat-label">Total events</div></div>'
     +       '<div class="dp-stat"><div class="dp-stat-val" style="color:#2a7a4a">'+active.length+'</div><div class="dp-stat-label">Live now</div></div>'
     +       '<div class="dp-stat"><div class="dp-stat-val '+(newOrders>0?'" style="color:#7A1020"':'">')+newOrders+'</div><div class="dp-stat-label">New orders</div></div>'
     +       '<div class="dp-stat"><div class="dp-stat-val">'+totalOrders+'</div><div class="dp-stat-label">Total orders</div></div>'
-    +     '</div>'
+    +     '</div>')
     +     '<div class="dp-card">'
     +       '<div class="dp-card-header"><span class="dp-card-title">Invited Events</span></div>'
     +       (isMobile()
@@ -2175,13 +2164,22 @@ function agentPortalHTML() {
   var content = '';
 
   if(tab==='orders') {
-    content += '<div class="dp-stats dp-stats-4" style="margin-bottom:24px">';
-    content += '<div class="dp-stat"><div class="dp-stat-val '+(newCount>0?'" style="color:#7A1020"':'">')+newCount+'</div><div class="dp-stat-label">New orders</div></div>';
-    content += '<div class="dp-stat"><div class="dp-stat-val">'+myOrders.length+'</div><div class="dp-stat-label">Total orders</div></div>';
-    content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#4A8A6A">'+myOrders.filter(function(o){return state.confirmed[o.id];}).length+'</div><div class="dp-stat-label">Confirmed</div></div>';
     var totalVal = myOrders.filter(function(o){return state.unlocked[o.id];}).reduce(function(s,o){return s+o.items.reduce(function(a,i){return a+(i.qtyCases||1)*(i.pricePerCase||0);},0);},0);
-    content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#2A4A6A">$'+totalVal.toLocaleString()+'</div><div class="dp-stat-label">Unlocked value</div></div>';
-    content += '</div>';
+    if(isMobile()) {
+      content += mobileStatGrid([
+        {value:newCount+'', label:'New Orders', color:newCount>0?'#7A1020':'#1A1A1A'},
+        {value:myOrders.length+'', label:'Total Orders'},
+        {value:myOrders.filter(function(o){return state.confirmed[o.id];}).length+'', label:'Confirmed', color:'#4A8A6A'},
+        {value:'$'+totalVal.toLocaleString(), label:'Unlocked Value', color:'#2A4A6A'}
+      ]);
+    } else {
+      content += '<div class="dp-stats dp-stats-4" style="margin-bottom:24px">';
+      content += '<div class="dp-stat"><div class="dp-stat-val '+(newCount>0?'" style="color:#7A1020"':'">')+newCount+'</div><div class="dp-stat-label">New orders</div></div>';
+      content += '<div class="dp-stat"><div class="dp-stat-val">'+myOrders.length+'</div><div class="dp-stat-label">Total orders</div></div>';
+      content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#4A8A6A">'+myOrders.filter(function(o){return state.confirmed[o.id];}).length+'</div><div class="dp-stat-label">Confirmed</div></div>';
+      content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#2A4A6A">$'+totalVal.toLocaleString()+'</div><div class="dp-stat-label">Unlocked value</div></div>';
+      content += '</div>';
+    }
 
     if(newCount>0) {
       content += '<div style="background:#EEF3FA;border:1px solid #C8D8EE;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">';
@@ -2449,12 +2447,12 @@ function agentPortalHTML() {
     + '</div></div>'
     + '<div class="dp-main">'
     +   '<div class="dp-topbar">'
-    +     '<div><div class="dp-topbar-title" style="display:flex;align-items:center;gap:8px">'+ev.name
-    +       '<span style="width:7px;height:7px;border-radius:50%;background:'+statusDot+';display:inline-block"></span>'
-    +       '<span style="font-size:11px;font-weight:400;color:var(--muted)">'+statusLabel+'</span></div>'
+    +     '<div style="min-width:0;flex:1"><div class="dp-topbar-title" style="display:flex;align-items:center;gap:8px;overflow:hidden"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+ev.name+'</span>'
+    +       '<span style="width:7px;height:7px;border-radius:50%;background:'+statusDot+';display:inline-block;flex-shrink:0"></span>'
+    +       '<span style="font-size:11px;font-weight:400;color:var(--muted);white-space:nowrap">'+statusLabel+'</span></div>'
     +       '<div class="dp-topbar-sub">'+ev.date+' · '+ev.venue+'</div></div>'
     +     '<div class="dp-topbar-actions">'
-    +       (newCount>0?'<span class="dp-badge dp-badge-red" style="padding:5px 10px;font-size:12px">'+newCount+' new order'+(newCount>1?'s':'')+'</span>':'')
+    +       (newCount>0?'<span class="dp-badge dp-badge-red" style="padding:5px 10px;font-size:12px">'+newCount+' new</span>':'')
     +       '<button class="dp-btn" onclick="backToAgentList()">← Back</button>'
     +       '<button class="dp-btn" onclick="signOutAgent()">Sign out</button>'
     +     '</div>'
@@ -2667,7 +2665,7 @@ window.showToast = function(msg, duration) {
   if(existing) existing.remove();
   var t = document.createElement('div');
   t.id = 'poured-toast';
-  t.style.cssText = 'position:fixed;bottom:calc(28px + env(safe-area-inset-bottom, 0px));left:50%;transform:translateX(-50%);background:#1A1A1A;color:#fff;padding:11px 20px;border-radius:8px;font-size:13px;font-weight:600;font-family:Nunito Sans,sans-serif;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);white-space:nowrap;pointer-events:none;transition:opacity .3s';
+  t.style.cssText = 'position:fixed;bottom:calc(28px + env(safe-area-inset-bottom, 0px));left:50%;transform:translateX(-50%);background:#1A1A1A;color:#fff;padding:11px 20px;border-radius:8px;font-size:13px;font-weight:600;font-family:Nunito Sans,sans-serif;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);white-space:nowrap;pointer-events:none;transition:opacity .3s;max-width:480px';
   t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(function(){ t.style.opacity='0'; setTimeout(function(){ t.remove(); },300); }, duration||2800);
@@ -3321,12 +3319,17 @@ function coordEventListHTML() {
     +   '</div>'
     +   '<div class="dp-content">'
     // Stats
-    +     '<div class="dp-stats dp-stats-4" style="margin-bottom:24px">'
+    +     (isMobile() ? mobileStatGrid([
+            {value:myEvents.length+'', label:'Total Events'},
+            {value:active.length+'', label:'Live Now', color:'#2a7a4a'},
+            {value:upcoming.length+'', label:'Upcoming', color:'#2A4A6A'},
+            {value:myEvents.reduce(function(s,e){return s+e.tiers.reduce(function(a,t){return a+t.sold;},0);},0)+'', label:'Tickets Sold', color:'#7A1020'}
+          ]) : '<div class="dp-stats dp-stats-4" style="margin-bottom:24px">'
     +       '<div class="dp-stat"><div class="dp-stat-val">'+myEvents.length+'</div><div class="dp-stat-label">Total events</div></div>'
     +       '<div class="dp-stat"><div class="dp-stat-val" style="color:#2a7a4a">'+active.length+'</div><div class="dp-stat-label">Live now</div></div>'
     +       '<div class="dp-stat"><div class="dp-stat-val" style="color:#2A4A6A">'+upcoming.length+'</div><div class="dp-stat-label">Upcoming</div></div>'
     +       '<div class="dp-stat"><div class="dp-stat-val" style="color:#7A1020">'+myEvents.reduce(function(s,e){return s+e.tiers.reduce(function(a,t){return a+t.sold;},0);},0)+'</div><div class="dp-stat-label">Tickets sold</div></div>'
-    +     '</div>'
+    +     '</div>')
     // Events table
     +     '<div class="dp-card">'
     +       '<div class="dp-card-header"><span class="dp-card-title">All Events</span></div>'
@@ -3388,12 +3391,21 @@ function coordPortalHTML() {
   var content = '';
 
   if(tab==='overview') {
-    content += '<div class="dp-stats dp-stats-4" style="margin-bottom:24px">';
-    content += '<div class="dp-stat"><div class="dp-stat-val">'+totalSold+'<span style="font-size:16px;color:var(--muted)">/'+totalCap+'</span></div><div class="dp-stat-label">Tickets sold</div><div class="dp-stat-sub">'+pctSold+'% capacity</div></div>';
-    content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#4A8A6A">$'+grossRev.toLocaleString()+'</div><div class="dp-stat-label">Gross ticket revenue</div></div>';
-    content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#2A4A6A">'+submitted+'<span style="font-size:16px;color:var(--muted)">/'+EV.agents.length+'</span></div><div class="dp-stat-label">Agents submitted</div>'+(pending>0?'<div class="dp-stat-sub" style="color:#7A1020">'+pending+' pending</div>':'')+'</div>';
-    content += '<div class="dp-stat"><div class="dp-stat-val">'+EV.products.length+'</div><div class="dp-stat-label">Products listed</div><div class="dp-stat-sub">'+EV.orders.length+' orders placed</div></div>';
-    content += '</div>';
+    if(isMobile()) {
+      content += mobileStatGrid([
+        {value:totalSold+'/'+totalCap, label:'Tickets Sold ('+pctSold+'%)'},
+        {value:'$'+grossRev.toLocaleString(), label:'Gross Revenue', color:'#4A8A6A'},
+        {value:submitted+'/'+EV.agents.length, label:'Agents Submitted'+(pending>0?' ('+pending+' pending)':''), color:'#2A4A6A'},
+        {value:EV.products.length+'', label:'Products ('+EV.orders.length+' orders)'}
+      ]);
+    } else {
+      content += '<div class="dp-stats dp-stats-4" style="margin-bottom:24px">';
+      content += '<div class="dp-stat"><div class="dp-stat-val">'+totalSold+'<span style="font-size:16px;color:var(--muted)">/'+totalCap+'</span></div><div class="dp-stat-label">Tickets sold</div><div class="dp-stat-sub">'+pctSold+'% capacity</div></div>';
+      content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#4A8A6A">$'+grossRev.toLocaleString()+'</div><div class="dp-stat-label">Gross ticket revenue</div></div>';
+      content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#2A4A6A">'+submitted+'<span style="font-size:16px;color:var(--muted)">/'+EV.agents.length+'</span></div><div class="dp-stat-label">Agents submitted</div>'+(pending>0?'<div class="dp-stat-sub" style="color:#7A1020">'+pending+' pending</div>':'')+'</div>';
+      content += '<div class="dp-stat"><div class="dp-stat-val">'+EV.products.length+'</div><div class="dp-stat-label">Products listed</div><div class="dp-stat-sub">'+EV.orders.length+' orders placed</div></div>';
+      content += '</div>';
+    }
 
     // Ticket tier breakdown
     content += '<div class="dp-grid-2" style="margin-bottom:20px">';
@@ -3742,13 +3754,13 @@ function coordPortalHTML() {
     // Main
     + '<div class="dp-main">'
     +   '<div class="dp-topbar">'
-    +     '<div><div class="dp-topbar-title" style="display:flex;align-items:center;gap:8px">'+EV.name
-    +       '<span style="width:7px;height:7px;border-radius:50%;background:'+statusDot+';display:inline-block"></span>'
-    +       '<span style="font-size:11px;font-weight:400;color:var(--muted)">'+statusLabel+'</span></div>'
+    +     '<div style="min-width:0;flex:1"><div class="dp-topbar-title" style="display:flex;align-items:center;gap:8px;overflow:hidden"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+EV.name+'</span>'
+    +       '<span style="width:7px;height:7px;border-radius:50%;background:'+statusDot+';display:inline-block;flex-shrink:0"></span>'
+    +       '<span style="font-size:11px;font-weight:400;color:var(--muted);white-space:nowrap">'+statusLabel+'</span></div>'
     +       '<div class="dp-topbar-sub">'+EV.date+' · '+EV.venue+'</div></div>'
     +     '<div class="dp-topbar-actions">'
-    +       '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openDupModal()">⎘ Duplicate</button>'
-    +       '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="setCoordTab(\'postemail\')">Post-event email</button>'
+    +       (isMobile()?'':'<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openDupModal()">⎘ Duplicate</button>')
+    +       (isMobile()?'':'<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="setCoordTab(\'postemail\')">Post-event email</button>')
     +       '<button class="dp-btn" onclick="backToCoordList()">← Back</button>'
     +       '<button class="dp-btn" onclick="signOutCoord()">Sign out</button>'
     +     '</div>'
@@ -3826,8 +3838,10 @@ function custEventListHTML() {
     return c;
   }
   var html='<div style="background:#F8F8F8;min-height:100vh;padding-bottom:60px">';
+  html+='<div style="position:sticky;top:0;z-index:100">';
   html+=headerHTML('My Tickets','signOutCust()','setState({portal:"home"})');
   html+=tabBar([['discover','Discover'],['upcoming','Upcoming'],['mytickets','My Tickets ('+myTickets.length+')']], state.custListTab,'setCustListTab');
+  html+='</div>';
   html+='<div style="padding:16px">';
   if(!current.length){html+='<div style="text-align:center;padding:48px 20px;color:#888"><div style="font-size:36px;margin-bottom:12px;opacity:.3">○</div><div>No events here yet.</div></div>';}
   else{current.forEach(function(ev){html+=eventCard(ev);});}
@@ -4054,8 +4068,8 @@ function custPortalHTML() {
 
   const detailModal = state.detail ? detailModalHTML(state.detail) : '';
 
-  return `<div style="padding-bottom:calc(90px + env(safe-area-inset-bottom, 0px))">
-    <div style="background:#1A1A1A;padding:14px 16px 0;box-shadow:0 2px 8px rgba(0,0,0,.25)">
+  return `<div style="padding-bottom:${cartCount>0?'140':'80'}px">
+    <div style="position:sticky;top:0;z-index:100;background:#1A1A1A;padding:14px 16px 0;box-shadow:0 2px 8px rgba(0,0,0,.25)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:10px">
           <button onclick="backToCustList()" style="background:rgba(255,255,255,.15);border:none;border-radius:5px;color:#fff;font-size:11px;cursor:pointer;padding:5px 10px;font-weight:700;letter-spacing:.06em;font-family:Nunito Sans,sans-serif">← Back</button>
@@ -4068,7 +4082,6 @@ function custPortalHTML() {
         <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,.9);margin-bottom:1px">${EV.name}</div>
         <div style="font-size:11px;color:rgba(255,255,255,.55)">${EV.date} · ${EV.venue}</div>
       </div>
-    </div>
     ${tabBar(tabs, state.custTab, 'setCustTab')}
     </div>
     ${ticketTab}${browseTab}${savedTab}${notesTab}${orderTab}${historyTab}
@@ -4101,14 +4114,22 @@ function adminPortalHTML() {
 
   // ── DASHBOARD ────────────────────────────────────────────────────
   if(tab==='dashboard') {
-    content += '<div class="dp-stats dp-stats-3" style="margin-bottom:24px;grid-template-columns:repeat(3,minmax(200px,1fr))">';
-    content += '<div class="dp-stat"><div class="dp-stat-val">'+totalEvents+'</div><div class="dp-stat-label">Total events</div><div class="dp-stat-sub">All time</div></div>';
-    content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#4A8A6A">$'+totalRevenue.toLocaleString()+'</div><div class="dp-stat-label">Platform revenue</div><div class="dp-stat-sub">All time</div></div>';
-    content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#2A4A6A">'+activeCoords+'</div><div class="dp-stat-label">Active Event Hosts</div></div>';
-    content += '</div>';
+    if(isMobile()) {
+      content += mobileStatGrid([
+        {value:totalEvents+'', label:'Total Events'},
+        {value:'$'+totalRevenue.toLocaleString(), label:'Platform Revenue', color:'#4A8A6A'},
+        {value:activeCoords+'', label:'Active Hosts', color:'#2A4A6A'}
+      ]);
+    } else {
+      content += '<div class="dp-stats dp-stats-3" style="margin-bottom:24px;grid-template-columns:repeat(3,minmax(200px,1fr))">';
+      content += '<div class="dp-stat"><div class="dp-stat-val">'+totalEvents+'</div><div class="dp-stat-label">Total events</div><div class="dp-stat-sub">All time</div></div>';
+      content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#4A8A6A">$'+totalRevenue.toLocaleString()+'</div><div class="dp-stat-label">Platform revenue</div><div class="dp-stat-sub">All time</div></div>';
+      content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#2A4A6A">'+activeCoords+'</div><div class="dp-stat-label">Active Event Hosts</div></div>';
+      content += '</div>';
+    }
 
     // Revenue breakdown
-    content += '<div class="dp-grid-2" style="margin-bottom:20px">';
+    content += '<div class="dp-grid-2" style="margin-bottom:20px;'+(isMobile()?'grid-template-columns:1fr':'')+'">';
     content += '<div class="dp-card"><div class="dp-card-header"><span class="dp-card-title">Revenue by Stream</span></div>';
     if(isMobile()) {
       content += '<div style="padding:12px">';
