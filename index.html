@@ -1,4 +1,4 @@
-<!-- poured v5 -->
+<!-- poured v6 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +15,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 64'%3E%3Cpath d='M26 0C26 0 0 24 0 39C0 53 11.6 64 26 64C40.4 64 52 53 52 39C52 24 26 0 26 0Z' fill='%237A1020'/%3E%3C/svg%3E">
 <!-- iOS home screen icons (inline SVG converted to data URI) -->
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%230F0A08' rx='40'/%3E%3Ctext x='90' y='115' text-anchor='middle' font-family='Georgia' font-size='72' fill='%23B8976A' font-weight='700'%3EP%3C/text%3E%3C/svg%3E">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>POURED — Beverage Events Platform</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,500;6..12,600;6..12,700;6..12,800;6..12,900&display=swap');
@@ -39,11 +39,30 @@
 }
 *{-webkit-font-smoothing:antialiased;}
 
+html{
+  height:-webkit-fill-available;
+  overflow-x:hidden;
+}
+
 /* ── MOBILE BASE ─────────────────────────────────── */
 body{
   font-family:var(--font); background:var(--white);
-  color:var(--ink); max-width:480px; margin:0 auto;
+  color:var(--ink); margin:0 auto;
   min-height:100vh; font-size:15px;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:none;
+}
+body:not(.dp){
+  max-width:480px;
+  margin:0 auto;
+  overflow-x:hidden;
+}
+@supports (padding: env(safe-area-inset-bottom)) {
+  .mobile-footer { padding-bottom: env(safe-area-inset-bottom); }
+}
+@media (display-mode: standalone) {
+  body:not(.dp) { padding-top: env(safe-area-inset-top, 0px); }
 }
 input,textarea,select,button{font-family:var(--font);}
 input:focus,textarea:focus,select:focus{outline:2px solid var(--wine);outline-offset:-1px;}
@@ -75,7 +94,15 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--wine);outline-of
 .btn-ghost:hover{border-color:var(--ink);}
 .btn-secondary{background:transparent;color:var(--wine);border:1.5px solid var(--wine);padding:12px 20px;border-radius:var(--r-btn);cursor:pointer;font-size:13px;font-weight:700;}
 
-.full{width:100%;} .hidden{display:none!important;} #app{padding-bottom:0;background:#FFFFFF;min-height:100vh;}
+.full{width:100%;} .hidden{display:none!important;}
+#app{
+  padding-bottom:0;
+  background:#FFFFFF;
+  min-height:100vh;
+  min-height:-webkit-fill-available;
+  overflow-x:hidden;
+  position:relative;
+}
 .cust-headline{font-family:'Nunito Sans',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.06em;}
 
 /* ── DESKTOP PORTAL ──────────────────────────────── */
@@ -3517,7 +3544,7 @@ function custPortalHTML() {
   </div>` : '';
 
   const shareModalContent = shareModalHTML();
-  const floatingCart = (cartCount>0 && state.custTab!=='order') ? `<div style="position:fixed;bottom:0;left:0;right:0;background:${B.ink};padding:12px 20px;display:flex;align-items:center;justify-content:space-between;z-index:150;border-top:1px solid #333;max-width:480px;margin:0 auto">
+  const floatingCart = (cartCount>0 && state.custTab!=='order') ? `<div class="mobile-footer" style="position:fixed;bottom:0;left:0;right:0;background:${B.ink};padding:12px 16px calc(12px + env(safe-area-inset-bottom, 0px)) 16px;display:flex;align-items:center;justify-content:space-between;z-index:150;border-top:1px solid #333;max-width:480px;margin:0 auto">
     <div>
       <div style="font-size:10px;color:var(--muted);letter-spacing:.1em">YOUR ORDER</div>
       <div style="font-size:14px;color:${B.cream}">${cartCount} case${cartCount>1?'s':''} · <span style="color:${B.pour}">$${cartTotal}</span></div>
