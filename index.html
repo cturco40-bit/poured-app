@@ -554,7 +554,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=52').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=53').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -4732,7 +4732,7 @@ function render() {
     return;
   }
   if(p === 'admin') { app.innerHTML = loginShell('Platform Admin','-','admin@pouredevents.com','admin2025','admin','#7A1020'); return; }
-  if(p === 'admin_in') { document.body.classList.add('dp'); app.innerHTML = adminPortalHTML(); injectMobileNav('admin'); injectDrawer('admin'); return; }
+  if(p === 'admin_in') { if(!state.currentUser||state.currentUser.role!=='admin'){setState({portal:'home'});showToast('Admin access restricted');return;} document.body.classList.add('dp'); app.innerHTML = adminPortalHTML(); injectMobileNav('admin'); injectDrawer('admin'); return; }
   if(p === 'agent' && state.currentUser) { document.body.classList.add('dp'); app.innerHTML = agentPortalHTML(); injectMobileNav('agent'); injectDrawer('agent'); return; }
   if(p === 'agent') { document.body.classList.remove('dp'); app.innerHTML = loginShell('Agent / Producer','','christian@profilewinegroup.ca','agent2025','agent','#7A1020'); return; }
   if(p === 'agent_in') { document.body.classList.add('dp'); app.innerHTML = agentPortalHTML(); injectMobileNav('agent'); injectDrawer('agent'); return; }
