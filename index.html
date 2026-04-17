@@ -554,7 +554,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=42').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=43').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -2037,20 +2037,8 @@ function detailModalHTML(prodId) {
 
 // ─── HOME ─────────────────────────────────────────────────────────────────────
 function homeHTML() {
-  var demoBanner = !LIVE_MODE
-    ? '<div style="background:#FFF1F2;border-bottom:1px solid #FECDD3;padding:7px 20px;display:flex;align-items:center;justify-content:space-between">'
-    + '<span style="font-size:11px;color:#7A1020;font-weight:700;letter-spacing:.06em">DEMO MODE</span>'
-    + '<a href="https://supabase.com" target="_blank" style="font-size:11px;color:#7A1020;text-decoration:none;font-weight:700">Connect DB →</a>'
-    + '</div>' : '';
-
-  var creds = !LIVE_MODE
-    ? '<div style="background:#F8F8F8;border-radius:8px;padding:12px 14px;margin-bottom:14px;border:1px solid #EFEFEF">'
-    + '<div style="font-size:9px;color:#BBBBBB;letter-spacing:.2em;font-weight:700;margin-bottom:8px;text-transform:uppercase">Demo Login</div>'
-    + '<div style="display:flex;flex-direction:column;gap:6px">'
-    + '<div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:#555;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Event Host</span><span style="font-size:10px;color:#AAA;font-family:monospace">coord2025</span></div>'
-    + '<div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:#555;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Agent / Producer</span><span style="font-size:10px;color:#AAA;font-family:monospace">agent2025</span></div>'
-    + '<div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:#555;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Attendee</span><span style="font-size:10px;color:#AAA;font-family:monospace">jane2025</span></div>'
-    + '</div></div>' : '';
+  var demoBanner = '';
+  var creds = '';
 
   return '<div style="min-height:100vh;background:#FFFFFF;display:flex;flex-direction:column">'
     + demoBanner
@@ -2084,12 +2072,6 @@ function homeHTML() {
     +   '<div style="font-size:11px;color:rgba(255,255,255,.45);font-weight:500">Browse wines, save favourites, and place orders</div></div>'
     +   '<span style="color:rgba(255,255,255,.35);font-size:22px;font-weight:300;line-height:1">›</span></button>'
 
-    + '</div>'
-    + '<div style="padding:0 24px 16px">'+creds
-    +   '<div style="height:1px;background:#F0F0F0;margin-bottom:12px"></div>'
-    +   '<div id="admin-portal-btn" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;cursor:pointer;border-radius:8px;transition:background .15s" onmouseenter="this.style.background=\'#F5F5F5\'" onmouseleave="this.style.background=\'transparent\'">'
-    +   '<span style="font-size:11px;font-weight:700;color:#CCCCCC;letter-spacing:.14em;text-transform:uppercase">Platform Admin</span>'
-    +   '<span style="color:#DDD;font-size:16px">›</span></div>'
     + '</div>'
     + '<div style="text-align:center;padding:0 24px 32px;margin-top:auto">'
     +   '<div style="font-size:10px;color:#CCCCCC;line-height:1.7">Poured facilitates event ticketing and order introductions only.<br>Beverage sales conducted directly between licensed agents and customers.</div>'
@@ -4738,12 +4720,6 @@ function render() {
   if(p === 'home') {
     document.body.classList.remove('dp');
     app.innerHTML = homeHTML();
-    var adminBtn = document.getElementById('admin-portal-btn');
-    if(adminBtn) {
-      adminBtn.onclick = function(){ setState({portal:'admin'}); };
-      adminBtn.onmouseenter = function(){ this.style.background='rgba(255,255,255,.04)'; };
-      adminBtn.onmouseleave = function(){ this.style.background='transparent'; };
-    }
     return;
   }
   if(p === 'admin') { app.innerHTML = loginShell('Platform Admin','-','admin@pouredevents.com','admin2025','admin','#7A1020'); return; }
