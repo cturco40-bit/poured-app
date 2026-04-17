@@ -554,7 +554,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=46').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=47').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -4416,7 +4416,7 @@ function adminPortalHTML() {
 
   // Platform-wide stats
   var totalEvents   = EVENTS.length + state.coordinators.reduce(function(s,c){return s+c.events;},0);
-  var totalRevenue  = state.coordinators.reduce(function(s,c){return s+c.revenue;},0) + 32400;
+  var totalRevenue  = state.coordinators.reduce(function(s,c){return s+c.revenue;},0) + (IS_DEMO ? 32400 : 0);
   var activeCoords  = state.coordinators.filter(function(c){return c.status==='active';}).length;
 
   // Default fees
@@ -4454,10 +4454,10 @@ function adminPortalHTML() {
     if(isMobile()) {
       content += '<div style="padding:12px">';
       [
-        ['Ticket fees','$1.75 + 2.9% per ticket','$1,800'],
-        ['Order unlock fees','2.75%','$2,400'],
-        ['Order processing','$4.25 per checkout','$280'],
-        ['Platform commission','7.5% free / 2% ticketed','$800'],
+        ['Ticket fees','$1.75 + 2.9% per ticket',IS_DEMO?'$1,800':'$0'],
+        ['Order unlock fees','2.75%',IS_DEMO?'$2,400':'$0'],
+        ['Order processing','$4.25 per checkout',IS_DEMO?'$280':'$0'],
+        ['Platform commission','7.5% free / 2% ticketed',IS_DEMO?'$800':'$0'],
       ].forEach(function(row){
         content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
         content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+row[0]+'</div>';
@@ -4469,10 +4469,10 @@ function adminPortalHTML() {
     } else {
       content += '<table class="dp-table"><thead><tr><th>Stream</th><th>Rate</th><th>Est. this month</th></tr></thead><tbody>';
       [
-        ['Ticket fees','$1.75 + 2.9% per ticket','$1,800'],
-        ['Order unlock fees','2.75%','$2,400'],
-        ['Order processing','$4.25 per checkout','$280'],
-        ['Platform commission','7.5% free / 2% ticketed','$800'],
+        ['Ticket fees','$1.75 + 2.9% per ticket',IS_DEMO?'$1,800':'$0'],
+        ['Order unlock fees','2.75%',IS_DEMO?'$2,400':'$0'],
+        ['Order processing','$4.25 per checkout',IS_DEMO?'$280':'$0'],
+        ['Platform commission','7.5% free / 2% ticketed',IS_DEMO?'$800':'$0'],
       ].forEach(function(row){
         content += '<tr><td style="font-weight:600;font-size:13px">'+row[0]+'</td><td style="font-size:12px;color:var(--muted)">'+row[1]+'</td><td style="font-weight:600;color:#4A8A6A">'+row[2]+'</td></tr>';
       });
@@ -4646,15 +4646,15 @@ function adminPortalHTML() {
   // ── ANALYTICS ─────────────────────────────────────────────────────
   else if(tab==='analytics') {
     content += '<div class="dp-stats dp-stats-3" style="margin-bottom:24px">';
-    content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#4A8A6A">$5,660</div><div class="dp-stat-label">This month</div><div class="dp-stat-sub">↑ 34% vs last month</div></div>';
-    content += '<div class="dp-stat"><div class="dp-stat-val">$32,400</div><div class="dp-stat-label">All-time revenue</div><div class="dp-stat-sub">Since launch</div></div>';
+    content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#4A8A6A">'+(IS_DEMO?'$5,660':'$0')+'</div><div class="dp-stat-label">This month</div><div class="dp-stat-sub">'+(IS_DEMO?'↑ 34% vs last month':'No data yet')+'</div></div>';
+    content += '<div class="dp-stat"><div class="dp-stat-val">'+(IS_DEMO?'$32,400':'$0')+'</div><div class="dp-stat-label">All-time revenue</div><div class="dp-stat-sub">'+(IS_DEMO?'Since launch':'—')+'</div></div>';
     content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#2A4A6A">'+EVENTS.length+'</div><div class="dp-stat-label">Events run</div><div class="dp-stat-sub">Across '+activeCoords+' coordinators</div></div>';
     content += '</div>';
 
     content += '<div class="dp-grid-2">';
     content += '<div class="dp-card"><div class="dp-card-header"><span class="dp-card-title">Revenue by Month</span></div>';
     content += '<div class="dp-card-body">';
-    [['Jan 2025','$1,840'],['Feb 2025','$3,200'],['Mar 2025','$4,220'],['Apr 2025','$5,660 (est)']].forEach(function(row){
+    (IS_DEMO?[['Jan 2025','$1,840'],['Feb 2025','$3,200'],['Mar 2025','$4,220'],['Apr 2025','$5,660 (est)']]:[]).forEach(function(row){
       content += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #F5F0EA">';
       content += '<span style="font-size:13px;color:var(--muted)">'+row[0]+'</span>';
       content += '<span style="font-size:14px;font-weight:700;color:#4A8A6A">'+row[1]+'</span></div>';
@@ -4663,7 +4663,7 @@ function adminPortalHTML() {
 
     content += '<div class="dp-card"><div class="dp-card-header"><span class="dp-card-title">Revenue by Stream</span></div>';
     content += '<div class="dp-card-body">';
-    [['Ticket fees','$3,200','56%','#4A8A6A'],['Unlock fees','$1,840','32%','#2A4A6A'],['Submission fees','$620','11%','#7A1020']].forEach(function(row){
+    [['Ticket fees',IS_DEMO?'$3,200':'$0',IS_DEMO?'56%':'0%','#4A8A6A'],['Unlock fees',IS_DEMO?'$1,840':'$0',IS_DEMO?'32%':'0%','#2A4A6A'],['Submission fees',IS_DEMO?'$620':'$0',IS_DEMO?'11%':'0%','#7A1020']].forEach(function(row){
       content += '<div style="margin-bottom:14px">';
       content += '<div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:13px;font-weight:500">'+row[0]+'</span><span style="font-size:13px;font-weight:700;color:'+row[3]+'">'+row[1]+'</span></div>';
       content += '<div class="dp-progress"><div class="dp-progress-fill" style="width:'+row[2]+';background:'+row[3]+'"></div></div>';
