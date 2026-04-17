@@ -552,8 +552,9 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 })();
 
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
+// IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=39').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=40').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
