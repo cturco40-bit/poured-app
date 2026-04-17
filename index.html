@@ -554,7 +554,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=48').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=49').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1809,7 +1809,7 @@ window.doSignup = function(portalId) {
   if(LIVE_MODE){
     AUTH.signUp(email, pw, {first_name:first, last_name:last, org:org, role:portalId, attendee_type:roleType}).then(function(res){
       if(res.error){ showErr(res.error.message); return; }
-      _sb.from('profiles').update({full_name:first+' '+last,company:org,role:portalId}).eq('email',email).then(function(){setState({portal:portalId+'_in', currentUser:{email:email, name:first+' '+last, role:portalId}});});
+      _sb.from('profiles').update({full_name:first+' '+last,company:org,role:portalId}).eq('id',res.user.id).then(function(){setState({portal:portalId+'_in', currentUser:{email:email, name:first+' '+last, role:portalId}});});
     });
   } else {
     // Demo mode — simulate success
