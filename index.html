@@ -554,7 +554,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=45').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=46').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -941,11 +941,11 @@ let state = {
   feeOverrides: {},   // eventId -> {ticketFlat, ticketPct, unlockPct, submissionFee, featuredFee}
   globalFees: {ticketFlat:1.75, ticketPct:2.9, unlockPct:2.75, submissionFee:4.25, featured:500},
   orderContact: null,
-  coordinators: [
+  coordinators: IS_DEMO ? [
     {id:'c003', name:'The Tasting Collective', email:'coordinator@tasting.ca', org:'The Tasting Collective', events:4, revenue:18200, status:'active', joined:'2025-01-15'},
     {id:'c004', name:'ITA Canada', email:'events@itacanada.ca', org:'ITA Canada', events:2, revenue:9400, status:'active', joined:'2025-02-01'},
     {id:'c005', name:'Gambero Rosso Toronto', email:'toronto@gamberorosso.it', org:'Gambero Rosso', events:1, revenue:4800, status:'active', joined:'2025-02-20'},
-  ],
+  ] : [],
   selectedEventId: null, // which event is open in agent or customer
   agentListTab: "invited", // invited | open | past
   custListTab: "discover", // discover | upcoming | mytickets
@@ -955,14 +955,14 @@ let state = {
   qrMode: false,                  // QR scanner active
   waitlist: {},                   // tierId -> [email, ...]
   custFilters: {},                // dietary filter tags
-  orderHistory: [
+  orderHistory: IS_DEMO ? [
     {eventId:4, eventName:"SIP Toronto 2025", date:"15 Nov 2024",
      items:[{supplier:"Fantini Group",name:"Casale Vecchio Montepulciano 2020",qtyCases:2,pricePerCase:96},
             {supplier:"Lungarotti",name:"L'Um Sangiovese Merlot 2022",qtyCases:2,pricePerCase:216}]},
     {eventId:1, eventName:"Wine Fest Toronto 2026", date:"22 Mar 2025",
      items:[{supplier:"Fantini Group",name:"Montepulciano d'Abruzzo DOC 2022",qtyCases:2,pricePerCase:144},
             {supplier:"Casa Gheller",name:"Franciacorta Brut NV",qtyCases:1,pricePerCase:228}]},
-  ],
+  ] : [],
   showPayoutTab: false,
   agentEditProduct: null,         // product being edited inline
   shareModal: null,               // product being shared
@@ -972,8 +972,8 @@ let state = {
   refundModal: null,              // order for refund
   // Agent
   agentTab: "orders",
-  unlocked: {"ORD-002":true,"ORD-003":true,"ORD-020":true,"ORD-021":true},
-  confirmed: {"ORD-002":true,"ORD-020":true,"ORD-021":true},
+  unlocked: IS_DEMO ? {"ORD-002":true,"ORD-003":true,"ORD-020":true,"ORD-021":true} : {},
+  confirmed: IS_DEMO ? {"ORD-002":true,"ORD-020":true,"ORD-021":true} : {},
   openOrder: null,
   payModal: null,
   unlockAllModal: false,
