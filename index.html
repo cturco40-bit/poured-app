@@ -554,7 +554,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=40').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=41').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1714,11 +1714,11 @@ function loginShell(role, icon, demoEmail, demoPw, portalId, accentColor) {
     + '<input id="login-pw" type="password" autocomplete="current-password" value="'+demoPw+'" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:15px;color:#1A1A1A;background:transparent;outline:none;margin-bottom:28px;font-family:inherit;font-weight:600;transition:border-color .2s" onfocus="this.style.borderColor=\'#7A1020\'" onblur="this.style.borderColor=\'#E0E0E0\'" onkeydown="if(event.key===\'Enter\')tryLogin(\''+portalId+'\',\''+demoEmail+'\',\''+demoPw+'\')">'
     + '<div id="login-err" style="display:none;color:#7A1020;font-size:12px;font-weight:700;margin-bottom:14px;letter-spacing:.04em;text-transform:uppercase"></div>'
     + '<button onclick="tryLogin(\''+portalId+'\',\''+demoEmail+'\',\''+demoPw+'\')" style="width:100%;padding:15px;background:linear-gradient(135deg,#1A1A1A,#2C2C2C);color:#fff;border:none;font-size:12px;font-weight:900;cursor:pointer;letter-spacing:.18em;text-transform:uppercase;font-family:inherit;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);transition:all .2s" onmouseenter="this.style.background=\'linear-gradient(135deg,#7A1020,#9B1A2A)\';this.style.boxShadow=\'0 6px 20px rgba(122,16,32,.4)\'" onmouseleave="this.style.background=\'linear-gradient(135deg,#1A1A1A,#2C2C2C)\';this.style.boxShadow=\'0 4px 16px rgba(0,0,0,.2)\'">Sign In</button>'
-    + '<div style="height:1px;background:#F0F0F0;margin:20px 0"></div>'
+    + (portalId!=='admin' ? '<div style="height:1px;background:#F0F0F0;margin:20px 0"></div>'
     + '<div style="text-align:center">'
     + '<span style="font-size:12px;color:#AAA">Don\'t have an account?  </span>'
     + '<button onclick="setState({portal:\''+portalId+'_signup\'})" style="background:none;border:none;font-size:12px;color:#7A1020;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:underline;padding:0">Sign up</button>'
-    + '</div>'
+    + '</div>' : '')
     + '</div>'
     + '</div></div>';
 }
@@ -1757,16 +1757,8 @@ function signupShell(role, portalId, accentColor) {
     + '<input id="signup-last" type="text" autocomplete="family-name" placeholder="Smith" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:15px;color:#1A1A1A;background:transparent;outline:none;font-family:inherit;font-weight:600;transition:border-color .2s" onfocus="this.style.borderColor=\'#7A1020\'" onblur="this.style.borderColor=\'#E0E0E0\'">'
     + '</div>'
     + '</div>'
-    // Organisation (for coord/agent only)
-    + (portalId!=='customer' ? '<div style="margin-bottom:20px"><div style="font-size:9px;color:#AAA;font-weight:700;text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px">'+(portalId==='coordinator'?'Organisation':'Agency / Company')+'</div><input id="signup-org" type="text" placeholder="'+(portalId==='coordinator'?'e.g. The Tasting Collective':'e.g. Profile Wine Group')+'" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:15px;color:#1A1A1A;background:transparent;outline:none;font-family:inherit;font-weight:600;transition:border-color .2s" onfocus="this.style.borderColor=\'#7A1020\'" onblur="this.style.borderColor=\'#E0E0E0\'"></div>' : '')
-    // Email
-    + (portalId==='customer' ? '<div style="margin-bottom:20px">'
-    + '<div style="font-size:9px;color:#AAA;font-weight:700;text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px">I am attending as</div>'
-    + '<select id="signup-role" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:14px;color:#1A1A1A;background:transparent;outline:none;font-family:inherit;appearance:none">'
-    + '<option value="trade">Trade Professional (buyer, sommelier, buyer)</option>'
-    + '<option value="consumer">Consumer</option>'
-    + '<option value="media">Press / Media</option>'
-    + '</select></div>' : '')
+    // Company / Organisation
+    + '<div style="margin-bottom:20px"><div style="font-size:9px;color:#AAA;font-weight:700;text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px">'+(portalId==='coordinator'?'Organisation':portalId==='agent'?'Agency / Company':'Company / Restaurant (optional)')+'</div><input id="signup-org" type="text" placeholder="'+(portalId==='coordinator'?'e.g. The Tasting Collective':portalId==='agent'?'e.g. Profile Wine Group':'e.g. Canoe Restaurant, Wine Align, etc.')+'" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:15px;color:#1A1A1A;background:transparent;outline:none;font-family:inherit;font-weight:600;transition:border-color .2s" onfocus="this.style.borderColor=\'#7A1020\'" onblur="this.style.borderColor=\'#E0E0E0\'"></div>'
     + '<div style="margin-bottom:20px">'
     + '<div style="font-size:9px;color:#AAA;font-weight:700;text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px">Email</div>'
     + '<input id="signup-email" type="email" autocomplete="email" placeholder="you@example.com" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:15px;color:#1A1A1A;background:transparent;outline:none;font-family:inherit;font-weight:600;transition:border-color .2s" onfocus="this.style.borderColor=\'#7A1020\'" onblur="this.style.borderColor=\'#E0E0E0\'">'
