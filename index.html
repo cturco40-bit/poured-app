@@ -671,7 +671,7 @@ const ORDER_FEE_CAP = 999999;
 const LISTING_FEE = 50;
 const PLATFORM_COMM_FREE = 0.075;
 const PLATFORM_COMM_TICKETED = 0.02;
-const ORDER_PROCESSING_FEE = 3.50;
+const ORDER_PROCESSING_FEE = 4.25;
 const depositRate = ml => ml >= 1000 ? 0.25 : ml < 630 ? 0.10 : 0.20;
 const pouredFee = sub => +Math.min(ORDER_FEE_CAP, sub * ORDER_FEE_PCT).toFixed(2);
 const calcTicketFee = p => p === 0 ? 0 : +(1.75 + p * 0.029).toFixed(2);
@@ -933,8 +933,8 @@ let state = {
   selectedEventId: null,
   adminTab: "dashboard",
   adminSelectedCoordId: null,
-  feeOverrides: {},   // eventId -> {ticketFlat, ticketPct, unlockPct, unlockCap, submissionFee, featuredFee}
-  globalFees: {ticketFlat:1.75, ticketPct:2.9, unlockPct:2.75, unlockCap:200, submissionFee:3.50, featured:500},
+  feeOverrides: {},   // eventId -> {ticketFlat, ticketPct, unlockPct, submissionFee, featuredFee}
+  globalFees: {ticketFlat:1.75, ticketPct:2.9, unlockPct:2.75, submissionFee:4.25, featured:500},
   orderContact: null,
   coordinators: [
     {id:'c003', name:'The Tasting Collective', email:'coordinator@tasting.ca', org:'The Tasting Collective', events:4, revenue:18200, status:'active', joined:'2025-01-15'},
@@ -1436,7 +1436,7 @@ function payoutDashboardHTML(ev) {
       <div style="font-size:10px;color:${B.cork};letter-spacing:.12em;margin-bottom:10px">PAYOUT HISTORY</div>
       ${[
         ['SIP Toronto 2025','17 Oct 2025','$9,840.00','Paid'],
-        ['Wine Fest Toronto 2025','9 May 2025','$6,205.50','Paid'],
+        ['Wine Fest Toronto 2025','9 May 2025','$6,205.25','Paid'],
       ].map(([name,date,amount,status])=>`
         <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid ${B.linen}">
           <div><div style="font-size:12px;font-weight:500">${name}</div><div style="font-size:10px;color:${B.cork}">${date}</div></div>
@@ -2846,7 +2846,7 @@ window.suspendCoordinator = function(coordName) {
 
 // Fee settings modal for individual coordinator
 window.showFeeSettingsModal = function(coordName) {
-  var gf = state.globalFees || {ticketFlat:1.75, ticketPct:2.9, unlockPct:2.75, unlockCap:200, submissionFee:3.50, featured:500};
+  var gf = state.globalFees || {ticketFlat:1.75, ticketPct:2.9, unlockPct:2.75, submissionFee:4.25, featured:500};
   var modal = document.createElement('div');
   modal.id = 'fee-modal-overlay';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:flex;align-items:flex-end';
@@ -2890,16 +2890,15 @@ window.saveAdminFeeDefaults = function() {
   var flat = parseFloat((document.getElementById('fee-ticket-flat')||{}).value||1.75);
   var pct  = parseFloat((document.getElementById('fee-ticket-pct')||{}).value||6);
   var unlock = parseFloat((document.getElementById('fee-unlock-pct')||{}).value||1.25);
-  var cap  = parseFloat((document.getElementById('fee-unlock-cap')||{}).value||50);
-  var sub  = parseFloat((document.getElementById('fee-sub')||{}).value||1.00);
-  var feat = parseFloat((document.getElementById('fee-featured')||{}).value||75);
-  state.globalFees = {ticketFlat:flat, ticketPct:pct, unlockPct:unlock, unlockCap:cap, submissionFee:sub, featured:feat};
+  var sub  = parseFloat((document.getElementById('fee-sub')||{}).value||4.25);
+  var feat = parseFloat((document.getElementById('fee-featured')||{}).value||500);
+  state.globalFees = {ticketFlat:flat, ticketPct:pct, unlockPct:unlock, submissionFee:sub, featured:feat};
   showToast('Default fees saved');
 };
 
 // Reset admin fees
 window.resetAdminFees = function() {
-  state.globalFees = {ticketFlat:1.75, ticketPct:2.9, unlockPct:2.75, unlockCap:200, submissionFee:3.50};
+  state.globalFees = {ticketFlat:1.75, ticketPct:2.9, unlockPct:2.75, submissionFee:4.25, featured:500};
   showToast('Fees reset to defaults');
   render();
 };
@@ -3262,7 +3261,7 @@ window.calcOrderUnlockFee = function(sub) {
 
 window.signOutAdmin = async function(){ await AUTH.signOut(); setState({portal:'home'}); };
 window.saveFeeOverride = function(eventId){
-  var fields = ['ticketFlat','ticketPct','unlockPct','unlockCap','submissionFee','featuredFee'];
+  var fields = ['ticketFlat','ticketPct','unlockPct','submissionFee','featuredFee'];
   var override = {};
   fields.forEach(function(f){
     var el = document.getElementById('fee-'+f+'-'+eventId);
@@ -3466,7 +3465,7 @@ function createEventHTML() {
         <div style="font-size:11px;color:${B.cork};margin-top:5px">Agents need approval to submit after this date.</div>
       </div>
       <div style="background:${B.linen};border-radius:10px;padding:10px 14px;margin-bottom:4px;border:1px solid ${B.mist};font-size:11px;color:${B.cork}">
-        Poured charges: $1.75 + 2.9%/ticket · $${d.listingFee}/agent listing · 2.75% order unlock · $3.50 order processing fee
+        Poured charges: $1.75 + 2.9%/ticket · $${d.listingFee}/agent listing · 2.75% order unlock · $4.25 order processing fee
       </div>
       ${navBtns(3, 5, "Review & Publish →")}
     </div>`;
@@ -3912,7 +3911,7 @@ function coordPortalHTML() {
     content += '<div class="dp-card"><div class="dp-card-header"><span class="dp-card-title">Payout History</span></div>';
     if(isMobile()) {
       content += '<div style="padding:12px">';
-      [['SIP Toronto 2025','17 Oct 2025','$9,840.00'],['Wine Fest Toronto 2025','9 May 2025','$6,205.50']].forEach(function(row){
+      [['SIP Toronto 2025','17 Oct 2025','$9,840.00'],['Wine Fest Toronto 2025','9 May 2025','$6,205.25']].forEach(function(row){
         content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
         content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+row[0]+'</div>';
         content += '<div style="font-size:12px;color:#888;margin-bottom:8px">'+row[1]+'</div>';
@@ -3924,7 +3923,7 @@ function coordPortalHTML() {
       content += '</div>';
     } else {
       content += '<table class="dp-table"><thead><tr><th>Event</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>';
-      [['SIP Toronto 2025','17 Oct 2025','$9,840.00'],['Wine Fest Toronto 2025','9 May 2025','$6,205.50']].forEach(function(row){
+      [['SIP Toronto 2025','17 Oct 2025','$9,840.00'],['Wine Fest Toronto 2025','9 May 2025','$6,205.25']].forEach(function(row){
         content += '<tr><td style="font-weight:600;font-size:13px">'+row[0]+'</td><td style="color:var(--muted);font-size:12px">'+row[1]+'</td><td style="font-weight:600">'+row[2]+'</td><td><span class="dp-badge dp-badge-green">Paid</span></td></tr>';
       });
       content += '</tbody></table>';
@@ -4388,7 +4387,7 @@ function custPortalHTML() {
         <div id="order-contact-err" style="display:none;color:#7A1020;font-size:12px;font-weight:700;margin-bottom:10px;padding:0 2px"></div>
         <div style="background:#F0F4F8;border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:12px;color:#555;line-height:1.6">
           <div style="font-weight:700;color:#1A1A1A;margin-bottom:4px">HOW THIS WORKS</div>
-          Your order is sent to each agent, who will contact you directly to confirm, arrange payment, and coordinate delivery through their standard channels. POURED does not process payment for wine — we simply connect you with the agent. A one-time $3.50 processing fee applies.
+          Your order is sent to each agent, who will contact you directly to confirm, arrange payment, and coordinate delivery through their standard channels. POURED does not process payment for wine — we simply connect you with the agent. A one-time $4.25 processing fee applies.
         </div>
         <button onclick="submitOrderWithContact()" style="width:100%;padding:13px;border-radius:10px;border:none;background:${B.ink};color:${B.cream};font-size:14px;font-family:Nunito Sans,sans-serif;cursor:pointer;font-weight:700">Submit Order — ${cartCount} case${cartCount>1?'s':''} · ${Object.keys(byAgent).length} agent${Object.keys(byAgent).length>1?'s':''}</button>
       </div>`}
@@ -4443,7 +4442,7 @@ function adminPortalHTML() {
   var activeCoords  = state.coordinators.filter(function(c){return c.status==='active';}).length;
 
   // Default fees
-  var DEFAULTS = { ticketFlat:1.75, ticketPct:2.9, unlockPct:2.75, unlockCap:200, submissionFee:3.50, featuredFee:500 };
+  var DEFAULTS = { ticketFlat:1.75, ticketPct:2.9, unlockPct:2.75, submissionFee:4.25, featuredFee:500 };
 
   function navItem(id, icon, label, badge) {
     return '<button class="dp-nav-item'+(tab===id?' active':'')+'" onclick="setAdminTab(\''+id+'\')">'
@@ -4479,7 +4478,7 @@ function adminPortalHTML() {
       [
         ['Ticket fees','$1.75 + 2.9% per ticket','$1,800'],
         ['Order unlock fees','2.75%','$2,400'],
-        ['Order processing','$3.50 per checkout','$280'],
+        ['Order processing','$4.25 per checkout','$280'],
         ['Platform commission','7.5% free / 2% ticketed','$800'],
       ].forEach(function(row){
         content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
@@ -4494,7 +4493,7 @@ function adminPortalHTML() {
       [
         ['Ticket fees','$1.75 + 2.9% per ticket','$1,800'],
         ['Order unlock fees','2.75%','$2,400'],
-        ['Order processing','$3.50 per checkout','$280'],
+        ['Order processing','$4.25 per checkout','$280'],
         ['Platform commission','7.5% free / 2% ticketed','$800'],
       ].forEach(function(row){
         content += '<tr><td style="font-weight:600;font-size:13px">'+row[0]+'</td><td style="font-size:12px;color:var(--muted)">'+row[1]+'</td><td style="font-weight:600;color:#4A8A6A">'+row[2]+'</td></tr>';
@@ -4535,7 +4534,7 @@ function adminPortalHTML() {
   // ── FEE MANAGEMENT ───────────────────────────────────────────────
   else if(tab==='fees') {
     // Global defaults
-    var gf = state.globalFees || {ticketFlat:1.75, ticketPct:2.9, unlockPct:2.75, unlockCap:200, submissionFee:3.50, featured:500};
+    var gf = state.globalFees || {ticketFlat:1.75, ticketPct:2.9, unlockPct:2.75, submissionFee:4.25, featured:500};
     content += '<div class="dp-card" style="margin-bottom:20px">';
     content += '<div class="dp-card-header"><span class="dp-card-title">Platform Default Fees</span><span style="font-size:12px;color:var(--muted)">Applied to all events unless overridden</span></div>';
     content += '<div class="dp-card-body">';
@@ -4546,7 +4545,7 @@ function adminPortalHTML() {
     content += '</div>';
     content += '<div class="dp-input-row dp-input-row-3">';
     
-    content += '<div class="dp-field"><label class="dp-label">ORDER PROCESSING FEE</label><div style="display:flex;align-items:center;gap:6px"><span style="color:var(--muted);font-size:13px">$</span><input id="fee-sub" class="dp-input" type="number" step="0.25" value="'+(gf.submissionFee!=null?gf.submissionFee:3.50)+'" style="max-width:100px"></div><div style="font-size:11px;color:var(--muted);margin-top:4px">One fee per checkout</div></div>';
+    content += '<div class="dp-field"><label class="dp-label">ORDER PROCESSING FEE</label><div style="display:flex;align-items:center;gap:6px"><span style="color:var(--muted);font-size:13px">$</span><input id="fee-sub" class="dp-input" type="number" step="0.25" value="'+(gf.submissionFee!=null?gf.submissionFee:4.25)+'" style="max-width:100px"></div><div style="font-size:11px;color:var(--muted);margin-top:4px">One fee per checkout</div></div>';
     content += '<div class="dp-field"><label class="dp-label">FEATURED UPGRADE (CAD)</label><div style="display:flex;align-items:center;gap:6px"><span style="color:var(--muted);font-size:13px">$</span><input id="fee-featured" class="dp-input" type="number" step="5" value="'+(gf.featured!=null?gf.featured:500)+'" style="max-width:100px"></div><div style="font-size:11px;color:var(--muted);margin-top:4px">Optional agent upgrade</div></div>';
     content += '</div>';
     content += '<div style="margin-top:16px;display:flex;gap:10px">';
