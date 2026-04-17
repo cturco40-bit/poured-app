@@ -554,7 +554,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=50').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=51').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1613,7 +1613,7 @@ function unlockOrder(orderId) {
   render();
 }
 function unlockAll() {
-  const myOrders = agentOrders("christian@profilewinegroup.ca");
+  const myOrders = agentOrders((state.currentUser&&state.currentUser.email)||(IS_DEMO?'christian@profilewinegroup.ca':''));
   myOrders.forEach(o => { state.unlocked[o.id] = true; });
   state.unlockAllModal = false;
   render();
@@ -2162,7 +2162,7 @@ function agentOrderCardHTML(order) {
 
 // ─── AGENT EVENT LIST ────────────────────────────────────────────────────────
 function agentEventListHTML() {
-  var AGENT_EMAIL = 'christian@profilewinegroup.ca';
+  var AGENT_EMAIL = (state.currentUser&&state.currentUser.email) || (IS_DEMO?'christian@profilewinegroup.ca':'');
   var myListings = EVENTS.map(function(ev){
     var listing = ev.agents.find(function(a){return a.email===AGENT_EMAIL;});
     if(!listing) return null;
@@ -2223,8 +2223,8 @@ function agentEventListHTML() {
     +   '<div class="dp-sidebar-section" style="margin-top:8px">ACCOUNT</div>'
     +   '<button class="dp-nav-item"><span class="dp-nav-icon">◎</span>Profile</button>'
     +   '<div class="dp-sidebar-footer">'
-    +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">Profile Wine Group</div>'
-    +     '<div style="font-size:10px;color:#555;margin-bottom:8px;padding:0 4px">christian@profilewinegroup.ca</div>'
+    +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">'+(state.currentUser&&state.currentUser.company||(IS_DEMO?'Profile Wine Group':'Agent'))+'</div>'
+    +     '<div style="font-size:10px;color:#555;margin-bottom:8px;padding:0 4px">'+(state.currentUser&&state.currentUser.email||(IS_DEMO?'christian@profilewinegroup.ca':''))+'</div>'
     +     '<button class="dp-signout" onclick="signOutAgent()">Sign out</button>'
     +   '</div>'
     + '</div></div>'
@@ -2262,7 +2262,7 @@ function agentEventListHTML() {
 
 
 function agentPortalHTML() {
-  var AGENT_EMAIL = 'christian@profilewinegroup.ca';
+  var AGENT_EMAIL = (state.currentUser&&state.currentUser.email) || (IS_DEMO?'christian@profilewinegroup.ca':'');
   var ev = EVENTS.find(function(e){return e.id===state.selectedEventId;})||EV;
   var tab = state.agentTab || 'orders';
 
@@ -2546,8 +2546,8 @@ function agentPortalHTML() {
     +   navItem('upload','-','Upload Wines')
     +   navItem('export','-','Export')
     +   '<div class="dp-sidebar-footer">'
-    +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">Profile Wine Group</div>'
-    +     '<div style="font-size:10px;color:#555;margin-bottom:8px;padding:0 4px">christian@profilewinegroup.ca</div>'
+    +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">'+(state.currentUser&&state.currentUser.company||(IS_DEMO?'Profile Wine Group':'Agent'))+'</div>'
+    +     '<div style="font-size:10px;color:#555;margin-bottom:8px;padding:0 4px">'+(state.currentUser&&state.currentUser.email||(IS_DEMO?'christian@profilewinegroup.ca':''))+'</div>'
     +     '<button class="dp-signout" onclick="signOutAgent()">Sign out</button>'
     +   '</div>'
     + '</div></div>'
@@ -2942,20 +2942,21 @@ window.injectDrawer = function(portal) {
   var old2 = document.getElementById('dp-drawer');
   if(old2) old2.remove();
   var items=[], userName='', userEmail='', userInitials='', signOutFn='';
+  var cu = state.currentUser||{};
   if(portal==='agent'){
-    userName='Christian Turco'; userEmail='christian@profilewinegroup.ca'; userInitials='CT'; signOutFn='signOutAgent()';
+    userName=cu.name||cu.company||(IS_DEMO?'Christian Turco':'Agent'); userEmail=cu.email||(IS_DEMO?'christian@profilewinegroup.ca':''); userInitials=(userName[0]||'A').toUpperCase(); signOutFn='signOutAgent()';
     if(state.selectedEventId){
       items=[{i:'\u2190',l:'All Events',a:'agentHome'}];
     } else { items=[{i:'\u2630',l:'My Events',a:'agentHome',on:true}]; }
   } else if(portal==='coordinator'){
-    userName='The Tasting Collective'; userEmail='coordinator@tasting.ca'; userInitials='TC'; signOutFn='signOutCoord()';
+    userName=cu.name||cu.company||(IS_DEMO?'The Tasting Collective':'Event Host'); userEmail=cu.email||(IS_DEMO?'coordinator@tasting.ca':''); userInitials=(userName[0]||'H').toUpperCase(); signOutFn='signOutCoord()';
     if(state.coordSelectedEventId && state.coordSelectedEventId!==-1){
       items=[{i:'\u2190',l:'All Events',a:'coordHome'}];
     } else {
       items=[{i:'\u2630',l:'My Events',a:'coordHome',on:!state.coordSelectedEventId},{i:'+',l:'New Event',a:'coordCreate',on:state.coordSelectedEventId===-1}];
     }
   } else if(portal==='admin'){
-    userName='Platform Admin'; userEmail='admin@pouredevents.com'; userInitials='PA'; signOutFn='signOutAdmin()';
+    userName=cu.name||(IS_DEMO?'Platform Admin':'Admin'); userEmail=cu.email||(IS_DEMO?'admin@pouredevents.com':''); userInitials=(userName[0]||'A').toUpperCase(); signOutFn='signOutAdmin()';
     items=[{i:'\u2630',l:'Dashboard',a:'adminDashboard',on:state.adminTab==='dashboard'},{i:'\u25CE',l:'Hosts',a:'adminCoords',on:state.adminTab==='coordinators'},{i:'\u25A1',l:'Events',a:'adminEvents',on:state.adminTab==='events'},{i:'$',l:'Fees',a:'adminFees',on:state.adminTab==='fees'}];
   }
   var navHTML = items.map(function(it){ return '<button class="dp-drawer-item'+(it.on?' active':'')+'" onclick="drawerAction(\''+it.a+'\')"><span class="dp-drawer-item-icon">'+it.i+'</span>'+it.l+'</button>'; }).join('');
@@ -3217,7 +3218,7 @@ window.dlCSVTemplate = function() {
 };
 window.dlAgentCSV = function() {
   var ev = EVENTS.find(function(e){return e.id===state.selectedEventId;})||EV;
-  var AGENT_EMAIL = 'christian@profilewinegroup.ca';
+  var AGENT_EMAIL = (state.currentUser&&state.currentUser.email) || (IS_DEMO?'christian@profilewinegroup.ca':'');
   var myOrders = ev.orders.filter(function(o){return o.items.some(function(i){return i.agentEmail===AGENT_EMAIL;});});
   var rows = [['Order ID','Customer','Email','Address','City','Postal','Items','Value','Status']];
   myOrders.forEach(function(o){
@@ -3543,7 +3544,7 @@ function coordEventListHTML() {
     +   '<div class="dp-sidebar-section" style="margin-top:8px">ACCOUNT</div>'
     +   '<button class="dp-nav-item"><span class="dp-nav-icon">◈</span>Settings</button>'
     +   '<div class="dp-sidebar-footer">'
-    +     '<div class="dp-sidebar-user"><div class="dp-sidebar-avatar">TC</div><div><div class="dp-sidebar-user-name">The Tasting Collective</div><div class="dp-sidebar-user-email">coordinator@tasting.ca</div></div></div>'
+    +     '<div class="dp-sidebar-user"><div class="dp-sidebar-avatar">'+(state.currentUser&&state.currentUser.name?state.currentUser.name[0].toUpperCase():'H')+'</div><div><div class="dp-sidebar-user-name">'+(state.currentUser&&state.currentUser.name||(IS_DEMO?'The Tasting Collective':'Event Host'))+'</div><div class="dp-sidebar-user-email">'+(state.currentUser&&state.currentUser.email||(IS_DEMO?'coordinator@tasting.ca':''))+'</div></div></div>'
     +     '<button class="dp-signout" onclick="signOutCoord()">Sign out</button>'
     +   '</div>'
     + '</div></div>'
@@ -3943,7 +3944,7 @@ function coordPortalHTML() {
     +   navItem('payout','-','Payout')
     +   navItem('create','+','Create Event')
     +   '<div class="dp-sidebar-footer">'
-    +     '<div class="dp-sidebar-user"><div class="dp-sidebar-avatar">TC</div><div><div class="dp-sidebar-user-name">The Tasting Collective</div><div class="dp-sidebar-user-email">coordinator@tasting.ca</div></div></div>'
+    +     '<div class="dp-sidebar-user"><div class="dp-sidebar-avatar">'+(state.currentUser&&state.currentUser.name?state.currentUser.name[0].toUpperCase():'H')+'</div><div><div class="dp-sidebar-user-name">'+(state.currentUser&&state.currentUser.name||(IS_DEMO?'The Tasting Collective':'Event Host'))+'</div><div class="dp-sidebar-user-email">'+(state.currentUser&&state.currentUser.email||(IS_DEMO?'coordinator@tasting.ca':''))+'</div></div></div>'
     +     '<button class="dp-signout" onclick="signOutCoord()">Sign out</button>'
     +   '</div>'
     + '</div></div>'
@@ -4059,7 +4060,7 @@ function custEventListHTML() {
 
   // ── DASHBOARD TAB ──
   if(dashTab==='dashboard') {
-    html+='<div style="margin-bottom:20px"><div style="font-size:20px;font-weight:800;color:#1A1A1A;margin-bottom:4px">Welcome back, Sarah</div><div style="font-size:13px;color:#888">Here\'s your overview</div></div>';
+    html+='<div style="margin-bottom:20px"><div style="font-size:20px;font-weight:800;color:#1A1A1A;margin-bottom:4px">Welcome back, '+(state.currentUser&&state.currentUser.name?state.currentUser.name.split(' ')[0]:(IS_DEMO?'Sarah':'there'))+'</div><div style="font-size:13px;color:#888">Here\'s your overview</div></div>';
     // Stats
     html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">';
     html+='<div style="background:#fff;border-radius:12px;padding:20px 16px;border:1px solid #EBEBEB;text-align:center"><div style="font-size:28px;font-weight:900;color:#1A1A1A">'+myTickets.length+'</div><div style="font-size:10px;color:#888;font-weight:700;letter-spacing:.1em;margin-top:4px">EVENTS ATTENDED</div></div>';
@@ -4689,8 +4690,8 @@ function adminPortalHTML() {
     +   navItem('coordinators','-','Event Hosts')
     +   navItem('fees','-','Fee Settings')
     +   '<div class="dp-sidebar-footer">'
-    +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">Platform Admin</div>'
-    +     '<div style="font-size:10px;color:#555;margin-bottom:8px;padding:0 4px">admin@pouredevents.com</div>'
+    +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">'+(state.currentUser&&state.currentUser.name||(IS_DEMO?'Platform Admin':'Admin'))+'</div>'
+    +     '<div style="font-size:10px;color:#555;margin-bottom:8px;padding:0 4px">'+(state.currentUser&&state.currentUser.email||(IS_DEMO?'admin@pouredevents.com':''))+'</div>'
     +     '<button class="dp-signout" onclick="signOutAdmin()">Sign out</button>'
     +   '</div>'
     + '</div></div>'
