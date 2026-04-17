@@ -554,7 +554,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=43').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=44').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -4745,6 +4745,8 @@ var IS_DEMO = false;
   if(demo === 'agent') { state.portal = 'agent_in'; }
   if(demo === 'attendee') { state.portal = 'customer_in'; state.selectedEventId = 1; }
   if(demo === 'admin') { state.portal = 'admin_in'; }
+  var adminMode = params.get('admin');
+  if(adminMode !== null) { state.portal = 'admin'; }
 })();
 
 function injectDemoBanner() {
