@@ -554,7 +554,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=51').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=52').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1907,7 +1907,7 @@ window.tryLogin = async function(portalId, demoEmail, demoPw) {
   var email=(document.getElementById('login-email')||{}).value||'';
   var pw=(document.getElementById('login-pw')||{}).value||'';
   var err=document.getElementById('login-err');
-  if(LIVE_MODE){if(err){err.style.display='none';}var res=await AUTH.signIn(email,pw);if(res.error){if(err){err.style.display='block';err.textContent=res.error.message;}return;}var profile=await AUTH.getProfile();setState({portal:((profile&&profile.role)||portalId)+'_in',currentUser:profile});}
+  if(LIVE_MODE){if(err){err.style.display='none';}var res=await AUTH.signIn(email,pw);if(res.error){if(err){err.style.display='block';err.textContent=res.error.message;}return;}var profile=await AUTH.getProfile();setState({portal:portalId+'_in',currentUser:profile});}
   else{if(email===demoEmail&&pw===demoPw){setState({portal:portalId+'_in'});}else{if(err){err.style.display='block';err.textContent='Demo: '+demoEmail+' / '+demoPw;}}}
 };
 
@@ -4733,10 +4733,13 @@ function render() {
   }
   if(p === 'admin') { app.innerHTML = loginShell('Platform Admin','-','admin@pouredevents.com','admin2025','admin','#7A1020'); return; }
   if(p === 'admin_in') { document.body.classList.add('dp'); app.innerHTML = adminPortalHTML(); injectMobileNav('admin'); injectDrawer('admin'); return; }
+  if(p === 'agent' && state.currentUser) { document.body.classList.add('dp'); app.innerHTML = agentPortalHTML(); injectMobileNav('agent'); injectDrawer('agent'); return; }
   if(p === 'agent') { document.body.classList.remove('dp'); app.innerHTML = loginShell('Agent / Producer','','christian@profilewinegroup.ca','agent2025','agent','#7A1020'); return; }
   if(p === 'agent_in') { document.body.classList.add('dp'); app.innerHTML = agentPortalHTML(); injectMobileNav('agent'); injectDrawer('agent'); return; }
+  if(p === 'coordinator' && state.currentUser) { document.body.classList.add('dp'); app.innerHTML = coordPortalHTML(); injectMobileNav('coordinator'); injectDrawer('coordinator'); return; }
   if(p === 'coordinator') { document.body.classList.remove('dp'); app.innerHTML = loginShell('Event Host','','coordinator@tasting.ca','coord2025','coordinator','#1D4ED8'); return; }
   if(p === 'coordinator_in') { document.body.classList.add('dp'); app.innerHTML = coordPortalHTML(); injectMobileNav('coordinator'); injectDrawer('coordinator'); return; }
+  if(p === 'customer' && state.currentUser) { document.body.classList.remove('dp'); app.innerHTML = custPortalHTML(); app.style.paddingBottom='0'; return; }
   if(p === 'customer') { document.body.classList.remove('dp'); app.innerHTML = loginShell('Attendee','','jane@example.com','jane2025','customer','#2a7a4a'); return; }
   if(p === 'customer_in') { document.body.classList.remove('dp'); app.innerHTML = custPortalHTML(); app.style.paddingBottom='0'; return; }
   if(p === 'coordinator_signup') { document.body.classList.remove('dp'); app.innerHTML = signupShell('Event Host','coordinator','#1D4ED8'); return; }
