@@ -554,7 +554,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=53').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=57').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -2082,7 +2082,7 @@ function homeHTML() {
 
     + '</div>'
     + '<div style="text-align:center;padding:0 24px 32px;margin-top:auto">'
-    +   '<div style="margin-bottom:8px"><a href="/terms.html" style="color:#CCCCCC;font-size:10px;letter-spacing:.08em;margin-right:16px;text-decoration:none">TERMS</a><a href="/privacy.html" style="color:#CCCCCC;font-size:10px;letter-spacing:.08em;text-decoration:none">PRIVACY</a></div>'
+    +   '<div style="margin-bottom:8px"><a href="https://pouredevents.com/terms" style="color:#CCCCCC;font-size:10px;letter-spacing:.08em;margin-right:16px;text-decoration:none">TERMS</a><a href="https://pouredevents.com/privacy" style="color:#CCCCCC;font-size:10px;letter-spacing:.08em;text-decoration:none">PRIVACY</a></div>'
     +   '<div style="font-size:10px;color:#CCCCCC;line-height:1.7">Poured facilitates event ticketing and order introductions only.<br>Beverage sales conducted directly between licensed agents and customers.</div>'
     + '</div></div>';
 }
