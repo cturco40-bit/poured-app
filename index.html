@@ -559,7 +559,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=73').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=74').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1020,14 +1020,14 @@ let state = {
 // ── 1. QR DOOR CHECK-IN ──────────────────────────────────────────────────
 window.toggleQR = () => setState({qrMode: !state.qrMode});
 function qrCheckinHTML(EV) {
-  var attendees = EV.attendees || [
+  var attendees = EV.attendees || (IS_DEMO ? [
     {id:1, name:'Jane Thompson',    tier:'General Admission', email:'jane@example.com',    ticket:'T-0042', admitted:false, paid:true},
     {id:2, name:'Marcus Reid',      tier:'VIP Reserve',       email:'marcus@example.com',   ticket:'T-0017', admitted:false, paid:true},
     {id:3, name:'Sophie Chen',      tier:'General Admission', email:'sophie@example.com',   ticket:'T-0091', admitted:true,  paid:true},
     {id:4, name:'David Okonkwo',    tier:'Trade / Industry',  email:'david@example.com',    ticket:'T-0003', admitted:false, paid:true},
     {id:5, name:'Priya Mehta',      tier:'General Admission', email:'priya@example.com',    ticket:'T-0058', admitted:false, paid:true},
     {id:6, name:'James Whitfield',  tier:'General Admission', email:'james@example.com',    ticket:'T-0071', admitted:true,  paid:true},
-  ];
+  ] : []);
   var admitted = attendees.filter(function(a){return a.admitted;}).length;
   var total    = attendees.length;
 
@@ -1178,8 +1178,8 @@ Receipt #: UNL-${order.id}
 Date: ${new Date().toLocaleDateString('en-CA')}
 Event: ${(EVENTS.find(function(e){return e.id===state.selectedEventId;})||{name:''}).name}
 
-Agent: Profile Wine Group
-Email: christian@profilewinegroup.ca
+Agent: ${(state.currentUser&&state.currentUser.company)||(IS_DEMO?'Profile Wine Group':'')}
+Email: ${(state.currentUser&&state.currentUser.email)||(IS_DEMO?'christian@profilewinegroup.ca':'')}
 
 ORDER UNLOCKED:
   Order ID:        ${order.id}
@@ -1456,12 +1456,12 @@ function payoutDashboardHTML(ev) {
 
 // ── 13. SMART SERVE / TRADE CHECK-IN ─────────────────────────────────────
 function tradeVerifyHTML(ev) {
-  const tradeAttendees = [
+  const tradeAttendees = IS_DEMO ? [
     {id:"t001",name:"Sophie Beaumont",company:"Profile Wine Group",credential:"ORCA Member",verified:true},
     {id:"t002",name:"David Chen",company:"Vanguard Wine Co.",credential:"Smart Serve #44821",verified:true},
     {id:"t003",name:"Rachel Torres",company:"LCBO Buyer",credential:"Trade ID TBD",verified:false},
     {id:"t004",name:"Michael Kim",company:"Independent",credential:"Smart Serve pending",verified:false},
-  ];
+  ] : [];
   return `<div style="padding:16px">
     <div style="font-size:11px;color:${B.cork};letter-spacing:.14em;margin-bottom:4px">TRADE CREDENTIAL VERIFICATION</div>
     <div style="font-size:13px;color:${B.cork};line-height:1.7;margin-bottom:14px">Trade ticket holders must present valid credentials at door. Smart Serve, ORCA membership, or industry trade ID required.</div>
@@ -2916,8 +2916,11 @@ window.drawerAction = function(action) {
   setTimeout(function(){ mobileNavAction(action); }, 150);
 };
 window.showAccountModal = function(portal, name, email) {
-  var company = portal==='agent' ? 'Profile Wine Group' : portal==='coordinator' ? 'The Tasting Collective' : 'Poured Platform';
-  var phone = portal==='agent' ? '416-555-0200' : portal==='coordinator' ? '416-555-0100' : '';
+  var cu = state.currentUser || {};
+  var demoCompany = portal==='agent' ? 'Profile Wine Group' : portal==='coordinator' ? 'The Tasting Collective' : 'Poured Platform';
+  var demoPhone = portal==='agent' ? '416-555-0200' : portal==='coordinator' ? '416-555-0100' : '';
+  var company = cu.company || (IS_DEMO ? demoCompany : '');
+  var phone = cu.phone || (IS_DEMO ? demoPhone : '');
   var role = portal==='agent' ? 'Agent / Producer' : portal==='coordinator' ? 'Event Host' : 'Platform Admin';
   var ov = document.createElement('div');
   ov.id = 'account-modal';
@@ -2951,20 +2954,21 @@ window.injectDrawer = function(portal) {
   if(old2) old2.remove();
   var items=[], userName='', userEmail='', userInitials='', signOutFn='';
   var cu = state.currentUser||{};
+  var computeInitials = function(n){ return (n||'').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2)||'U'; };
   if(portal==='agent'){
-    userName=cu.name||cu.company||(IS_DEMO?'Christian Turco':'Agent'); userEmail=cu.email||(IS_DEMO?'christian@profilewinegroup.ca':''); userInitials=(userName[0]||'A').toUpperCase(); signOutFn='signOutAgent()';
+    userName=cu.name||cu.company||(IS_DEMO?'Christian Turco':'Agent'); userEmail=cu.email||(IS_DEMO?'christian@profilewinegroup.ca':''); userInitials=computeInitials(userName); signOutFn='signOutAgent()';
     if(state.selectedEventId){
       items=[{i:'\u2190',l:'All Events',a:'agentHome'}];
     } else { items=[{i:'\u2630',l:'My Events',a:'agentHome',on:true}]; }
   } else if(portal==='coordinator'){
-    userName=cu.name||cu.company||(IS_DEMO?'The Tasting Collective':'Event Host'); userEmail=cu.email||(IS_DEMO?'coordinator@tasting.ca':''); userInitials=(userName[0]||'H').toUpperCase(); signOutFn='signOutCoord()';
+    userName=cu.name||cu.company||(IS_DEMO?'The Tasting Collective':'Event Host'); userEmail=cu.email||(IS_DEMO?'coordinator@tasting.ca':''); userInitials=computeInitials(userName); signOutFn='signOutCoord()';
     if(state.coordSelectedEventId && state.coordSelectedEventId!==-1){
       items=[{i:'\u2190',l:'All Events',a:'coordHome'}];
     } else {
       items=[{i:'\u2630',l:'My Events',a:'coordHome',on:!state.coordSelectedEventId},{i:'+',l:'New Event',a:'coordCreate',on:state.coordSelectedEventId===-1}];
     }
   } else if(portal==='admin'){
-    userName=cu.name||(IS_DEMO?'Platform Admin':'Admin'); userEmail=cu.email||(IS_DEMO?'admin@pouredevents.com':''); userInitials=(userName[0]||'A').toUpperCase(); signOutFn='signOutAdmin()';
+    userName=cu.name||(IS_DEMO?'Platform Admin':'Admin'); userEmail=cu.email||(IS_DEMO?'admin@pouredevents.com':''); userInitials=computeInitials(userName); signOutFn='signOutAdmin()';
     items=[{i:'\u2630',l:'Dashboard',a:'adminDashboard',on:state.adminTab==='dashboard'},{i:'\u25CE',l:'Hosts',a:'adminCoords',on:state.adminTab==='coordinators'},{i:'\u25A1',l:'Events',a:'adminEvents',on:state.adminTab==='events'},{i:'$',l:'Fees',a:'adminFees',on:state.adminTab==='fees'}];
   }
   var navHTML = items.map(function(it){ return '<button class="dp-drawer-item'+(it.on?' active':'')+'" onclick="drawerAction(\''+it.a+'\')"><span class="dp-drawer-item-icon">'+it.i+'</span>'+it.l+'</button>'; }).join('');
@@ -4200,10 +4204,16 @@ function custEventListHTML() {
   else if(dashTab==='profile') {
     html+='<div style="background:#fff;border-radius:14px;border:1px solid #EBEBEB;padding:24px 20px">';
     html+='<div style="font-size:16px;font-weight:800;margin-bottom:20px">MY PROFILE</div>';
-    html+='<div style="margin-bottom:14px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">FIRST NAME</div><input id="prof-first" type="text" value="Sarah" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
-    html+='<div style="margin-bottom:14px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">LAST NAME</div><input id="prof-last" type="text" value="Thompson" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
-    html+='<div style="margin-bottom:14px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">EMAIL</div><input id="prof-email" type="email" value="sarah@example.com" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
-    html+='<div style="margin-bottom:14px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">PHONE</div><input id="prof-phone" type="tel" value="416-555-0199" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
+    var _cuProf = state.currentUser || {};
+    var _profFull = _cuProf.name || (IS_DEMO?'Sarah Thompson':'');
+    var _profFirst = _profFull.split(' ')[0] || (IS_DEMO?'Sarah':'');
+    var _profLast = _profFull.split(' ').slice(1).join(' ') || (IS_DEMO?'Thompson':'');
+    var _profEmail = _cuProf.email || (IS_DEMO?'sarah@example.com':'');
+    var _profPhone = _cuProf.phone || (IS_DEMO?'416-555-0199':'');
+    html+='<div style="margin-bottom:14px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">FIRST NAME</div><input id="prof-first" type="text" value="'+_profFirst+'" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
+    html+='<div style="margin-bottom:14px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">LAST NAME</div><input id="prof-last" type="text" value="'+_profLast+'" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
+    html+='<div style="margin-bottom:14px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">EMAIL</div><input id="prof-email" type="email" value="'+_profEmail+'" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
+    html+='<div style="margin-bottom:14px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">PHONE</div><input id="prof-phone" type="tel" value="'+_profPhone+'" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
     html+='<div style="margin-bottom:14px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">COMPANY / RESTAURANT <span style="color:#CCC">(optional)</span></div><input id="prof-company" type="text" value="" placeholder="e.g. Canoe Restaurant" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
     html+='<div style="margin-bottom:20px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">PASSWORD</div><input id="prof-pw" type="password" value="********" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
     html+='<button onclick="showToast(\'Profile saved\')" style="width:100%;padding:13px;border-radius:10px;border:none;background:#1A1A1A;color:#fff;font-size:13px;font-weight:700;font-family:Nunito Sans,sans-serif;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px">Save Changes</button>';
@@ -4429,7 +4439,7 @@ function custPortalHTML() {
             </div>
             <div>
               <div style="font-size:9px;color:${B.cork};font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Phone *</div>
-              <input id="order-phone" type="tel" placeholder="416-555-0100" style="width:100%;padding:9px 11px;border:1.5px solid ${B.mist};border-radius:6px;font-size:13px;color:${B.ink};background:#fff;font-family:Nunito Sans,sans-serif;box-sizing:border-box">
+              <input id="order-phone" type="tel" placeholder="Phone number" style="width:100%;padding:9px 11px;border:1.5px solid ${B.mist};border-radius:6px;font-size:13px;color:${B.ink};background:#fff;font-family:Nunito Sans,sans-serif;box-sizing:border-box">
             </div>
           </div>
           <div style="margin-bottom:4px">
@@ -4568,7 +4578,7 @@ function adminPortalHTML() {
         var sc = ev.status==='active'?'dp-badge-green':ev.status==='upcoming'?'dp-badge-blue':'dp-badge-gray';
         content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
         content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+ev.name+'</div>';
-        content += '<div style="font-size:12px;color:#888;margin-bottom:6px">The Tasting Collective</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:6px">'+(IS_DEMO?'The Tasting Collective':'—')+'</div>';
         content += '<div style="display:flex;justify-content:space-between;align-items:center">';
         content += '<span style="font-size:14px;font-weight:600;color:#4A8A6A">$'+ticketRev.toFixed(0)+'</span>';
         content += '<span class="dp-badge '+sc+'">'+ev.status+'</span>';
@@ -4580,7 +4590,7 @@ function adminPortalHTML() {
       EVENTS.forEach(function(ev){
         var ticketRev = ev.tiers.reduce(function(s,t){return s+calcTicketFee(t.price)*t.sold;},0);
         var sc = ev.status==='active'?'dp-badge-green':ev.status==='upcoming'?'dp-badge-blue':'dp-badge-gray';
-        content += '<tr><td style="font-weight:600;font-size:13px">'+ev.name+'</td><td style="font-size:12px;color:var(--muted)">The Tasting Collective</td><td style="font-weight:600;color:#4A8A6A">$'+ticketRev.toFixed(0)+'</td><td><span class="dp-badge '+sc+'">'+ev.status+'</span></td></tr>';
+        content += '<tr><td style="font-weight:600;font-size:13px">'+ev.name+'</td><td style="font-size:12px;color:var(--muted)">'+(IS_DEMO?'The Tasting Collective':'—')+'</td><td style="font-weight:600;color:#4A8A6A">$'+ticketRev.toFixed(0)+'</td><td><span class="dp-badge '+sc+'">'+ev.status+'</span></td></tr>';
       });
       content += '</tbody></table>';
     }
@@ -4624,7 +4634,7 @@ function adminPortalHTML() {
           + '<td><div style="font-weight:600;font-size:13px">'+ev.name+'</div>'
           + (isCustom?'<span class="dp-badge dp-badge-amber" style="margin-top:4px">Custom fees</span>':'')
           + '</td>'
-          + '<td style="font-size:12px;color:var(--muted)">The Tasting Collective</td>'
+          + '<td style="font-size:12px;color:var(--muted)">'+(IS_DEMO?'The Tasting Collective':'—')+'</td>'
           + '<td><div style="display:flex;align-items:center;gap:3px"><span style="font-size:11px;color:var(--muted)">$</span><input id="fee-ticketFlat-'+ev.id+'" class="dp-input" type="number" step="0.25" value="'+(ov.ticketFlat||1.75)+'" style="width:64px;padding:5px 8px;font-size:12px"></div></td>'
           + '<td><div style="display:flex;align-items:center;gap:3px"><input id="fee-ticketPct-'+ev.id+'" class="dp-input" type="number" step="0.5" value="'+(ov.ticketPct||6)+'" style="width:52px;padding:5px 8px;font-size:12px"><span style="font-size:11px;color:var(--muted)">%</span></div></td>'
           + '<td><div style="display:flex;align-items:center;gap:3px"><input id="fee-unlockPct-'+ev.id+'" class="dp-input" type="number" step="0.25" value="'+(ov.unlockPct||1.25)+'" style="width:52px;padding:5px 8px;font-size:12px"><span style="font-size:11px;color:var(--muted)">%</span></div></td>'
@@ -4683,7 +4693,7 @@ function adminPortalHTML() {
   else if(tab==='events') {
     content += '<div class="dp-card"><div class="dp-card-header"><span class="dp-card-title">All Platform Events</span>';
     content += '<div style="display:flex;gap:8px">';
-    content += '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="(function(){var a=document.createElement(\'a\');a.href=URL.createObjectURL(new Blob([[\'Event,Host,Date,Tickets,Revenue,Status\'].concat(EVENTS.map(function(e){return e.name+\',The Tasting Collective,\'+e.date+\',\'+e.tiers.reduce(function(s,t){return s+t.sold;},0)+\',\'+e.tiers.reduce(function(s,t){return s+calcTicketFee(t.price)*t.sold;},0)+\',\'+e.status;})).join(\'\\n\')],{type:\'text/csv\'}));a.download=\'platform-events.csv\';a.click();})()">⬇ Export CSV</button>';
+    content += '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="(function(){var h=IS_DEMO?\'The Tasting Collective\':\'\';var a=document.createElement(\'a\');a.href=URL.createObjectURL(new Blob([[\'Event,Host,Date,Tickets,Revenue,Status\'].concat(EVENTS.map(function(e){return e.name+\',\'+h+\',\'+e.date+\',\'+e.tiers.reduce(function(s,t){return s+t.sold;},0)+\',\'+e.tiers.reduce(function(s,t){return s+calcTicketFee(t.price)*t.sold;},0)+\',\'+e.status;})).join(\'\\n\')],{type:\'text/csv\'}));a.download=\'platform-events.csv\';a.click();})()">⬇ Export CSV</button>';
     content += '</div></div>';
     if(isMobile()) {
       content += '<div style="padding:12px">';
@@ -4692,7 +4702,7 @@ function adminPortalHTML() {
         var sc = ev.status==='active'?'dp-badge-green':ev.status==='upcoming'?'dp-badge-blue':'dp-badge-gray';
         content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
         content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+ev.name+'</div>';
-        content += '<div style="font-size:12px;color:#888;margin-bottom:6px">'+ev.date+' · The Tasting Collective</div>';
+        content += '<div style="font-size:12px;color:#888;margin-bottom:6px">'+ev.date+(IS_DEMO?' · The Tasting Collective':'')+'</div>';
         content += '<div style="display:flex;justify-content:space-between;align-items:center">';
         content += '<span style="font-size:12px">$'+ticketRev.toFixed(0)+' rev</span>';
         content += '<span class="dp-badge '+sc+'">'+ev.status+'</span>';
@@ -4709,7 +4719,7 @@ function adminPortalHTML() {
         var sc = ev.status==='active'?'dp-badge-green':ev.status==='upcoming'?'dp-badge-blue':'dp-badge-gray';
         content += '<tr>'
           + '<td><div style="font-weight:600;font-size:13px">'+ev.name+'</div><div style="font-size:11px;color:var(--muted)">'+ev.agents.length+' agents · '+ev.products.length+' products</div></td>'
-          + '<td style="font-size:12px;color:var(--muted)">The Tasting Collective</td>'
+          + '<td style="font-size:12px;color:var(--muted)">'+(IS_DEMO?'The Tasting Collective':'—')+'</td>'
           + '<td style="font-size:12px;color:var(--muted)">'+ev.date+'</td>'
           + '<td style="font-size:13px">'+ev.tiers.reduce(function(s,t){return s+t.sold;},0)+' / '+ev.tiers.reduce(function(s,t){return s+t.capacity;},0)+'</td>'
           + '<td style="font-weight:600;color:#4A8A6A">$'+totalRev.toFixed(0)+'</td>'
