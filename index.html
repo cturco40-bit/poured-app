@@ -565,7 +565,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=98').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=99').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -5438,11 +5438,9 @@ function injectDemoBanner() {
   if(!IS_DEMO || document.getElementById('demo-banner')) return;
   var b = document.createElement('div');
   b.id = 'demo-banner';
-  b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#7A1020;color:#fff;padding:calc(6px + env(safe-area-inset-top, 0px)) 16px 6px;font-size:11px;font-family:Nunito Sans,sans-serif;font-weight:700;letter-spacing:.06em;text-align:center;display:flex;align-items:center;justify-content:center;gap:12px';
-  b.innerHTML = '<span>DEMO MODE — This is sample data</span><a href="mailto:info@pouredevents.com" style="color:#fff;background:rgba(255,255,255,.2);padding:3px 12px;border-radius:20px;font-size:10px;text-decoration:none;letter-spacing:.08em">REQUEST EARLY ACCESS</a>';
+  b.style.cssText = 'background:#7A1020;color:#fff;padding:6px 16px;padding-top:calc(6px + env(safe-area-inset-top,0px));font-size:11px;font-family:Nunito Sans,sans-serif;font-weight:700;letter-spacing:.06em;text-align:center;display:flex;align-items:center;justify-content:center;gap:12px;z-index:9999';
+  b.innerHTML = '<span>DEMO MODE \u2014 This is sample data</span><a href="mailto:info@pouredevents.com" style="color:#fff;background:rgba(255,255,255,.2);padding:3px 12px;border-radius:20px;font-size:10px;text-decoration:none;letter-spacing:.08em">REQUEST EARLY ACCESS</a>';
   document.body.prepend(b);
-  // Push content down
-  document.body.style.paddingTop = '32px';
 }
 
 try { var savedCart = sessionStorage.getItem('poured-cart'); if(savedCart) state.cart = JSON.parse(savedCart); } catch(e){}
