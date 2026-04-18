@@ -182,8 +182,8 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     background: rgba(255,255,255,.25) !important;
   }
   .dp-content {
-    padding-top: calc(60px + env(safe-area-inset-top, 0px)) !important;
-    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-top: calc(100px + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: 20px !important;
     padding-left: 12px !important;
     padding-right: 12px !important;
     background: #FFFFFF;
@@ -215,44 +215,9 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   .dp-stat-label { font-size: 9px; letter-spacing: .02em; line-height: 1.4; word-break: break-word; overflow-wrap: break-word; hyphens: auto; }
   .dp-stat-sub { font-size: 10px; }
   .dp-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .dp-mobile-nav {
-    display: flex;
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 100 !important;
-    background: #fff !important;
-    border-top: 1px solid #EBEBEB !important;
-    padding: 8px 0 !important;
-    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
-    margin: 0 !important;
-    transform: none !important;
-    max-width: none !important;
-    width: 100% !important;
-    box-shadow: 0 -1px 4px rgba(0,0,0,.05) !important;
-  }
-  .dp-mobile-nav-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;
-    cursor: pointer;
-    border: none;
-    background: none;
-    font-family: 'Nunito Sans', sans-serif;
-    color: #888888;
-    font-size: 9px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    gap: 3px;
-  }
-  .dp-mobile-nav-item.active { color: #7A1020; }
-  .dp-mobile-nav-icon { font-size: 18px; line-height: 1; }
   .dp-btn-sm { min-height: 44px; padding: 10px 14px; font-size: 12px; }
+  /* Bottom-nav system removed — all navigation lives in the topbar + drawer */
+  .dp-mobile-nav { display: none !important; }
 }
 
 .dp-shell{
@@ -328,9 +293,28 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   box-shadow:0 1px 6px rgba(0,0,0,.06);
   z-index:5;
 }
+.dp-topbar.has-tabs{
+  flex-direction:column;
+  align-items:stretch;
+  height:auto;
+  padding:0;
+}
+.dp-topbar-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 22px;
+  min-height:54px;
+}
 .dp-topbar-title{text-transform:uppercase;letter-spacing:.08em;font-size:15px;font-weight:700;color:var(--ink);letter-spacing:-.1px;}
 .dp-topbar-sub{font-size:11px;color:var(--muted);margin-top:2px;}
 .dp-topbar-actions{display:flex;gap:8px;align-items:center;}
+.dp-hamburger{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;font-family:inherit;display:none;}
+@media(max-width:768px){
+  .dp-hamburger{display:inline-block;}
+  .dp-topbar.has-tabs{padding:calc(8px + env(safe-area-inset-top, 0px)) 0 0 !important;}
+  .dp-topbar.has-tabs > .dp-topbar-row{padding:0 12px 8px;min-height:auto;}
+}
 .dp-content{flex:1;overflow-y:auto;padding:24px;background:linear-gradient(180deg,#F2F2F2 0%,#F8F8F8 100%);}
 .dp-content::-webkit-scrollbar{width:4px;}
 .dp-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
@@ -549,7 +533,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=105').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=106').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -2817,24 +2801,26 @@ function agentPortalHTML() {
     +     '<button class="dp-signout" onclick="signOutAgent()">Sign out</button>'
     +   '</div>'
     + '</div></div>'
-    + '<div class="dp-topbar">'
-    +   '<div style="display:flex;align-items:center;gap:8px">'+logoSVG+'<span style="font-size:13px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-family:Nunito Sans,sans-serif;color:'+(isMobile()?'#fff':'var(--ink)')+'">POURED</span></div>'
-    +   '<div class="dp-topbar-actions">'
-    +     (newCount>0?'<span class="dp-badge dp-badge-red" style="padding:4px 8px;font-size:11px">'+newCount+' new</span>':'')
-    +     '<button class="dp-btn" onclick="backToAgentList()">← Back</button>'
-    +     '<button class="dp-btn" onclick="signOutAgent()">Sign out</button>'
+    + '<div class="dp-topbar has-tabs">'
+    +   '<div class="dp-topbar-row">'
+    +     '<div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1"><span style="font-size:13px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;font-family:Nunito Sans,sans-serif;color:'+(isMobile()?'#fff':'var(--ink)')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ev.name+'</span></div>'
+    +     '<div class="dp-topbar-actions">'
+    +       (newCount>0?'<span class="dp-badge dp-badge-red" style="padding:4px 8px;font-size:11px">'+newCount+' new</span>':'')
+    +       '<button class="dp-btn" onclick="backToAgentList()">← Back</button>'
+    +       '<button class="dp-btn" onclick="signOutAgent()">Sign out</button>'
+    +     '</div>'
     +   '</div>'
+    +   tabBar([['orders','Orders'],['suppliers','Wines'],['upload','Upload'],['team','Table Staff']], tab, 'setAgentTab')
     + '</div>'
     + '<div class="dp-main">'
-    +   '<div style="background:'+(isMobile()?'#fff':'var(--off)')+';padding:12px 16px;border-bottom:1px solid #E5E5E5">'
+    +   (isMobile()?'':'<div style="background:var(--off);padding:12px 16px;border-bottom:1px solid #E5E5E5">'
     +     '<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">'
     +       '<span style="font-size:15px;font-weight:800;color:#1A1A1A">'+ev.name+'</span>'
     +       '<span style="width:7px;height:7px;border-radius:50%;background:'+statusDot+';display:inline-block;flex-shrink:0"></span>'
     +       '<span style="font-size:11px;font-weight:600;color:var(--muted)">'+statusLabel+'</span>'
     +     '</div>'
     +     '<div style="font-size:12px;color:#888">'+ev.date+' · '+ev.venue+'</div>'
-    +   '</div>'
-    +   tabBar([['orders','Orders'],['suppliers','Wines'],['upload','Upload'],['team','Table Staff']], tab, 'setAgentTab')
+    +   '</div>')
     +   '<div class="dp-content">'+content+'</div>'
     + '</div>'
     + '</div>';
@@ -3277,12 +3263,13 @@ window.injectDrawer = function(portal) {
   document.body.appendChild(dr);
   // Add hamburger to topbar if not already there
   var topbar = document.querySelector('.dp-topbar');
-  if(topbar && !topbar.querySelector('.dp-hamburger')){
+  var hbTarget = topbar ? (topbar.querySelector('.dp-topbar-row') || topbar) : null;
+  if(hbTarget && !hbTarget.querySelector('.dp-hamburger')){
     var hb = document.createElement('button');
     hb.className='dp-hamburger';
     hb.innerHTML='\u2261';
     hb.onclick=toggleDrawer;
-    topbar.insertBefore(hb, topbar.firstChild);
+    hbTarget.insertBefore(hb, hbTarget.firstChild);
   }
 };
 
@@ -3310,10 +3297,11 @@ window.mobileNavAction = function(action) {
 };
 
 window.injectMobileNav = function(portal) {
-  if(window.innerWidth > 768) return;
   var existing = document.getElementById('dp-mobile-nav');
   if(existing) existing.remove();
+  return;
 
+  // Legacy code below — no longer executed
   var navItems = [];
 
   if(portal === 'coordinator') {
@@ -4540,26 +4528,28 @@ function coordPortalHTML() {
     +   '</div>'
     + '</div></div>'
     // Topbar
-    + '<div class="dp-topbar">'
-    +   '<div style="display:flex;align-items:center;gap:8px">'+logoSVG+'<span style="font-size:13px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-family:Nunito Sans,sans-serif;color:'+(isMobile()?'#fff':'var(--ink)')+'">POURED</span></div>'
-    +   '<div class="dp-topbar-actions">'
-    +     (isMobile()?'':'<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openDupModal()">⎘ Duplicate</button>')
-    +     (isMobile()?'':'<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="setCoordTab(\'postemail\')">Post-event email</button>')
-    +     '<button class="dp-btn" onclick="backToCoordList()">← Back</button>'
-    +     '<button class="dp-btn" onclick="signOutCoord()">Sign out</button>'
+    + '<div class="dp-topbar has-tabs">'
+    +   '<div class="dp-topbar-row">'
+    +     '<div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1"><span style="font-size:13px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;font-family:Nunito Sans,sans-serif;color:'+(isMobile()?'#fff':'var(--ink)')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+EV.name+'</span></div>'
+    +     '<div class="dp-topbar-actions">'
+    +       (isMobile()?'':'<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openDupModal()">⎘ Duplicate</button>')
+    +       (isMobile()?'':'<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="setCoordTab(\'postemail\')">Post-event email</button>')
+    +       '<button class="dp-btn" onclick="backToCoordList()">← Back</button>'
+    +       '<button class="dp-btn" onclick="signOutCoord()">Sign out</button>'
+    +     '</div>'
     +   '</div>'
+    +   tabBar([['overview','Overview'],['door','Check-in'],['agents','Exhibitors'],['payout','Payout']], tab, 'setCoordTab')
     + '</div>'
     // Main
     + '<div class="dp-main">'
-    +   '<div style="background:'+(isMobile()?'#fff':'var(--off)')+';padding:12px 16px;border-bottom:1px solid #E5E5E5">'
+    +   (isMobile()?'':'<div style="background:var(--off);padding:12px 16px;border-bottom:1px solid #E5E5E5">'
     +     '<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">'
     +       '<span style="font-size:15px;font-weight:800;color:#1A1A1A">'+EV.name+'</span>'
     +       '<span style="width:7px;height:7px;border-radius:50%;background:'+statusDot+';display:inline-block;flex-shrink:0"></span>'
     +       '<span style="font-size:11px;font-weight:600;color:var(--muted)">'+statusLabel+'</span>'
     +     '</div>'
     +     '<div style="font-size:12px;color:#888">'+EV.date+' · '+EV.venue+'</div>'
-    +   '</div>'
-    +   tabBar([['overview','Overview'],['door','Check-in'],['agents','Exhibitors'],['payout','Payout']], tab, 'setCoordTab')
+    +   '</div>')
     +   '<div class="dp-content">'+content+'</div>'
     + '</div>'
     + dupModalHTML(EV)
@@ -5333,12 +5323,14 @@ function adminPortalHTML() {
     +     '<button class="dp-signout" onclick="signOutAdmin()">Sign out</button>'
     +   '</div>'
     + '</div></div>'
-    + '<div class="dp-topbar">'
-    +   '<div style="display:flex;align-items:center;gap:8px">'+logoSVG+'<span style="font-size:13px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-family:Nunito Sans,sans-serif;color:'+(isMobile()?'#fff':'var(--ink)')+'">POURED</span></div>'
-    +   '<div class="dp-topbar-actions"><button class="dp-btn" onclick="signOutAdmin()">Sign out</button></div>'
+    + '<div class="dp-topbar has-tabs">'
+    +   '<div class="dp-topbar-row">'
+    +     '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-family:Nunito Sans,sans-serif;color:'+(isMobile()?'#fff':'var(--ink)')+'">Admin</span></div>'
+    +     '<div class="dp-topbar-actions"><button class="dp-btn" onclick="signOutAdmin()">Sign out</button></div>'
+    +   '</div>'
+    +   tabBar([['dashboard','Dashboard'],['coordinators','Hosts'],['events','Events'],['fees','Fees']], tab, 'setAdminTab')
     + '</div>'
     + '<div class="dp-main">'
-    +   tabBar([['dashboard','Dashboard'],['coordinators','Hosts'],['events','Events'],['fees','Fees']], tab, 'setAdminTab')
     +   '<div class="dp-content">'+content+'</div>'
     + '</div>'
     + '</div>';
