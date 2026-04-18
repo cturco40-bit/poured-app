@@ -148,8 +148,10 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   .dp-topbar {
     position: fixed !important;
     top: 0;
-    left: 0;
-    right: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
     z-index: 50;
     padding: 0 14px;
     padding-top: calc(14px + env(safe-area-inset-top, 0px));
@@ -158,8 +160,6 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     background: #1A1A1A !important;
     border-bottom: none !important;
     box-shadow: 0 2px 8px rgba(0,0,0,.25) !important;
-    max-width: 480px;
-    margin: 0 auto;
   }
   .dp-topbar-title {
     color: #FFFFFF !important;
@@ -567,7 +567,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=95').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=96').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
