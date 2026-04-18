@@ -558,7 +558,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=58').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=59').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1911,7 +1911,7 @@ window.tryLogin = async function(portalId, demoEmail, demoPw) {
   var email=(document.getElementById('login-email')||{}).value||'';
   var pw=(document.getElementById('login-pw')||{}).value||'';
   var err=document.getElementById('login-err');
-  if(LIVE_MODE){if(err){err.style.display='none';}var res=await AUTH.signIn(email,pw);if(res.error){if(err){err.style.display='block';err.textContent=res.error.message;}return;}var profile=await AUTH.getProfile();setState({portal:portalId+'_in',currentUser:profile});}
+  if(LIVE_MODE){if(err){err.style.display='none';}var res=await AUTH.signIn(email,pw);if(res.error){if(err){err.style.display='block';err.textContent=res.error.message;}return;}var profile=await AUTH.getProfile();setState({portal:portalId+'_in',currentUser:profile?{id:profile.id,email:profile.email,name:profile.full_name,company:profile.company,phone:profile.phone,role:profile.role,approved:profile.approved}:{email:email,role:portalId}});loadUserEvents();}
   else{if(email===demoEmail&&pw===demoPw){setState({portal:portalId+'_in'});}else{if(err){err.style.display='block';err.textContent='Demo: '+demoEmail+' / '+demoPw;}}}
 };
 
@@ -3321,7 +3321,52 @@ window.submitOrderWithContact = function() {
     setState({orderDone:true});
   }
 };
-window.publishEvent=async function(){document.querySelectorAll('[data-field]').forEach(function(el){var k=el.getAttribute('data-field');if(k&&el.value!==undefined)state.draft[k]=el.value;});if(LIVE_MODE){var ev=await DB.createEvent(state.draft);if(ev){await DB.publishEvent(ev.id);setState({createDone:true});}}else{setState({createDone:true});}};
+window.publishEvent=async function(){
+  document.querySelectorAll('[data-field]').forEach(function(el){var k=el.getAttribute('data-field');if(k&&el.value!==undefined)state.draft[k]=el.value;});
+  var d=state.draft;
+  if(LIVE_MODE&&_sb){
+    var user=await _sb.auth.getUser();
+    var uid=(state.currentUser&&state.currentUser.id)||(user.data&&user.data.user&&user.data.user.id);
+    if(!uid){showToast('Not signed in');return;}
+    var res=await _sb.from('events').insert({
+      host_id:uid,name:d.name,date:d.date,time:(d.startTime||'18:00')+'-'+(d.endTime||'21:00'),
+      venue:d.venue,address:d.address,city:d.city||'Toronto',
+      description:d.description||'',passcode:d.passcode||null,
+      submission_deadline:d.submissionDeadline||null,status:'upcoming',
+      require_passcode:d.requirePasscode!==false,allow_public_browse:d.allowPublicBrowse||false
+    }).select().single();
+    if(res.error){showToast('Error: '+res.error.message);return;}
+    var eventId=res.data.id;
+    var tiers=(d.tiers||[]).filter(function(t){return t.enabled;}).map(function(t){
+      return{event_id:eventId,label:t.label,price:parseFloat(t.price)||0,capacity:parseInt(t.capacity)||100,sold:0};
+    });
+    if(tiers.length>0){
+      var tierRes=await _sb.from('ticket_tiers').insert(tiers);
+      if(tierRes.error)console.warn('Tier insert error:',tierRes.error);
+    }
+    setState({createDone:true});
+    showToast('Event created successfully');
+  }else{
+    setState({createDone:true});
+  }
+};
+
+window.loadUserEvents = async function() {
+  if(!LIVE_MODE||!_sb||IS_DEMO) return;
+  var user=await _sb.auth.getUser();
+  if(!user.data||!user.data.user) return;
+  var uid=user.data.user.id;
+  var role=(state.currentUser&&state.currentUser.role)||'attendee';
+  if(role==='coordinator'||role==='admin'){
+    var res=await _sb.from('events').select('*,ticket_tiers(*)').eq('host_id',uid).order('date',{ascending:false});
+    if(res.data) EVENTS=res.data.map(function(ev){ev.products=ev.products||[];ev.agents=ev.agents||[];ev.orders=ev.orders||[];ev.tiers=ev.ticket_tiers||ev.tiers||[];return ev;});
+  } else {
+    var res=await _sb.from('events').select('*,ticket_tiers(*)').in('status',['active','upcoming']).order('date');
+    if(res.data) EVENTS=res.data.map(function(ev){ev.products=ev.products||[];ev.agents=ev.agents||[];ev.orders=ev.orders||[];ev.tiers=ev.ticket_tiers||ev.tiers||[];return ev;});
+  }
+  render();
+};
+
 window.resetCreate = () => setState({createDone:false,createStep:1,draft:{name:"",host:"",date:"",startTime:"18:00",endTime:"21:00",venue:"",address:"",city:"Toronto",province:"ON",description:"",passcode:"",submissionDeadline:"",tiers:[{id:"ga",label:"General Admission",price:"85",capacity:"120",enabled:true,perks:"All tables\nWelcome drink\nEvent booklet"},{id:"vip",label:"VIP Reserve",price:"165",capacity:"30",enabled:false,perks:"Early entry 5:30 PM\nGrand cru walkthrough\nGift bottle"},{id:"trade",label:"Trade / Industry",price:"0",capacity:"40",enabled:false,perks:"Trade ID required\nFull access\nPrice sheets"}],agentEmails:"",listingFee:"50",featuredFee:"500",requirePasscode:true,allowPublicBrowse:false}});
 
 function createEventHTML() {
