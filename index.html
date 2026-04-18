@@ -558,7 +558,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=64').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=65').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1534,6 +1534,7 @@ window.readFormAndAdvance = function(nextStep) {
   if(nextStep===2){
     if(!state.draft.name||!state.draft.name.trim()){showToast('Please enter an event name');return;}
     if(!state.draft.date){showToast('Please select a date');return;}
+    if(!state.draft.host||!state.draft.host.trim()){showToast('Please enter your organization name');return;}
     if(!state.draft.venue||!state.draft.venue.trim()){showToast('Please enter a venue');return;}
   }
   state.draft.tiers.forEach(function(tier){['price','capacity','perks'].forEach(function(key){var el=document.querySelector('[data-tier="'+tier.id+'"][data-key="'+key+'"]');if(el)state.draft.tiers=state.draft.tiers.map(function(t){return t.id===tier.id?Object.assign({},t,{[key]:el.value}):t;});});});
@@ -3287,7 +3288,13 @@ window.toggleCoordSupplier = name => setState({expandedSupplier: state.expandedS
 window.setCreateStep = n => setState({createStep:n});
 window.setTierEnabled = (id,val) => updateTier(id,'enabled',val);
 window.setTierField = (id,key,val) => updateTier(id,key,val);
-window.genPasscode = () => setDraft({passcode:Math.random().toString(36).slice(2,8).toUpperCase()});
+window.genPasscode = function() {
+  var chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',code='';
+  for(var i=0;i<6;i++) code+=chars.charAt(Math.floor(Math.random()*chars.length));
+  var input=document.querySelector('[data-field="passcode"]');
+  if(input){input.value=code;input.dispatchEvent(new Event('input'));}
+  if(state.draft) state.draft.passcode=code;
+};
 window.toggleDraftBool = key => setDraft({[key]:!state.draft[key]});
 window.submitOrder = async function() {
   var ev = EVENTS.find(function(e){return e.id===state.selectedEventId;}) || EV;
@@ -3324,6 +3331,7 @@ window.submitOrderWithContact = function() {
 window.publishEvent=async function(){
   document.querySelectorAll('[data-field]').forEach(function(el){var k=el.getAttribute('data-field');if(k&&el.value!==undefined)state.draft[k]=el.value;});
   var d=state.draft;
+  if(!d.host||!d.host.trim()){showToast('Please enter your organization name');return;}
   if(LIVE_MODE&&_sb){
     var user=await _sb.auth.getUser();
     var uid=(state.currentUser&&state.currentUser.id)||(user.data&&user.data.user&&user.data.user.id);
@@ -3422,7 +3430,7 @@ function createEventHTML() {
     stepContent = `<div style="padding:14px 20px 20px">
       <div style="font-size:16px;font-style:italic;margin-bottom:14px">Event Details</div>
       <div style="margin-bottom:11px"><label class="lbl">EVENT NAME *</label><input class="inp" value="${d.name}" data-field="name" placeholder="e.g. Wine Fest Toronto 2025"></div>
-      <div style="margin-bottom:11px"><label class="lbl">HOST / ORGANIZER</label><input class="inp" value="${d.host}" data-field="host" placeholder="e.g. The Spoke Club, ITA Canada"></div>
+      <div style="margin-bottom:11px"><label class="lbl">HOST / ORGANIZER <span style="color:#7A1020">*</span></label><input class="inp" value="${d.host}" data-field="host" placeholder="e.g. The Spoke Club, ITA Canada"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:11px">
         <div><label class="lbl">EVENT DATE *</label><input type="date" class="inp" value="${d.date}" data-field="date"></div>
       </div>
@@ -3431,7 +3439,7 @@ function createEventHTML() {
         <div><label class="lbl">END</label><input type="time" class="inp" value="${d.endTime}" data-field="endTime"></div>
       </div>
       <div style="margin-bottom:11px"><label class="lbl">VENUE *</label><input class="inp" value="${d.venue}" data-field="venue" placeholder="e.g. The Spoke Club"></div>
-      <div style="margin-bottom:11px"><label class="lbl">ADDRESS *</label><input class="inp" value="${d.address}" data-field="address" placeholder="e.g. 600 King St W"></div>
+      <div style="margin-bottom:11px"><label class="lbl">ADDRESS *</label><input class="inp" value="${d.address}" data-field="address" placeholder="e.g. 600 King St W"><div style="font-size:10px;color:#888;margin-top:4px">Enter the full venue address for attendee directions</div></div>
       <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:11px">
         <div><label class="lbl">CITY</label><input class="inp" value="${d.city}" data-field="city"></div>
         <div><label class="lbl">PROV.</label><select class="inp" style="appearance:none" data-field="province">${["ON","BC","AB","QC","MB","SK","NS","NB","NL","PE"].map(p=>`<option ${d.province===p?'selected':''}>${p}</option>`).join('')}</select></div>
@@ -3472,8 +3480,7 @@ function createEventHTML() {
         ${agentList.length>0?`<div style="font-size:11px;color:${B.sage};margin-top:5px">✓ ${agentList.length} agent${agentList.length>1?'s':''} will be invited</div>`:''}
       </div>
       <div style="background:#fff;border-radius:10px;border:1px solid ${B.mist};margin-bottom:14px;padding:12px 14px">
-        <div style="margin-bottom:12px"><label class="lbl">LISTING FEE / AGENT ($)</label><input type="number" min="0" class="inp" value="${d.listingFee}" data-field="listingFee"></div>
-        <div><label class="lbl">FEATURED UPGRADE ($)</label><input type="number" min="0" class="inp" value="${d.featuredFee}" data-field="featuredFee"></div>
+        <div><label class="lbl">LISTING FEE / AGENT ($)</label><input type="number" min="0" class="inp" value="${d.listingFee}" data-field="listingFee"></div>
       </div>
       ${navBtns(2, 4, "Settings →")}
     </div>`;
