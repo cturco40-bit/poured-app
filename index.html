@@ -105,6 +105,26 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--wine);outline-of
   box-sizing:border-box;
 }
 .cust-headline{font-family:'Nunito Sans',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.06em;}
+.cust-header{position:sticky;top:0;z-index:50;background:#fff;}
+@media(max-width:768px){
+  .cust-header{
+    position:fixed !important;
+    top:0 !important;
+    left:50% !important;
+    transform:translateX(-50%) !important;
+    right:auto !important;
+    width:100% !important;
+    max-width:480px !important;
+    z-index:100 !important;
+    background:#1A1A1A !important;
+    box-sizing:border-box !important;
+  }
+  .cust-content-below-header{
+    padding-top:calc(100px + env(safe-area-inset-top, 0px)) !important;
+  }
+}
+/* Empty date inputs show grey placeholder colour on iOS */
+input[type="date"]:invalid,input[type="date"]:not([value]):not(:focus){color:#AAA;}
 
 /* ── DESKTOP PORTAL ──────────────────────────────── */
 body.dp{
@@ -536,7 +556,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=107').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=108').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -4623,9 +4643,9 @@ function custEventListHTML() {
     return c;
   }
 
-  var html='<div style="background:#F8F8F8;min-height:100vh;padding-bottom:60px">';
+  var html='<div class="cust-content-below-header" style="background:#F8F8F8;min-height:100vh;padding-bottom:60px">';
   // Header
-  html+='<div style="position:sticky;top:0;z-index:100">';
+  html+='<div class="cust-header" style="position:sticky;top:0;z-index:100">';
   html+='<div style="background:#1A1A1A;padding:calc(8px + env(safe-area-inset-top, 0px)) 18px 12px">';
   html+='<div style="display:flex;justify-content:space-between;align-items:center">';
   html+='<div style="display:flex;align-items:center;gap:10px">';
@@ -5016,8 +5036,8 @@ function custPortalHTML() {
 
   const detailModal = state.detail ? detailModalHTML(state.detail) : '';
 
-  return `<div style="padding-bottom:${cartCount>0?'140':'80'}px">
-    <div style="position:sticky;top:0;z-index:100;background:#1A1A1A;box-shadow:0 2px 8px rgba(0,0,0,.25)">
+  return `<div class="cust-content-below-header" style="padding-bottom:${cartCount>0?'140':'80'}px">
+    <div class="cust-header" style="position:sticky;top:0;z-index:100;background:#1A1A1A;box-shadow:0 2px 8px rgba(0,0,0,.25)">
       <div style="padding:calc(8px + env(safe-area-inset-top, 0px)) 16px 10px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div style="display:flex;align-items:center;gap:10px">
