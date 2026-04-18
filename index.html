@@ -146,8 +146,8 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     position: relative !important;
     flex-shrink: 0;
     padding: 0 14px;
-    padding-top: calc(48px + env(safe-area-inset-top, 0px)) !important;
-    min-height: calc(80px + env(safe-area-inset-top, 0px));
+    padding-top: calc(8px + env(safe-area-inset-top, 0px)) !important;
+    min-height: calc(48px + env(safe-area-inset-top, 0px));
     height: auto;
     background: #1A1A1A !important;
     border-bottom: none !important;
@@ -565,7 +565,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=101').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=102').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -786,12 +786,12 @@ const DEMO_EVENTS = [
       {id:"a4",firm:"Sake Selections CA",      email:"yuki@sakeselections.ca", listingFee:50,paid:false,featured:false,submitted:false},
     ],
     products:[
-      {id:1,dietary:[],agentId:"a1",agent:"Profile Wine Group",agentEmail:"christian@profilewinegroup.ca",supplier:"Fantini Group",country:"Italy",region:"Abruzzo",dietary:[],name:"Montepulciano d'Abruzzo DOC",vintage:"2022",category:"Wine",subCat:"Red",abv:"13.5",bottleSizeMl:750,lcboPerBottle:16,pricePerBottle:12,pricePerCase:144,caseSize:12,minOrderCases:1,avail:35,tasting:"Ripe cherry, plum, soft tannins. WineAlign #1 value red.",pairings:"Pasta, Pizza, Grilled Meats",ratings:[{user:"WineAlign",score:5,note:"#1 Best Value Red"}],views:245,orders:18},
+      {id:1,dietary:[],agentId:"a1",agent:"Profile Wine Group",agentEmail:"christian@profilewinegroup.ca",supplier:"Fantini Group",country:"Italy",region:"Abruzzo",dietary:[],name:"Montepulciano d'Abruzzo DOC",vintage:"2022",availableVintage:"2021",productUrl:"https://shop.example.com/montepulciano",category:"Wine",subCat:"Red",abv:"13.5",bottleSizeMl:750,lcboPerBottle:16,pricePerBottle:12,pricePerCase:144,caseSize:12,minOrderCases:1,avail:35,tasting:"Ripe cherry, plum, soft tannins. WineAlign #1 value red.",pairings:"Pasta, Pizza, Grilled Meats",ratings:[{user:"WineAlign",score:5,note:"#1 Best Value Red"}],views:245,orders:18},
       {id:2,dietary:[],agentId:"a1",agent:"Profile Wine Group",agentEmail:"christian@profilewinegroup.ca",supplier:"Fantini Group",country:"Italy",region:"Abruzzo",name:"Sangiovese IGT",vintage:"2023",category:"Wine",subCat:"Red",abv:"12.5",bottleSizeMl:750,lcboPerBottle:14,pricePerBottle:10,pricePerCase:120,caseSize:12,minOrderCases:1,avail:40,tasting:"Bright cherry, herbs, easy-drinking everyday red.",pairings:"Antipasto, Grilled Veg",ratings:[],views:180,orders:12},
       {id:3,dietary:[],agentId:"a1",agent:"Profile Wine Group",agentEmail:"christian@profilewinegroup.ca",supplier:"Lungarotti",country:"Italy",region:"Umbria",name:"L'Um Sangiovese Merlot",vintage:"2022",category:"Wine",subCat:"Red",abv:"13.0",bottleSizeMl:750,lcboPerBottle:22,pricePerBottle:18,pricePerCase:216,caseSize:12,minOrderCases:1,avail:25,tasting:"Ripe red fruit, spice, smooth tannins. 90 pts Falstaff.",pairings:"Pasta, Red Meat, Cheese",ratings:[{user:"FAL",score:4,note:"90 points"}],views:156,orders:9},
-      {id:4,dietary:[],agentId:"a1",agent:"Profile Wine Group",agentEmail:"christian@profilewinegroup.ca",supplier:"Casa Gheller",country:"Italy",region:"Veneto",name:"Prosecco DOC",vintage:"NV",category:"Champagne & Sparkling",subCat:"Sparkling",abv:"11.0",bottleSizeMl:750,lcboPerBottle:24,pricePerBottle:20,pricePerCase:240,caseSize:12,minOrderCases:1,avail:45,tasting:"Fresh pear, white flowers, fine bubbles. 90 pts Decanter.",pairings:"Aperitivo, Seafood, Celebration",ratings:[],views:198,orders:11},
+      {id:4,dietary:[],agentId:"a1",agent:"Profile Wine Group",agentEmail:"christian@profilewinegroup.ca",supplier:"Casa Gheller",country:"Italy",region:"Veneto",name:"Prosecco DOC",vintage:"NV",productUrl:"https://shop.example.com/prosecco",category:"Champagne & Sparkling",subCat:"Sparkling",abv:"11.0",bottleSizeMl:750,lcboPerBottle:24,pricePerBottle:20,pricePerCase:240,caseSize:12,minOrderCases:1,avail:45,tasting:"Fresh pear, white flowers, fine bubbles. 90 pts Decanter.",pairings:"Aperitivo, Seafood, Celebration",ratings:[],views:198,orders:11},
       {id:5,agentId:"a2",agent:"Vanguard Wine Co.",agentEmail:"orders@vanguardwine.ca",supplier:"Opus One Winery",country:"USA",region:"Napa Valley",name:"Opus One",vintage:"2019",category:"Wine",subCat:"Red",abv:"14.5",bottleSizeMl:750,lcboPerBottle:420,pricePerBottle:390,pricePerCase:2340,caseSize:6,minOrderCases:1,avail:8,tasting:"Cassis, dark plum, mocha. Extraordinary length.",pairings:"Wagyu, Truffle",ratings:[{user:"M.C.",score:4,note:"Beautiful vintage"}],views:310,orders:5},
-      {id:6,agentId:"a2",agent:"Vanguard Wine Co.",agentEmail:"orders@vanguardwine.ca",supplier:"Cloudy Bay",country:"NZ",region:"Marlborough",name:"Sauvignon Blanc",vintage:"2023",category:"Wine",subCat:"White",abv:"13.0",bottleSizeMl:750,lcboPerBottle:42,pricePerBottle:36,pricePerCase:432,caseSize:12,minOrderCases:1,avail:30,tasting:"Passion fruit, fresh-cut grass, citrus.",pairings:"Seafood, Salads",ratings:[],views:87,orders:18},
+      {id:6,agentId:"a2",agent:"Vanguard Wine Co.",agentEmail:"orders@vanguardwine.ca",supplier:"Cloudy Bay",country:"NZ",region:"Marlborough",name:"Sauvignon Blanc",vintage:"2023",availableVintage:"2022",productUrl:"https://shop.example.com/cloudy-bay",category:"Wine",subCat:"White",abv:"13.0",bottleSizeMl:750,lcboPerBottle:42,pricePerBottle:36,pricePerCase:432,caseSize:12,minOrderCases:1,avail:30,tasting:"Passion fruit, fresh-cut grass, citrus.",pairings:"Seafood, Salads",ratings:[],views:87,orders:18},
       {id:7,agentId:"a2",agent:"Vanguard Wine Co.",agentEmail:"orders@vanguardwine.ca",supplier:"Cloudy Bay",country:"NZ",region:"Marlborough",name:"Pinot Noir",vintage:"2021",category:"Wine",subCat:"Red",abv:"13.5",bottleSizeMl:750,lcboPerBottle:58,pricePerBottle:50,pricePerCase:600,caseSize:12,minOrderCases:1,avail:20,tasting:"Red cherry, cola, earth. Silky.",pairings:"Duck, Salmon",ratings:[],views:64,orders:9},
       {id:8,agentId:"a3",agent:"Spirit & Soul Imports",agentEmail:"james@spiritsoul.ca",supplier:"Glenfarclas",country:"Scotland",region:"Speyside",name:"15 Year",vintage:"",category:"Whisky & Spirits",subCat:"Single Malt",abv:"46.0",bottleSizeMl:750,lcboPerBottle:110,pricePerBottle:95,pricePerCase:570,caseSize:6,minOrderCases:1,avail:12,tasting:"Rich dried fruits, sherry oak, Christmas cake.",pairings:"Dark Chocolate",ratings:[{user:"P.T.",score:5,note:"Best value malt"}],views:178,orders:9},
     ],
@@ -1215,7 +1215,7 @@ Receipt #: UNL-${order.id}
 Date: ${new Date().toLocaleDateString('en-CA')}
 Event: ${(EVENTS.find(function(e){return e.id===state.selectedEventId;})||{name:''}).name}
 
-Agent: ${(state.currentUser&&state.currentUser.company)||(IS_DEMO?'Profile Wine Group':'')}
+Exhibitor: ${(state.currentUser&&state.currentUser.company)||(IS_DEMO?'Profile Wine Group':'')}
 Email: ${(state.currentUser&&state.currentUser.email)||(IS_DEMO?'christian@profilewinegroup.ca':'')}
 
 ORDER UNLOCKED:
@@ -1388,7 +1388,7 @@ function dupModalHTML(ev) {
       <div style="padding:20px">
         <div style="background:${B.linen};border-radius:10px;padding:14px;margin-bottom:16px">
           <div style="font-size:11px;color:${B.cork};margin-bottom:8px">COPYING FROM</div>
-          ${[['Event',ev.name],['Date',ev.date],['Venue',ev.venue],['Agents',ev.agents.length+' agents'],['Products',ev.products.length+' wines']].map(([l,v])=>`
+          ${[['Event',ev.name],['Date',ev.date],['Venue',ev.venue],['Exhibitors',ev.agents.length+' exhibitors'],['Products',ev.products.length+' wines']].map(([l,v])=>`
             <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:${B.cork}">${l}</span><span style="font-weight:700">${v}</span></div>`).join('')}
         </div>
         <div style="font-size:11px;color:${B.cork};margin-bottom:12px">What carries over to the new event:</div>
@@ -1466,7 +1466,7 @@ function payoutDashboardHTML(ev) {
       ${[
         ['Gross ticket revenue',`$${grossRev.toLocaleString()}`,B.ink,false],
         [`Poured ticket fees (${totalSold} tickets)`,`-$${ticketFees.toFixed(2)}`,'#C04040',false],
-        ['Agent listing fees collected',`$${listingRev}`,B.sage,false],
+        ['Exhibitor listing fees collected',`$${listingRev}`,B.sage,false],
         ['Net payout',`$${netPayout.toFixed(2)}`,B.ink,true],
       ].map(([l,v,color,bold])=>`
         <div style="display:flex;justify-content:space-between;font-size:${bold?14:12}px;color:${color};font-weight:${bold?700:400};padding:8px 0;border-top:${bold?`2px solid ${B.mist}`:'1px solid '+B.linen}">
@@ -1503,7 +1503,7 @@ function tradeVerifyHTML(ev) {
     <div style="font-size:11px;color:${B.cork};letter-spacing:.14em;margin-bottom:4px">TRADE CREDENTIAL VERIFICATION</div>
     <div style="font-size:13px;color:${B.cork};line-height:1.7;margin-bottom:14px">Trade ticket holders must present valid credentials at door. Smart Serve, ORCA membership, or industry trade ID required.</div>
     <div style="background:#EEF3FA;border-radius:10px;padding:12px 14px;margin-bottom:14px;border:1px solid #C8D8EE;font-size:12px;color:${B.slate}">
-      Accepted credentials: Smart Serve · ORCA membership · LCBO buyer badge · Trade association ID · Agent business card + ID
+      Accepted credentials: Smart Serve · ORCA membership · LCBO buyer badge · Trade association ID · Exhibitor business card + ID
     </div>
     ${tradeAttendees.map(a=>{
       const isIn = !!(state.checkedIn && state.checkedIn[a.id]);
@@ -1608,20 +1608,22 @@ window.handleCSVUpload=async function(input){
     if(parsed.length===0) { hideLoader(); showToast('CSV is empty'); return; }
     var products = parsed.map(function(r){
       return {
-        supplier:      r['Supplier/Producer']||r['Supplier']||'',
-        name:          r['Product Name']||r['Name']||'',
-        vintage:       r['Vintage']||'',
-        category:      r['Category']||'Wine',
-        country:       r['Country']||'',
-        region:        r['Region']||'',
-        abv:           r['ABV(%)']||r['ABV']||'',
-        bottleSizeMl:  r['Bottle Size(mL)']||r['Bottle Size']||'750',
-        caseSize:      r['Case Size(bottles)']||r['Case Size']||'12',
-        pricePerBottle:r['Price Per Bottle($)']||r['Price Per Bottle']||'0',
-        pricePerCase:  r['Price Per Case($)']||r['Price Per Case']||'0',
-        avail:         r['Cases Available']||r['Availability']||'In Stock',
-        tasting:       r['Tasting Notes']||'',
-        pairings:      r['Food Pairings']||''
+        supplier:       r['Producer']||r['Supplier/Producer']||r['Supplier']||'',
+        name:           r['Product Name']||r['Name']||'',
+        vintage:        r['Vintage']||'',
+        availableVintage: r['Available Vintage']||r['available vintage']||'',
+        category:       r['Category']||'Wine',
+        country:        r['Country']||'',
+        region:         r['Region']||'',
+        abv:            r['ABV(%)']||r['ABV']||'',
+        bottleSizeMl:   r['Bottle Size(mL)']||r['Bottle Size']||'750',
+        caseSize:       r['Case Size(bottles)']||r['Case Size']||'12',
+        pricePerBottle: r['Price Per Bottle($)']||r['Price Per Bottle']||'0',
+        pricePerCase:   r['Price Per Case($)']||r['Price Per Case']||'0',
+        avail:          r['Cases Available']||r['Availability']||'In Stock',
+        tasting:        r['Tasting Notes']||'',
+        pairings:       r['Food Pairings']||'',
+        productUrl:     r['Product URL']||r['product url']||r['Buy URL']||''
       };
     });
     var rows = products.map(function(p){
@@ -1674,7 +1676,7 @@ window.readFormAndAdvance = function(nextStep) {
   var d=state.draft;
   if(state.createStep===1){var m=[];if(!d.name||!d.name.trim())m.push('Event name');if(!d.date)m.push('Date');if(!d.host||!d.host.trim())m.push('Organization');if(!d.venue||!d.venue.trim())m.push('Venue');if(!d.address||!d.address.trim())m.push('Address');if(m.length){showToast('Required: '+m.join(', '));return;}}
   if(state.createStep===2){if(!d.tiers.filter(function(t){return t.enabled;}).length){showToast('Enable at least one ticket tier');return;}}
-  if(state.createStep===4){var m4=[];if(!d.passcode||!d.passcode.trim())m4.push('Passcode');if(!d.submissionDeadline)m4.push('Agent deadline');if(m4.length){showToast('Required: '+m4.join(', '));return;}}
+  if(state.createStep===4){var m4=[];if(!d.passcode||!d.passcode.trim())m4.push('Passcode');if(!d.submissionDeadline)m4.push('Exhibitor deadline');if(m4.length){showToast('Required: '+m4.join(', '));return;}}
   setState({createStep:nextStep});
 };
 
@@ -2145,8 +2147,10 @@ function productCardHTML(prod) {
     <div style="padding:12px 14px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div style="flex:1;min-width:0">
-          <div style="font-size:14px;font-weight:700;margin-bottom:2px">${prod.name}${prod.vintage?' '+prod.vintage:''}</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:2px">${prod.name}${prod.vintage&&!(prod.availableVintage&&prod.availableVintage!==prod.vintage)?' '+prod.vintage:''}</div>
           <div style="font-size:11px;color:${B.cork}">${prod.supplier} · ${prod.country}${prod.region?' · '+prod.region:''}</div>
+          ${prod.availableVintage&&prod.vintage&&prod.availableVintage!==prod.vintage?`<div style="font-size:11px;color:#888;margin-top:4px">Tasting: ${prod.vintage} · Ordering: ${prod.availableVintage}</div>`:''}
+          ${prod.productUrl?`<div style="font-size:10px;color:#4A8A6A;margin-top:4px">🛒 Available to buy online</div>`:''}
           ${prod.dietary&&prod.dietary.length?`<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:3px">${prod.dietary.map(d=>`<span style="background:#F0FDF4;color:#166534;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em">${d}</span>`).join('')}</div>`:''}
         </div>
         <button onclick="toggleFav(${prod.id})" style="background:none;border:none;font-size:16px;cursor:pointer;color:${isFav?B.pour:B.mist};padding:0 0 0 8px;flex-shrink:0">♥</button>
@@ -2245,8 +2249,8 @@ function homeHTML() {
 
     +   '<button data-portal="agent" onclick="goPortal(this)" onmouseenter="roleCardHover(this,true)" onmouseleave="roleCardHover(this,false)" '
     +   'style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:linear-gradient(135deg,#1A1A1A,#2C2C2C);border:none;border-radius:10px;cursor:pointer;width:100%;box-shadow:0 4px 14px rgba(0,0,0,.18);text-align:left;transition:all .2s">'
-    +   '<div><div style="font-size:13px;font-weight:900;color:#fff;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;font-family:Nunito Sans,sans-serif">Agent / Producer</div>'
-    +   '<div style="font-size:11px;color:rgba(255,255,255,.45);font-weight:500">Upload portfolio · receive orders</div></div>'
+    +   '<div><div style="font-size:13px;font-weight:900;color:#fff;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;font-family:Nunito Sans,sans-serif">Exhibitor</div>'
+    +   '<div style="font-size:11px;color:rgba(255,255,255,.45);font-weight:500">Importer / Producer · Upload portfolio · receive orders</div></div>'
     +   '<span style="color:rgba(255,255,255,.35);font-size:22px;font-weight:300;line-height:1">›</span></button>'
 
     +   '<button data-portal="customer" onclick="goPortal(this)" onmouseenter="roleCardHover(this,true)" onmouseleave="roleCardHover(this,false)" '
@@ -2394,13 +2398,13 @@ function agentEventListHTML() {
   return '<div class="dp-shell">'
     + '<div class="dp-sidebar-wrap"><button id="sb-toggle-btn" class="dp-collapse-btn" onclick="toggleSidebar()">‹</button><div id="dp-sidebar" class="dp-sidebar">'
     +   '<div class="dp-sidebar-logo">'+logoSVG+'<div><div class="dp-sidebar-logo-text">POURED</div><span class="dp-sidebar-logo-sub">BEVERAGE EVENTS</span></div></div>'
-    +   '<div class="dp-sidebar-section">AGENT / PRODUCER</div>'
+    +   '<div class="dp-sidebar-section">EXHIBITOR</div>'
     +   '<button class="dp-nav-item active"><span class="dp-nav-icon">≡</span><span class="dp-nav-label">My Events</span></button>'
     +   '<button class="dp-nav-item" onclick="setState({selectedEventId:null,agentTab:\'account-team\'})"><span class="dp-nav-icon">◎</span><span class="dp-nav-label">Team</span></button>'
     +   '<div class="dp-sidebar-section" style="margin-top:8px">ACCOUNT</div>'
     +   '<button class="dp-nav-item"><span class="dp-nav-icon">◎</span>Profile</button>'
     +   '<div class="dp-sidebar-footer">'
-    +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">'+(state.currentUser&&state.currentUser.company||(IS_DEMO?'Profile Wine Group':'Agent'))+'</div>'
+    +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">'+(state.currentUser&&state.currentUser.company||(IS_DEMO?'Profile Wine Group':'Exhibitor'))+'</div>'
     +     '<div style="font-size:10px;color:#555;margin-bottom:8px;padding:0 4px">'+(state.currentUser&&state.currentUser.email||(IS_DEMO?'christian@profilewinegroup.ca':''))+'</div>'
     +     '<button class="dp-signout" onclick="signOutAgent()">Sign out</button>'
     +   '</div>'
@@ -2442,11 +2446,11 @@ function agentAccountTeamHTML() {
   return '<div class="dp-shell">'
     + '<div class="dp-sidebar-wrap"><button id="sb-toggle-btn" class="dp-collapse-btn" onclick="toggleSidebar()">\u2039</button><div id="dp-sidebar" class="dp-sidebar">'
     +   '<div class="dp-sidebar-logo">'+logoSVG+'<div><div class="dp-sidebar-logo-text">POURED</div><span class="dp-sidebar-logo-sub">BEVERAGE EVENTS</span></div></div>'
-    +   '<div class="dp-sidebar-section">AGENT / PRODUCER</div>'
+    +   '<div class="dp-sidebar-section">EXHIBITOR</div>'
     +   '<button class="dp-nav-item" onclick="setState({selectedEventId:null,agentTab:\'orders\'})"><span class="dp-nav-icon">\u2630</span><span class="dp-nav-label">My Events</span></button>'
     +   '<button class="dp-nav-item active"><span class="dp-nav-icon">\u25CE</span><span class="dp-nav-label">Team</span></button>'
     +   '<div class="dp-sidebar-footer">'
-    +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">'+(state.currentUser&&state.currentUser.company||(IS_DEMO?'Profile Wine Group':'Agent'))+'</div>'
+    +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">'+(state.currentUser&&state.currentUser.company||(IS_DEMO?'Profile Wine Group':'Exhibitor'))+'</div>'
     +     '<div style="font-size:10px;color:#555;margin-bottom:8px;padding:0 4px">'+(state.currentUser&&state.currentUser.email||(IS_DEMO?'christian@profilewinegroup.ca':''))+'</div>'
     +     '<button class="dp-signout" onclick="signOutAgent()">Sign out</button>'
     +   '</div>'
@@ -2527,7 +2531,7 @@ function agentPortalHTML() {
       content += '</div>';
     }
     if(agentListing && agentListing.featured) {
-      content += '<div style="background:#EBF5EE;border:1px solid #C8E0D0;border-radius:10px;padding:10px 16px;margin-bottom:16px;font-size:12px;color:#2A6A4A;font-weight:600">★ You are a Featured Supplier — your table appears first for all attendees</div>';
+      content += '<div style="background:#EBF5EE;border:1px solid #C8E0D0;border-radius:10px;padding:10px 16px;margin-bottom:16px;font-size:12px;color:#2A6A4A;font-weight:600">★ You are a Featured Producer — your table appears first for all attendees</div>';
     }
 
     if(newCount>0) {
@@ -2602,7 +2606,7 @@ function agentPortalHTML() {
 
   else if(tab==='suppliers') {
     content += '<div class="dp-card">';
-    content += '<div class="dp-card-header"><span class="dp-card-title">My Supplier Tables</span>';
+    content += '<div class="dp-card-header"><span class="dp-card-title">My Producer Tables</span>';
     content += '<div style="display:flex;gap:8px">';
     content += '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="printPourSheet(\''+AGENT_EMAIL+'\')">Print Pour Sheet</button>';
     content += '</div></div>';
@@ -2626,7 +2630,7 @@ function agentPortalHTML() {
       });
       content += '</div>';
     } else {
-      content += '<table class="dp-table"><thead><tr><th>Supplier</th><th>Country</th><th>Products</th><th>Price range</th><th>Available</th><th>Actions</th></tr></thead><tbody>';
+      content += '<table class="dp-table"><thead><tr><th>Producer</th><th>Country</th><th>Products</th><th>Price range</th><th>Available</th><th>Actions</th></tr></thead><tbody>';
       Object.keys(supplierGroups).forEach(function(sup){
         var prods = supplierGroups[sup];
         var minP  = Math.min.apply(null,prods.map(function(p){return p.pricePerBottle;}));
@@ -2661,7 +2665,7 @@ function agentPortalHTML() {
       });
       content += '</div>';
     } else {
-      content += '<table class="dp-table"><thead><tr><th>Product</th><th>Supplier</th><th>Category</th><th>Price/btl</th><th>Price/case</th><th>Cases Available</th><th></th></tr></thead><tbody>';
+      content += '<table class="dp-table"><thead><tr><th>Product</th><th>Producer</th><th>Category</th><th>Price/btl</th><th>Price/case</th><th>Cases Available</th><th></th></tr></thead><tbody>';
       myProds.forEach(function(p){
         content += '<tr>'
           + '<td><div style="font-weight:600;font-size:13px">'+p.name+(p.vintage?' '+p.vintage:'')+'</div><div style="font-size:11px;color:var(--muted)">'+p.abv+'% · '+p.caseSize+'btl · '+p.bottleSizeMl+'mL</div></td>'
@@ -2694,7 +2698,7 @@ function agentPortalHTML() {
     content += '<div style="background:#F5F0EA;border-radius:8px;padding:14px;margin-bottom:16px">';
     content += '<div style="font-size:11px;color:var(--muted);letter-spacing:.1em;margin-bottom:8px">REQUIRED CSV COLUMNS</div>';
     content += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px">';
-    ['Supplier/Producer','Product Name','Vintage','Category','ABV(%)','Bottle Size(mL)','Case Size(bottles)','Price Per Bottle($)','Price Per Case($)','Availability','Tasting Notes','Food Pairings'].forEach(function(col){
+    ['Producer','Product Name','Vintage','Available Vintage (optional)','Category','ABV(%)','Bottle Size(mL)','Case Size(bottles)','Price Per Bottle($)','Price Per Case($)','Cases Available','Tasting Notes','Food Pairings','Product URL (optional)'].forEach(function(col){
       content += '<div style="font-size:11px;font-family:monospace;color:#2A4A6A;padding:3px 0">'+col+'</div>';
     });
     content += '</div></div>';
@@ -2813,14 +2817,14 @@ function agentPortalHTML() {
     +   '<button class="dp-nav-item" onclick="backToAgentList()"><span class="dp-nav-icon">←</span>All Events</button>'
     +   '<div class="dp-sidebar-section" style="margin-top:4px">'+ev.name.toUpperCase().substring(0,22)+'</div>'
     +   navItem('orders','-','Orders',newCount||null)
-    +   navItem('suppliers','-','My Suppliers')
+    +   navItem('suppliers','-','My Producers')
     +   navItem('upload','-','Upload Wines')
     +   navItem('team','-','Table Staff')
     +   navItem('export','-','Export')
     +   '<div class="dp-sidebar-section" style="margin-top:8px">ACCOUNT</div>'
     +   '<button class="dp-nav-item" onclick="setState({selectedEventId:null,agentTab:\'account-team\'})"><span class="dp-nav-icon">◎</span><span class="dp-nav-label">Team</span></button>'
     +   '<div class="dp-sidebar-footer">'
-    +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">'+(state.currentUser&&state.currentUser.company||(IS_DEMO?'Profile Wine Group':'Agent'))+'</div>'
+    +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">'+(state.currentUser&&state.currentUser.company||(IS_DEMO?'Profile Wine Group':'Exhibitor'))+'</div>'
     +     '<div style="font-size:10px;color:#555;margin-bottom:8px;padding:0 4px">'+(state.currentUser&&state.currentUser.email||(IS_DEMO?'christian@profilewinegroup.ca':''))+'</div>'
     +     '<button class="dp-signout" onclick="signOutAgent()">Sign out</button>'
     +   '</div>'
@@ -2893,7 +2897,7 @@ window.showInviteAgentModal = function(evId) {
 
   var title = document.createElement('div');
   title.style.cssText = 'font-size:16px;font-weight:800;color:#1A1A1A;margin-bottom:4px';
-  title.textContent = 'Invite Agent / Producer';
+  title.textContent = 'Invite Exhibitor';
   var subtitle = document.createElement('div');
   subtitle.style.cssText = 'font-size:12px;color:#888;margin-bottom:20px';
   subtitle.textContent = 'They will receive an email with a link to create an account.';
@@ -2930,11 +2934,11 @@ window.showInviteAgentModal = function(evId) {
   var featLeft = Math.max(0, 3 - featCount);
   var featInfo = document.createElement('div');
   featInfo.style.cssText = 'background:#F8F5F6;border:1px solid rgba(122,16,32,.12);border-radius:8px;padding:10px 12px;margin-top:4px;font-size:11px;color:#555;line-height:1.5';
-  featInfo.innerHTML = '<span style="font-weight:700;color:#7A1020">★ Featured Supplier spots: '+featLeft+'/3 remaining</span><br>$500 upgrade — top of every attendee\'s browse list';
+  featInfo.innerHTML = '<span style="font-weight:700;color:#7A1020">★ Featured Producer spots: '+featLeft+'/3 remaining</span><br>$500 upgrade — top of every attendee\'s browse list';
 
   card.appendChild(title);
   card.appendChild(subtitle);
-  card.appendChild(field('Agent Name', inpName));
+  card.appendChild(field('Exhibitor Name', inpName));
   card.appendChild(field('Agency / Company', inpOrg));
   card.appendChild(field('Email Address', inpEmail));
   card.appendChild(errDiv);
@@ -3221,7 +3225,7 @@ window.showAccountModal = function(portal, name, email) {
   var demoPhone = portal==='agent' ? '416-555-0200' : portal==='coordinator' ? '416-555-0100' : '';
   var company = cu.company || (IS_DEMO ? demoCompany : '');
   var phone = cu.phone || (IS_DEMO ? demoPhone : '');
-  var role = portal==='agent' ? 'Agent / Producer' : portal==='coordinator' ? 'Event Host' : 'Platform Admin';
+  var role = portal==='agent' ? 'Exhibitor' : portal==='coordinator' ? 'Event Host' : 'Platform Admin';
   var ov = document.createElement('div');
   ov.id = 'account-modal';
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
@@ -3256,7 +3260,7 @@ window.injectDrawer = function(portal) {
   var cu = state.currentUser||{};
   var computeInitials = function(n){ return (n||'').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2)||'U'; };
   if(portal==='agent'){
-    userName=cu.name||cu.company||(IS_DEMO?'Christian Turco':'Agent'); userEmail=cu.email||(IS_DEMO?'christian@profilewinegroup.ca':''); userInitials=computeInitials(userName); signOutFn='signOutAgent()';
+    userName=cu.name||cu.company||(IS_DEMO?'Christian Turco':'Exhibitor'); userEmail=cu.email||(IS_DEMO?'christian@profilewinegroup.ca':''); userInitials=computeInitials(userName); signOutFn='signOutAgent()';
     var agentTeamOn = !state.selectedEventId && state.agentTab==='account-team';
     if(state.selectedEventId){
       items=[{i:'\u2190',l:'All Events',a:'agentHome'},{i:'\u25CE',l:'Team',a:'agentTeam'}];
@@ -3329,7 +3333,7 @@ window.injectMobileNav = function(portal) {
       navItems = [
         {label:'Overview',  icon:'\u2630', action:'coordOverview'},
         {label:'Check-in',  icon:'\u2713', action:'coordDoor'},
-        {label:'Agents',    icon:'\u25CE', action:'coordAgents'},
+        {label:'Exhibitors',    icon:'\u25CE', action:'coordAgents'},
         {label:'Payout',    icon:'$',       action:'coordPayout'}
       ];
     } else {
@@ -3452,7 +3456,7 @@ window.printPourSheet = function(email) {
   var prods = ev.products.filter(function(p){return !email||p.agentEmail===email;});
   var html = '<' + 'html><' + 'head><' + 'title>Pour Sheet</' + 'title><style>body{font-family:sans-serif;padding:24px}h1{font-size:18px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px}th{background:#f0f0f0}</' + 'style></' + 'head><body>';
   html += '<h1>Pour Sheet — '+ev.name+'</h1><p>'+ev.date+' · '+ev.venue+'</p>';
-  html += '<table><tr><th>Wine</th><th>Supplier</th><th>Category</th><th>Price/btl</th><th>Notes</th></tr>';
+  html += '<table><tr><th>Wine</th><th>Producer</th><th>Category</th><th>Price/btl</th><th>Notes</th></tr>';
   prods.forEach(function(p){html+='<tr><td>'+p.name+(p.vintage?' '+p.vintage:'')+'</td><td>'+p.supplier+'</td><td>'+p.category+'</td><td>$'+p.pricePerBottle+'</td><td></td></tr>';});
   html += '</' + 'table></' + 'body></' + 'html>';
   var w = window.open('','_blank');
@@ -3524,8 +3528,8 @@ window.stars = function(n) {
 
 window.doConfirm = function(id) { confirmOrder(id); };
 window.dlCSVTemplate = function() {
-  var headers = 'Supplier/Producer,Product Name,Vintage,Category,ABV(%),Bottle Size(mL),Case Size(bottles),Price Per Bottle($),Price Per Case($),Cases Available,Tasting Notes,Food Pairings';
-  var example = 'Fantini Group,Montepulciano d\'Abruzzo DOC,2022,Red Wine,13.5,750,12,12.00,144.00,In Stock,"Ripe cherry, plum, soft tannins.","Pasta, Pizza, Grilled Meats"';
+  var headers = 'Producer,Product Name,Vintage,Available Vintage,Category,ABV(%),Bottle Size(mL),Case Size(bottles),Price Per Bottle($),Price Per Case($),Cases Available,Tasting Notes,Food Pairings,Product URL';
+  var example = 'Fantini Group,Montepulciano d\'Abruzzo DOC,2025,2024,Red Wine,13.5,750,12,12.00,144.00,25,"Ripe cherry, plum, soft tannins.","Pasta, Pizza, Grilled Meats",https://shop.example.com/montepulciano';
   var csv = headers + '\n' + example;
   var a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
@@ -3813,7 +3817,7 @@ function createEventHTML() {
   const step4ok = !!(d.passcode && d.submissionDeadline);
   const enabledTiers = d.tiers.filter(t=>t.enabled);
   const agentList = d.agentEmails.split(/[\n,]+/).map(s=>s.trim()).filter(Boolean);
-  const STEPS = [["Details","-"],["Tickets","-"],["Agents","-"],["Settings","-"],["Review","-"]];
+  const STEPS = [["Details","-"],["Tickets","-"],["Exhibitors","-"],["Settings","-"],["Review","-"]];
 
   if(state.createDone) {
     const slug = d.name.toLowerCase().replace(/[^a-z0-9]+/g,'-');
@@ -3836,7 +3840,7 @@ function createEventHTML() {
           <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid ${B.linen}"><span style="color:${B.cork}">${l}</span><span style="font-weight:700">${v}</span></div>`).join('')}
       </div>
       <div style="background:#EEF3FA;border-radius:10px;padding:11px 14px;margin-bottom:14px;font-size:11px;color:${B.cork};line-height:1.75">
-        Share link — attendees buy and get their passcode automatically.<br> Agents upload wines, one table per supplier — you approve before going live.<br> On event day — attendees browse, taste, rate and order.
+        Share link — attendees buy and get their passcode automatically.<br> Exhibitors upload wines, one table per producer — you approve before going live.<br> On event day — attendees browse, taste, rate and order.
       </div>
       <button onclick="resetCreate()" style="width:100%;padding:11px;border-radius:8px;border:1px solid ${B.mist};background:#fff;color:${B.cork};font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">+ Create Another Event</button>
     </div>`;
@@ -3898,12 +3902,12 @@ function createEventHTML() {
         </div>`:''}
       </div>`;}).join('')}
       ${enabledTiers.length===0?`<div style="background:#FBF5E6;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:#7A1020">Enable at least one ticket tier to continue.</div>`:''}
-      ${navBtns(1, 3, "Invite Agents →")}
+      ${navBtns(1, 3, "Invite Exhibitors →")}
     </div>`;
   } else if(state.createStep===3) {
     stepContent = `<div style="padding:14px 20px 20px">
-      <div style="font-size:16px;font-style:italic;margin-bottom:6px">Invite Agents</div>
-      <div style="font-size:12px;color:${B.cork};margin-bottom:16px;line-height:1.6">Each agent uploads wines by supplier — one table per supplier. You can invite more after publishing.</div>
+      <div style="font-size:16px;font-style:italic;margin-bottom:6px">Invite Exhibitors</div>
+      <div style="font-size:12px;color:${B.cork};margin-bottom:16px;line-height:1.6">Each exhibitor uploads wines by producer — one table per producer. You can invite more after publishing.</div>
       <div style="margin-bottom:14px">
         <label class="lbl">AGENT EMAILS (one per line or comma-separated)</label>
         <textarea class="inp" style="min-height:96px;resize:vertical;line-height:1.8;font-size:13px" data-field="agentEmails" placeholder="christian@profilewinegroup.ca&#10;orders@vanguardwine.ca&#10;james@spiritsoul.ca">${d.agentEmails}</textarea>
@@ -3932,7 +3936,7 @@ function createEventHTML() {
       <div style="margin-bottom:14px">
         <label class="lbl">AGENT SUBMISSION DEADLINE *</label>
         <input type="date" class="inp" value="${d.submissionDeadline}" data-field="submissionDeadline">
-        <div style="font-size:11px;color:${B.cork};margin-top:5px">Agents need approval to submit after this date.</div>
+        <div style="font-size:11px;color:${B.cork};margin-top:5px">Exhibitors need approval to submit after this date.</div>
       </div>
       <div style="background:${B.linen};border-radius:10px;padding:10px 14px;margin-bottom:4px;border:1px solid ${B.mist};font-size:11px;color:${B.cork}">
         Poured charges: $1.75 + 2.9%/ticket · $${d.listingFee}/agent listing · 2.75% order unlock · $4.25 order processing fee
@@ -4220,14 +4224,14 @@ function coordPortalHTML() {
       content += mobileStatGrid([
         {value:totalSold+'/'+totalCap, label:'Tickets Sold ('+pctSold+'%)'},
         {value:'$'+grossRev.toLocaleString(), label:'Gross Revenue', color:'#4A8A6A'},
-        {value:submitted+'/'+EV.agents.length, label:'Agents Submitted'+(pending>0?' ('+pending+' pending)':''), color:'#2A4A6A'},
+        {value:submitted+'/'+EV.agents.length, label:'Exhibitors Submitted'+(pending>0?' ('+pending+' pending)':''), color:'#2A4A6A'},
         {value:EV.products.length+'', label:'Products ('+EV.orders.length+' orders)'}
       ]);
     } else {
       content += '<div class="dp-stats dp-stats-4" style="margin-bottom:24px">';
       content += '<div class="dp-stat"><div class="dp-stat-val">'+totalSold+'<span style="font-size:16px;color:var(--muted)">/'+totalCap+'</span></div><div class="dp-stat-label">Tickets sold</div><div class="dp-stat-sub">'+pctSold+'% capacity</div></div>';
       content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#4A8A6A">$'+grossRev.toLocaleString()+'</div><div class="dp-stat-label">Gross ticket revenue</div></div>';
-      content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#2A4A6A">'+submitted+'<span style="font-size:16px;color:var(--muted)">/'+EV.agents.length+'</span></div><div class="dp-stat-label">Agents submitted</div>'+(pending>0?'<div class="dp-stat-sub" style="color:#7A1020">'+pending+' pending</div>':'')+'</div>';
+      content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#2A4A6A">'+submitted+'<span style="font-size:16px;color:var(--muted)">/'+EV.agents.length+'</span></div><div class="dp-stat-label">Exhibitors submitted</div>'+(pending>0?'<div class="dp-stat-sub" style="color:#7A1020">'+pending+' pending</div>':'')+'</div>';
       content += '<div class="dp-stat"><div class="dp-stat-val">'+EV.products.length+'</div><div class="dp-stat-label">Products listed</div><div class="dp-stat-sub">'+EV.orders.length+' orders placed</div></div>';
       content += '</div>';
     }
@@ -4270,7 +4274,7 @@ function coordPortalHTML() {
 
     // Top suppliers
     content += '<div class="dp-card">';
-    content += '<div class="dp-card-header"><span class="dp-card-title">Top Suppliers</span><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="(function(){var a=document.createElement(\'a\');a.href=URL.createObjectURL(new Blob([[\'Supplier,Agent,Views,Orders\'].concat(allStats.map(function(s){return s.supplier+\',\'+s.agent+\',\'+s.totalViews+\',\'+s.totalOrders;})).join(\'\\n\')],{type:\'text/csv\'}));a.download=\'report.csv\';a.click();})()">⬇ Export CSV</button></div>';
+    content += '<div class="dp-card-header"><span class="dp-card-title">Top Producers</span><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="(function(){var a=document.createElement(\'a\');a.href=URL.createObjectURL(new Blob([[\'Supplier,Agent,Views,Orders\'].concat(allStats.map(function(s){return s.supplier+\',\'+s.agent+\',\'+s.totalViews+\',\'+s.totalOrders;})).join(\'\\n\')],{type:\'text/csv\'}));a.download=\'report.csv\';a.click();})()">⬇ Export CSV</button></div>';
     if(isMobile()) {
       content += '<div style="padding:12px">';
       allStats.slice(0,8).forEach(function(s){
@@ -4283,7 +4287,7 @@ function coordPortalHTML() {
       });
       content += '</div>';
     } else {
-      content += '<table class="dp-table"><thead><tr><th>Supplier</th><th>Agent</th><th>Views</th><th>Orders</th></tr></thead><tbody>';
+      content += '<table class="dp-table"><thead><tr><th>Producer</th><th>Exhibitor</th><th>Views</th><th>Orders</th></tr></thead><tbody>';
       allStats.slice(0,8).forEach(function(s){
         content += '<tr><td style="font-weight:600">'+s.supplier+'</td><td style="color:var(--muted)">'+s.agent+'</td><td>'+s.totalViews+'</td><td style="font-weight:600;color:#7A1020">'+s.totalOrders+'</td></tr>';
       });
@@ -4295,7 +4299,7 @@ function coordPortalHTML() {
 
   else if(tab==='agents') {
     content += '<div class="dp-card">';
-    content += '<div class="dp-card-header"><span class="dp-card-title">Agents</span><div style="display:flex;gap:8px"><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="sendAgentReminder(state.selectedEventId)">Send reminders</button><button class="dp-btn dp-btn-primary dp-btn-sm" onclick="showInviteAgentModal(state.selectedEventId||state.coordSelectedEventId||1)">+ Invite Agent</button></div></div>';
+    content += '<div class="dp-card-header"><span class="dp-card-title">Exhibitors</span><div style="display:flex;gap:8px"><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="sendAgentReminder(state.selectedEventId)">Send reminders</button><button class="dp-btn dp-btn-primary dp-btn-sm" onclick="showInviteAgentModal(state.selectedEventId||state.coordSelectedEventId||1)">+ Invite Exhibitor</button></div></div>';
     if(isMobile()) {
       content += '<div style="padding:12px">';
       EV.agents.forEach(function(agent){
@@ -4309,7 +4313,7 @@ function coordPortalHTML() {
       });
       content += '</div>';
     } else {
-      content += '<table class="dp-table"><thead><tr><th>Agent</th><th>Listing fee</th><th>Submission</th><th>Products</th><th>Actions</th></tr></thead><tbody>';
+      content += '<table class="dp-table"><thead><tr><th>Exhibitor</th><th>Listing fee</th><th>Submission</th><th>Products</th><th>Actions</th></tr></thead><tbody>';
       EV.agents.forEach(function(agent){
         var agentProds = EV.products.filter(function(p){return p.agentEmail===agent.email;});
         content += '<tr>'
@@ -4327,7 +4331,7 @@ function coordPortalHTML() {
 
   else if(tab==='suppliers') {
     content += '<div class="dp-card">';
-    content += '<div class="dp-card-header"><span class="dp-card-title">Supplier Tables</span><div style="font-size:12px;color:var(--muted)">'+EV.products.length+' products across '+allStats.length+' suppliers</div></div>';
+    content += '<div class="dp-card-header"><span class="dp-card-title">Producer Tables</span><div style="font-size:12px;color:var(--muted)">'+EV.products.length+' products across '+allStats.length+' producers</div></div>';
     if(isMobile()) {
       content += '<div style="padding:12px">';
       allStats.forEach(function(s){
@@ -4341,7 +4345,7 @@ function coordPortalHTML() {
       });
       content += '</div>';
     } else {
-      content += '<table class="dp-table"><thead><tr><th>Supplier</th><th>Country</th><th>Agent</th><th>Views</th><th>Orders</th></tr></thead><tbody>';
+      content += '<table class="dp-table"><thead><tr><th>Producer</th><th>Country</th><th>Exhibitor</th><th>Views</th><th>Orders</th></tr></thead><tbody>';
       allStats.forEach(function(s){
         content += '<tr>'
           + '<td style="font-weight:600;font-size:13px">'+s.supplier+'</td>'
@@ -4381,7 +4385,7 @@ function coordPortalHTML() {
       });
       content += '</div>';
     } else {
-      content += '<table class="dp-table"><thead><tr><th>Product</th><th>Supplier</th><th>Agent</th><th>Category</th><th>Price/case</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+      content += '<table class="dp-table"><thead><tr><th>Product</th><th>Producer</th><th>Exhibitor</th><th>Category</th><th>Price/case</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
       EV.products.forEach(function(prod){
         var st = state.coordApprovals[prod.id];
         content += '<tr>'
@@ -4472,7 +4476,7 @@ function coordPortalHTML() {
     content += '<div style="font-size:13px;color:var(--muted);margin-bottom:24px">Estimated net payout · processed 3 days post-event</div>';
     [['Gross ticket revenue','$'+grossRev.toLocaleString(),'#1A1A1A'],
      ['Poured ticket fees','-$'+ticketFees.toFixed(2),'#C04040'],
-     ['Agent listing fees collected','$'+listingRev,'#4A8A6A'],
+     ['Exhibitor listing fees collected','$'+listingRev,'#4A8A6A'],
     ].forEach(function(row){
       content += '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F5F0EA;font-size:13px">'
         + '<span style="color:var(--muted)">'+row[0]+'</span>'
@@ -4531,8 +4535,8 @@ function coordPortalHTML() {
     +   '<button class="dp-nav-item" onclick="backToCoordList()"><span class="dp-nav-icon">←</span>All Events</button>'
     +   '<div class="dp-sidebar-section" style="margin-top:4px">'+EV.name.toUpperCase().substring(0,22)+'</div>'
     +   navItem('overview','-','Overview')
-    +   navItem('agents','-','Agents'+(pending>0?' ('+pending+' pending)':''))
-    +   navItem('suppliers','-','Suppliers')
+    +   navItem('agents','-','Exhibitors'+(pending>0?' ('+pending+' pending)':''))
+    +   navItem('suppliers','-','Producers')
     +   navItem('approvals','-','Approvals',EV.products.filter(function(p){return state.coordApprovals[p.id]===undefined;}).length||null)
     +   navItem('door','-','Door Check-in')
     +   navItem('payout','-','Payout')
@@ -4564,7 +4568,7 @@ function coordPortalHTML() {
     +     '</div>'
     +     '<div style="font-size:12px;color:#888">'+EV.date+' · '+EV.venue+'</div>'
     +   '</div>'
-    +   tabBar([['overview','Overview'],['door','Check-in'],['agents','Agents'],['payout','Payout']], tab, 'setCoordTab')
+    +   tabBar([['overview','Overview'],['door','Check-in'],['agents','Exhibitors'],['payout','Payout']], tab, 'setCoordTab')
     +   '<div class="dp-content">'+content+'</div>'
     + '</div>'
     + dupModalHTML(EV)
@@ -4765,7 +4769,7 @@ window.forgotPassword = function() {
 function onboardingHTML() {
   if(state.onboardingDone || IS_DEMO) return '';
   var steps = [
-    {title:'Welcome to POURED!', text:'Browse wines by supplier table, save your favourites, and place orders \u2014 all from your phone.', icon:'\ud83c\udf77'},
+    {title:'Welcome to POURED!', text:'Browse wines by producer table, save your favourites, and place orders \u2014 all from your phone.', icon:'\ud83c\udf77'},
     {title:'Browse Wines', text:'Tap any supplier to see their wines. Use the \u2665 to save ones you like.', icon:'\ud83d\udccb'},
     {title:'Place Orders', text:'Add wines to your cart and checkout when ready. Your order goes directly to the agent.', icon:'\ud83d\uded2'},
     {title:'48-Hour Window', text:'Orders stay open for 48 hours after the event. Take your time deciding.', icon:'\u23f0'}
@@ -4829,7 +4833,7 @@ function custPortalHTML() {
   const browseTab = state.custTab==='browse' ? `<div style="padding:12px 14px">
     ${orderingBanner(EV)}
     <div style="display:flex;gap:6px;margin-bottom:12px">
-      ${[["table","By Supplier"],["category","By Region"]].map(([m,l])=>`<button onclick="setBrowseMode('${m}')" style="flex:1;padding:8px;border-radius:10px;border:1px solid ${state.browseMode===m?B.ink:B.mist};background:${state.browseMode===m?B.ink:'#fff'};color:${state.browseMode===m?B.cream:B.cork};font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">${l}</button>`).join('')}
+      ${[["table","By Producer"],["category","By Region"]].map(([m,l])=>`<button onclick="setBrowseMode('${m}')" style="flex:1;padding:8px;border-radius:10px;border:1px solid ${state.browseMode===m?B.ink:B.mist};background:${state.browseMode===m?B.ink:'#fff'};color:${state.browseMode===m?B.cream:B.cork};font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">${l}</button>`).join('')}
     </div>
     ${filterPillsHTML()}
     ${state.browseMode==='table'?`<div style="display:flex;justify-content:flex-end;margin-bottom:10px;gap:8px">
@@ -4850,7 +4854,7 @@ function custPortalHTML() {
         const featuredCount = sorted.filter(t=>{const a=EV.agents.find(ag=>ag.id===t.agentId);return a&&a.featured;}).length;
         const featuredMax = 3;
         const featuredRemaining = Math.max(0, featuredMax - featuredCount);
-        if(hasFeatured && prevFeatured===null && isFeatured) sectionHeader = `<div style="border:2px solid ${B.wine};border-radius:14px;overflow:hidden;margin-bottom:16px;box-shadow:0 4px 20px rgba(122,16,32,.1)"><div style="background:${B.wine};color:#fff;padding:12px 16px;font-size:10px;font-weight:800;letter-spacing:.16em;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px">★</span> FEATURED SUPPLIERS</div><span style="font-size:9px;font-weight:700;letter-spacing:.08em;opacity:.7">${featuredCount}/${featuredMax} SPOTS</span></div>`;
+        if(hasFeatured && prevFeatured===null && isFeatured) sectionHeader = `<div style="border:2px solid ${B.wine};border-radius:14px;overflow:hidden;margin-bottom:16px;box-shadow:0 4px 20px rgba(122,16,32,.1)"><div style="background:${B.wine};color:#fff;padding:12px 16px;font-size:10px;font-weight:800;letter-spacing:.16em;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px">★</span> FEATURED PRODUCERS</div><span style="font-size:9px;font-weight:700;letter-spacing:.08em;opacity:.7">${featuredCount}/${featuredMax} SPOTS</span></div>`;
         if(hasFeatured && prevFeatured===true && !isFeatured) sectionHeader = `</div><div style="height:16px"></div>`;
         prevFeatured = isFeatured;
         const key = table.agentId+'::'+table.supplier;
@@ -4929,7 +4933,7 @@ function custPortalHTML() {
       <div style="text-align:center;padding:24px 0 16px">
         <div style="font-size:48px;margin-bottom:10px"></div>
         <div style="font-size:20px;font-weight:800;margin-bottom:8px">ORDER SUBMITTED</div>
-        <div style="font-size:12px;color:${B.cork};line-height:1.75;max-width:320px;margin:0 auto">${Object.keys(byAgent).length} agent${Object.keys(byAgent).length>1?'s have':' has'} been notified. Each agent will review your order and contact you directly to confirm, arrange payment, and coordinate delivery.</div>
+        <div style="font-size:12px;color:${B.cork};line-height:1.75;max-width:320px;margin:0 auto">${Object.keys(byAgent).length} exhibitor${Object.keys(byAgent).length>1?'s have':' has'} been notified. Each exhibitor will review your order and contact you directly to confirm, arrange payment, and coordinate delivery.</div>
       </div>
       ${Object.entries(byAgent).map(([agent,items])=>`<div style="background:#fff;border-radius:12px;overflow:hidden;margin-bottom:10px;border:1px solid ${B.mist}">
         <div style="background:${B.linen};padding:9px 14px;display:flex;justify-content:space-between;border-bottom:1px solid ${B.mist}"><div style="font-size:13px;font-weight:700">${agent}</div><div style="font-size:13px;font-weight:700;color:${B.pour}">$${items.reduce((s,i)=>s+(i.qtyCases||1)*(i.pricePerCase||0),0).toFixed(2)}</div></div>
@@ -4972,11 +4976,11 @@ function custPortalHTML() {
         <div style="background:${B.linen};border-radius:10px;padding:11px 14px;margin-bottom:14px;border:1px solid ${B.mist}">
           <div style="display:flex;justify-content:space-between;font-size:12px;color:${B.cork};margin-bottom:3px"><span>Poured submission fee</span><span>$1.00</span></div>
           <div style="display:flex;justify-content:space-between;font-size:12px;color:${B.cork};margin-bottom:8px"><span>HST</span><span>$0.13</span></div>
-          <div style="font-size:11px;color:${B.cork};font-style:italic">Agents collect payment directly after confirmation.</div>
+          <div style="font-size:11px;color:${B.cork};font-style:italic">Exhibitors collect payment directly after confirmation.</div>
         </div>
         <div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid ${B.mist}">
           <div style="font-size:10px;color:${B.cork};font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px">Your Contact Details</div>
-          <div style="font-size:11px;color:${B.cork};margin-bottom:12px;line-height:1.5">Agents will use this to confirm your order and arrange delivery.</div>
+          <div style="font-size:11px;color:${B.cork};margin-bottom:12px;line-height:1.5">Exhibitors will use this to confirm your order and arrange delivery.</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
             <div>
               <div style="font-size:9px;color:${B.cork};font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">First Name *</div>
@@ -5015,7 +5019,7 @@ function custPortalHTML() {
           <div style="font-weight:700;color:#1A1A1A;margin-bottom:4px">HOW THIS WORKS</div>
           Your order is sent to each agent, who will contact you directly to confirm, arrange payment, and coordinate delivery through their standard channels. POURED does not process payment for wine — we simply connect you with the agent. A one-time $4.25 processing fee applies.
         </div>
-        <button onclick="if(!disableBtn(this))return;submitOrderWithContact()" style="width:100%;padding:13px;border-radius:10px;border:none;background:${B.ink};color:${B.cream};font-size:14px;font-family:Nunito Sans,sans-serif;cursor:pointer;font-weight:700">Submit Order — ${cartCount} case${cartCount>1?'s':''} · ${Object.keys(byAgent).length} agent${Object.keys(byAgent).length>1?'s':''}</button>
+        <button onclick="if(!disableBtn(this))return;submitOrderWithContact()" style="width:100%;padding:13px;border-radius:10px;border:none;background:${B.ink};color:${B.cream};font-size:14px;font-family:Nunito Sans,sans-serif;cursor:pointer;font-weight:700">Submit Order — ${cartCount} case${cartCount>1?'s':''} · ${Object.keys(byAgent).length} exhibitor${Object.keys(byAgent).length>1?'s':''}</button>
       </div>`}
     </div>`}
   </div>` : '';
@@ -5025,7 +5029,7 @@ function custPortalHTML() {
     <div>
       <div style="font-size:10px;color:var(--muted);letter-spacing:.1em">YOUR ORDER</div>
       <div style="font-size:14px;color:${B.cream}">${cartCount} case${cartCount>1?'s':''} · <span style="color:${B.pour}">$${cartTotal}</span></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:2px">${Object.keys(byAgent).length} agent${Object.keys(byAgent).length>1?'s':''} · routed automatically</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px">${Object.keys(byAgent).length} exhibitor${Object.keys(byAgent).length>1?'s':''} · routed automatically</div>
     </div>
     <button onclick="setCustTab('order')" style="background:${B.wine};color:${B.cream};border:none;padding:8px 16px;border-radius:10px;cursor:pointer;font-size:12px;font-family:Nunito Sans,sans-serif">Review →</button>
   </div>` : '';
@@ -5383,7 +5387,7 @@ function render() {
   if(p === 'admin') { app.innerHTML = loginShell('Platform Admin','-','admin@pouredevents.com','admin2025','admin','#7A1020'); return; }
   if(p === 'admin_in') { if(!state.currentUser||state.currentUser.role!=='admin'){setState({portal:'home'});showToast('Admin access restricted');return;} document.body.classList.add('dp'); app.innerHTML = adminPortalHTML(); injectMobileNav('admin'); injectDrawer('admin'); return; }
   if(p === 'agent' && state.currentUser) { document.body.classList.add('dp'); app.innerHTML = agentPortalHTML(); injectMobileNav('agent'); injectDrawer('agent'); return; }
-  if(p === 'agent') { document.body.classList.remove('dp'); app.innerHTML = loginShell('Agent / Producer','','christian@profilewinegroup.ca','agent2025','agent','#7A1020'); return; }
+  if(p === 'agent') { document.body.classList.remove('dp'); app.innerHTML = loginShell('Exhibitor','','christian@profilewinegroup.ca','agent2025','agent','#7A1020'); return; }
   if(p === 'agent_in') { document.body.classList.add('dp'); app.innerHTML = agentPortalHTML(); injectMobileNav('agent'); injectDrawer('agent'); return; }
   if(p === 'coordinator' && state.currentUser) { document.body.classList.add('dp'); app.innerHTML = coordPortalHTML(); injectMobileNav('coordinator'); injectDrawer('coordinator'); return; }
   if(p === 'coordinator') { document.body.classList.remove('dp'); app.innerHTML = loginShell('Event Host','','coordinator@tasting.ca','coord2025','coordinator','#1D4ED8'); return; }
@@ -5392,7 +5396,7 @@ function render() {
   if(p === 'customer') { document.body.classList.remove('dp'); app.innerHTML = loginShell('Attendee','','jane@example.com','jane2025','customer','#2a7a4a'); return; }
   if(p === 'customer_in') { document.body.classList.remove('dp'); app.innerHTML = custPortalHTML(); app.style.paddingBottom='0'; return; }
   if(p === 'coordinator_signup') { document.body.classList.remove('dp'); app.innerHTML = signupShell('Event Host','coordinator','#1D4ED8'); return; }
-  if(p === 'agent_signup')       { document.body.classList.remove('dp'); app.innerHTML = signupShell('Agent / Producer','agent','#7A1020'); return; }
+  if(p === 'agent_signup')       { document.body.classList.remove('dp'); app.innerHTML = signupShell('Importer / Producer','agent','#7A1020'); return; }
   if(p === 'customer_signup')    { document.body.classList.remove('dp'); app.innerHTML = signupShell('Attendee','customer','#2a7a4a'); return; }
 }
 
