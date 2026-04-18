@@ -560,7 +560,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=89').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=90').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -656,6 +656,24 @@ window.addEventListener('load', function() {
 
 // ─── SUPABASE ──────────────────────────────────────────────────────────────────
 var _sb=null,LIVE_MODE=false;
+var orderQueue = [];
+var lastEventFetch = 0;
+window.sbRetry = async function(fn, retries) {
+  retries = retries || 3;
+  for(var i=0; i<retries; i++) {
+    try {
+      var result = await fn();
+      if(result && result.error && result.error.message && result.error.message.includes('rate limit')) {
+        await new Promise(function(r){setTimeout(r, 1000*(i+1));});
+        continue;
+      }
+      return result;
+    } catch(err) {
+      if(i === retries-1) return {error: err, data: null};
+      await new Promise(function(r){setTimeout(r, 1000*(i+1));});
+    }
+  }
+};
 var AUTH={signIn:async function(){return{user:null,error:null};},signUp:async function(){return{user:null,error:null};},signOut:async function(){},getProfile:async function(){return null;}};
 var DB={listEvents:async function(){return window.EVENTS||[];},getEvent:async function(id){return(window.EVENTS||[]).find(function(e){return e.id===id||e.id===parseInt(id);})||null;},createEvent:async function(){showToast('Connect Supabase to create real events');return null;},publishEvent:async function(){},uploadCSV:async function(){showToast('Connect Supabase to upload products');return null;},approveProduct:async function(){},editProduct:async function(){},submitOrder:async function(){},unlockOrder:async function(){},confirmOrder:async function(){},saveRating:async function(){},toggleSaved:async function(){if(window.toggleFav)window.toggleFav(arguments[0]);},joinWaitlist:async function(){}};
 (function(){var U='https://cjewygscygpvogmbiyhr.supabase.co',A='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZXd5Z3NjeWdwdm9nbWJpeWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNjc0NTUsImV4cCI6MjA5MTg0MzQ1NX0.AejNetX9wfsI9YCcnZAtk8iHVWffl8dLcCOBuFcwg3o';if(U==='YOUR_SUPABASE_URL')return;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';s.onload=function(){_sb=supabase.createClient(U,A);LIVE_MODE=true;AUTH.signIn=async function(e,p){var r=await _sb.auth.signInWithPassword({email:e,password:p});return{user:r.data&&r.data.user,error:r.error};};AUTH.signUp=async function(e,p,meta){var r=await _sb.auth.signUp({email:e,password:p,options:{data:meta}});return{user:r.data&&r.data.user,error:r.error};};AUTH.signOut=async function(){await _sb.auth.signOut();};AUTH.getProfile=async function(){var u=await _sb.auth.getUser();if(!u.data||!u.data.user)return null;var p=await _sb.from('profiles').select('*').eq('id',u.data.user.id).single();return p.data;};DB.listEvents=async function(){var r=await _sb.from('events').select('*,ticket_tiers(*),agent_listings(count),products(count)').order('date');return r.data||window.EVENTS||[];};DB.getEvent=async function(id){var r=await _sb.from('events').select('*,ticket_tiers(*),agent_listings(*,profiles(full_name,email,company)),products(*,tasting_notes(rating,note,attendee_id))').eq('id',id).single();return r.data;};console.log('Poured: Supabase connected');};s.onerror=function(){console.warn('Poured: SDK load failed');};document.head.appendChild(s);})();
@@ -988,6 +1006,8 @@ let state = {
     {id:2, name:'Maria Fantini', role:'Producer', smartServe:'', email:'maria@fantinigroup.it', phone:''}
   ] : [],
   showAddStaff: false,
+  onboardingStep: 0,
+  onboardingDone: false,
   // Coordinator
   coordTab: "overview",
   expandedAgent: null,
@@ -1651,9 +1671,11 @@ window.readFormAndAdvance = function(nextStep) {
   setState({createStep:nextStep});
 };
 
+var renderTimeout = null;
 function setState(updates) {
   Object.assign(state, updates);
-  render();
+  clearTimeout(renderTimeout);
+  renderTimeout = setTimeout(render, 16);
 }
 function setDraft(updates) {
   Object.assign(state.draft, updates);
@@ -3625,7 +3647,7 @@ window.submitOrderWithContact = async function() {
     var firstName = (document.getElementById('order-first')||{}).value||'';
     var lastName  = (document.getElementById('order-last')||{}).value||'';
 
-    var orderRes = await _sb.from('orders').insert({
+    var orderRow = {
       id: orderId,
       event_id: state.selectedEventId,
       attendee_id: state.currentUser.id,
@@ -3635,10 +3657,7 @@ window.submitOrderWithContact = async function() {
       customer_company: company,
       processing_fee: 4.25,
       status: 'submitted'
-    }).select().single();
-
-    if(orderRes.error){ showToast('Order error: ' + orderRes.error.message); return; }
-
+    };
     var items = (state.cart||[]).map(function(i){
       return {
         order_id: orderId,
@@ -3654,12 +3673,22 @@ window.submitOrderWithContact = async function() {
       };
     });
 
-    var itemsRes = await _sb.from('order_items').insert(items);
-    if(itemsRes.error){ showToast('Error saving order items: ' + itemsRes.error.message); return; }
+    try {
+      var orderRes = await _sb.from('orders').insert(orderRow).select().single();
+      if(orderRes.error){ throw orderRes.error; }
 
-    setState({cart:[], orderDone:true, custTab:'order'});
-    showToast('Order submitted successfully!');
-    return;
+      var itemsRes = await _sb.from('order_items').insert(items);
+      if(itemsRes.error){ throw itemsRes.error; }
+
+      setState({cart:[], orderDone:true, custTab:'order'});
+      showToast('Order submitted successfully!');
+      return;
+    } catch(err) {
+      orderQueue.push({order: orderRow, items: items});
+      setState({cart:[], orderDone:true, custTab:'order'});
+      showToast('Order saved offline \u2014 will sync when connected');
+      return;
+    }
   }
 
   // Demo mode
@@ -3698,6 +3727,7 @@ window.publishEvent=async function(){
 
 window.loadUserEvents = async function() {
   if(!LIVE_MODE||!_sb||IS_DEMO) return;
+  if(Date.now() - lastEventFetch < 30000 && EVENTS.length > 0) return;
   var user=await _sb.auth.getUser();
   if(!user.data||!user.data.user) return;
   var uid=user.data.user.id;
@@ -3731,6 +3761,7 @@ window.loadUserEvents = async function() {
     var res=await _sb.from('events').select('*,ticket_tiers(*)').in('status',['active','upcoming']).order('date');
     if(res.data) EVENTS=res.data.map(function(ev){ev.products=ev.products||[];ev.agents=ev.agents||[];ev.orders=ev.orders||[];ev.tiers=ev.ticket_tiers||ev.tiers||[];return ev;});
   }
+  lastEventFetch = Date.now();
   render();
 };
 
@@ -4673,6 +4704,32 @@ function custEventListHTML() {
   return html;
 }
 
+window.skipOnboarding = function(){ setState({onboardingDone:true}); };
+
+function onboardingHTML() {
+  if(state.onboardingDone || IS_DEMO) return '';
+  var steps = [
+    {title:'Welcome to POURED!', text:'Browse wines by supplier table, save your favourites, and place orders \u2014 all from your phone.', icon:'\ud83c\udf77'},
+    {title:'Browse Wines', text:'Tap any supplier to see their wines. Use the \u2665 to save ones you like.', icon:'\ud83d\udccb'},
+    {title:'Place Orders', text:'Add wines to your cart and checkout when ready. Your order goes directly to the agent.', icon:'\ud83d\uded2'},
+    {title:'48-Hour Window', text:'Orders stay open for 48 hours after the event. Take your time deciding.', icon:'\u23f0'}
+  ];
+  var step = state.onboardingStep || 0;
+  if(step >= steps.length) return '';
+  var s = steps[step];
+  return '<div onclick="if(event.target===this)skipOnboarding()" style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px">'
+    + '<div style="background:#fff;border-radius:16px;padding:32px 24px;max-width:340px;text-align:center">'
+    + '<div style="font-size:48px;margin-bottom:16px">'+s.icon+'</div>'
+    + '<div style="font-size:18px;font-weight:800;margin-bottom:8px;color:#1A1A1A">'+s.title+'</div>'
+    + '<div style="font-size:14px;color:#666;line-height:1.7;margin-bottom:24px">'+s.text+'</div>'
+    + '<div style="display:flex;gap:8px;justify-content:center">'
+    + (step > 0 ? '<button onclick="setState({onboardingStep:'+(step-1)+'})" style="padding:10px 20px;border:1px solid #E5E5E5;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;font-family:Nunito Sans,sans-serif;color:#888">Back</button>' : '')
+    + '<button onclick="'+(step < steps.length-1 ? 'setState({onboardingStep:'+(step+1)+'})' : 'setState({onboardingDone:true})')+'" style="padding:10px 24px;border:none;border-radius:8px;background:#7A1020;color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:Nunito Sans,sans-serif">'+(step < steps.length-1 ? 'Next' : 'Got it!')+'</button>'
+    + '</div>'
+    + '<div style="margin-top:12px"><button onclick="skipOnboarding()" style="background:none;border:none;color:#AAA;font-size:11px;cursor:pointer;font-family:Nunito Sans,sans-serif">Skip</button></div>'
+    + '</div></div>';
+}
+
 function custPortalHTML() {
   if (!state.selectedEventId) return custEventListHTML();
   const activeEV = EVENTS.find(e=>e.id===state.selectedEventId) || EV;
@@ -4940,7 +4997,7 @@ function custPortalHTML() {
     ${tabBar(tabs, state.custTab, 'setCustTab')}
     </div>
     ${ticketTab}${browseTab}${savedTab}${notesTab}${orderTab}${historyTab}
-    ${floatingCart}${detailModal}${shareModalContent}
+    ${floatingCart}${detailModal}${shareModalContent}${onboardingHTML()}
   </div>`;
 }
 
@@ -5276,6 +5333,37 @@ function render() {
   if(p === 'agent_signup')       { document.body.classList.remove('dp'); app.innerHTML = signupShell('Agent / Producer','agent','#7A1020'); return; }
   if(p === 'customer_signup')    { document.body.classList.remove('dp'); app.innerHTML = signupShell('Attendee','customer','#2a7a4a'); return; }
 }
+
+// ── OFFLINE ORDER QUEUE SYNC ─────────────────────────────────────────────────
+setInterval(async function(){
+  if(!LIVE_MODE || orderQueue.length===0 || !navigator.onLine) return;
+  var q = orderQueue[0];
+  try {
+    var res = await _sb.from('orders').insert(q.order);
+    if(!res.error) {
+      await _sb.from('order_items').insert(q.items);
+      orderQueue.shift();
+      showToast('Queued order synced successfully');
+    }
+  } catch(e){}
+}, 15000);
+
+// ── CONNECTION STATUS BANNER ─────────────────────────────────────────────────
+window.addEventListener('online', function(){
+  var b = document.getElementById('offline-banner');
+  if(b) b.remove();
+  showToast('Back online');
+});
+window.addEventListener('offline', function(){
+  var b = document.getElementById('offline-banner');
+  if(!b) {
+    b = document.createElement('div');
+    b.id = 'offline-banner';
+    b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#7A1020;color:#fff;text-align:center;padding:8px calc(8px + env(safe-area-inset-bottom,0px));font-size:12px;font-weight:700;z-index:9999;font-family:Nunito Sans,sans-serif';
+    b.textContent = 'You are offline \u2014 orders will sync when connected';
+    document.body.appendChild(b);
+  }
+});
 
 // ── DEMO DEEP LINKS & ADMIN ACCESS ──────────────────────────────────────────
 (function(){
