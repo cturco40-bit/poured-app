@@ -123,36 +123,38 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   body.dp {
     max-width: 480px;
     margin: 0 auto;
-  }
-  .dp-shell {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100vh;
-    height: 100dvh;
-    overflow: hidden !important;
-  }
-  .dp-sidebar { display: none !important; }
-  .dp-sidebar-wrap { display: none !important; }
-  .dp-collapse-btn { display: none !important; }
-  .dp-main {
-    flex: 1 1 auto;
-    width: 100%;
-    min-height: 0;
-    overflow-y: auto !important;
     overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
+  }
+  .dp-sidebar,
+  .dp-sidebar-wrap,
+  .dp-collapse-btn { display: none !important; }
+  .dp-shell {
+    display: block !important;
+    min-height: 100vh;
+    overflow: visible !important;
+    overflow-x: hidden;
+  }
+  .dp-main {
+    display: block !important;
+    overflow: visible !important;
+    width: 100% !important;
+    margin: 0 !important;
+    overflow-x: hidden;
   }
   .dp-topbar {
-    position: relative !important;
-    flex-shrink: 0;
-    padding: 0 14px;
-    padding-top: calc(8px + env(safe-area-inset-top, 0px)) !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 100 !important;
+    background: #1A1A1A !important;
+    padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 8px !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,.1) !important;
+    border-bottom: none !important;
     min-height: calc(48px + env(safe-area-inset-top, 0px));
     height: auto;
-    background: #1A1A1A !important;
-    border-bottom: none !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,.25) !important;
-    z-index: 5;
+    max-width: 480px;
+    margin: 0 auto;
   }
   .dp-topbar-title {
     color: #FFFFFF !important;
@@ -180,14 +182,15 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     background: rgba(255,255,255,.25) !important;
   }
   .dp-content {
-    padding: 12px;
-    padding-top: 16px !important;
+    padding-top: calc(60px + env(safe-area-inset-top, 0px)) !important;
     padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
     background: #FFFFFF;
+    box-sizing: border-box;
   }
   .dp-content * { max-width: 100%; box-sizing: border-box; }
   .dp-content table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .dp-input-row-2, .dp-input-row-3 { grid-template-columns: 1fr !important; }
   .dp-content input, .dp-content textarea, .dp-content select { width: 100% !important; box-sizing: border-box; }
   .dp-content [style*="grid-template-columns:1fr 1fr"],
   .dp-content [style*="grid-template-columns:2fr 1fr"] { grid-template-columns: 1fr !important; }
@@ -197,51 +200,37 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     max-width: 100% !important;
     width: 100% !important;
   }
-  .dp-stats-4,
+  .dp-input-row,
+  .dp-input-row-2,
+  .dp-input-row-3 { grid-template-columns: 1fr !important; }
+  .dp-stats,
+  .dp-stats-2,
   .dp-stats-3,
-  .dp-stats-2 { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .dp-stats-4 { grid-template-columns: 1fr 1fr !important; gap: 8px; }
   .dp-grid-2,
   .dp-grid-3 { grid-template-columns: 1fr !important; }
-  .dp-card-header {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .dp-stat {
-    padding: 10px 10px;
-    min-width: 0;
-  }
-  .dp-stat-val {
-    font-size: 18px;
-    letter-spacing: -0.5px;
-    line-height: 1.1;
-    margin-bottom: 4px;
-  }
-  .dp-stat-label {
-    font-size: 9px;
-    letter-spacing: .02em;
-    line-height: 1.4;
-    word-break: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
-  }
-  .dp-stat-sub {
-    font-size: 10px;
-  }
+  .dp-card-header { flex-wrap: wrap; gap: 8px; }
+  .dp-stat { padding: 10px; min-width: 0; }
+  .dp-stat-val { font-size: 18px; letter-spacing: -0.5px; line-height: 1.1; margin-bottom: 4px; }
+  .dp-stat-label { font-size: 9px; letter-spacing: .02em; line-height: 1.4; word-break: break-word; overflow-wrap: break-word; hyphens: auto; }
+  .dp-stat-sub { font-size: 10px; }
+  .dp-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .dp-mobile-nav {
     display: flex;
     position: fixed !important;
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
+    z-index: 100 !important;
+    background: #fff !important;
+    border-top: 1px solid #EBEBEB !important;
+    padding: 8px 0 !important;
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
     margin: 0 !important;
     transform: none !important;
     max-width: none !important;
     width: 100% !important;
-    background: #FFFFFF;
-    border-top: 1px solid #EBEBEB;
-    z-index: 100;
-    padding: 8px 0;
-    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -1px 4px rgba(0,0,0,.05) !important;
   }
   .dp-mobile-nav-item {
     flex: 1;
@@ -249,7 +238,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 8px 4px;
+    padding: 4px;
     cursor: pointer;
     border: none;
     background: none;
@@ -262,14 +251,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     gap: 3px;
   }
   .dp-mobile-nav-item.active { color: #7A1020; }
-  .dp-mobile-nav-icon {
-    font-size: 18px;
-    line-height: 1;
-  }
-  body.dp { overflow-x: hidden; }
-  .dp-shell { overflow-x: hidden; }
-  .dp-main { overflow-x: hidden; max-width: 100vw; -webkit-overflow-scrolling: touch; }
-  .dp-content { overflow-x: hidden; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
+  .dp-mobile-nav-icon { font-size: 18px; line-height: 1; }
   .dp-btn-sm { min-height: 44px; padding: 10px 14px; font-size: 12px; }
 }
 
@@ -567,7 +549,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=103').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=104').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1848,7 +1830,7 @@ function tabBar(tabs, activeId, setFn) {
 function loginShell(role, icon, demoEmail, demoPw, portalId, accentColor) {
   return '<div style="min-height:100vh;background:#FFFFFF;display:flex;flex-direction:column">'
     // Wine header
-    + '<div style="background:#1A1A1A;padding:calc(20px + env(safe-area-inset-top, 0px)) 20px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.3)">'
+    + '<div style="background:#1A1A1A;padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.3)">'
     + '<button onclick="setState({portal:\'home\'})" style="background:rgba(255,255,255,.15);border:none;border-radius:6px;color:#fff;font-size:11px;cursor:pointer;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;font-family:inherit">← Back</button>'
     + '<div style="display:flex;align-items:center;gap:9px">' + logoSVG
     + '<span style="font-size:16px;font-weight:900;color:#fff;letter-spacing:.16em;font-family:Nunito Sans,sans-serif">POURED</span></div>'
@@ -1888,7 +1870,7 @@ function loginShell(role, icon, demoEmail, demoPw, portalId, accentColor) {
 function signupShell(role, portalId, accentColor) {
   return '<div style="min-height:100vh;background:#FFFFFF;display:flex;flex-direction:column">'
     // Wine header
-    + '<div style="background:#1A1A1A;padding:calc(20px + env(safe-area-inset-top, 0px)) 20px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.3)">'
+    + '<div style="background:#1A1A1A;padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.3)">'
     + '<button onclick="setState({portal:\''+portalId+'\'})" style="background:rgba(255,255,255,.15);border:none;border-radius:6px;color:#fff;font-size:11px;cursor:pointer;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;font-family:inherit">← Back</button>'
     + '<div style="display:flex;align-items:center;gap:9px">' + logoSVG
     + '<span style="font-size:16px;font-weight:900;color:#fff;letter-spacing:.16em;font-family:Nunito Sans,sans-serif">POURED</span></div>'
@@ -2230,7 +2212,7 @@ function homeHTML() {
   return '<div style="min-height:100vh;background:#FFFFFF;display:flex;flex-direction:column">'
     + demoBanner
     // Clean white header — logo centred like the reference image
-    + '<div style="padding:calc(60px + env(safe-area-inset-top, 0px)) 24px 32px;text-align:center">'
+    + '<div style="padding:calc(40px + env(safe-area-inset-top, 0px)) 24px 32px;text-align:center">'
     +   '<svg width="44" height="54" viewBox="0 0 52 64" fill="none" style="margin-bottom:14px;display:block;margin-left:auto;margin-right:auto"><path d="M26 0C26 0 0 24 0 39C0 53 11.6 64 26 64C40.4 64 52 53 52 39C52 24 26 0 26 0Z" fill="#7A1020"/></svg>'
     +   '<div style="font-size:32px;font-weight:900;color:#1A1A1A;letter-spacing:.2em;text-transform:uppercase;line-height:1;margin-bottom:6px;font-family:Nunito Sans,sans-serif">POURED</div>'
     +   '<div style="font-size:10px;color:#BBBBBB;letter-spacing:.28em;text-transform:uppercase;font-weight:700">Beverage Events</div>'
@@ -4648,7 +4630,7 @@ function custEventListHTML() {
   var html='<div style="background:#F8F8F8;min-height:100vh;padding-bottom:60px">';
   // Header
   html+='<div style="position:sticky;top:0;z-index:100">';
-  html+='<div style="background:#1A1A1A;padding:calc(48px + env(safe-area-inset-top, 0px)) 18px 12px">';
+  html+='<div style="background:#1A1A1A;padding:calc(8px + env(safe-area-inset-top, 0px)) 18px 12px">';
   html+='<div style="display:flex;justify-content:space-between;align-items:center">';
   html+='<div style="display:flex;align-items:center;gap:10px">';
   html+=logoSVG;
@@ -5040,7 +5022,7 @@ function custPortalHTML() {
 
   return `<div style="padding-bottom:${cartCount>0?'140':'80'}px">
     <div style="position:sticky;top:0;z-index:100;background:#1A1A1A;box-shadow:0 2px 8px rgba(0,0,0,.25)">
-      <div style="padding:calc(48px + env(safe-area-inset-top, 0px)) 16px 10px">
+      <div style="padding:calc(8px + env(safe-area-inset-top, 0px)) 16px 10px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div style="display:flex;align-items:center;gap:10px">
             <button onclick="backToCustList()" style="background:rgba(255,255,255,.15);border:none;border-radius:5px;color:#fff;font-size:11px;cursor:pointer;padding:5px 10px;font-weight:700;letter-spacing:.06em;font-family:Nunito Sans,sans-serif">← Dashboard</button>
