@@ -559,7 +559,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=92').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=93').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -3553,7 +3553,15 @@ window.calcOrderUnlockFee = function(sub) {
 };
 
 
-window.signOutAdmin = async function(){ try { sessionStorage.removeItem('poured-cart'); } catch(e){} await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',adminTab:'dashboard'}); };
+function cleanupPortalUI() {
+  var mobileNav = document.getElementById('dp-mobile-nav');
+  if(mobileNav) mobileNav.remove();
+  var drawer = document.getElementById('dp-drawer');
+  if(drawer) drawer.remove();
+  var drawerOverlay = document.getElementById('dp-drawer-overlay');
+  if(drawerOverlay) drawerOverlay.remove();
+}
+window.signOutAdmin = async function(){ try { sessionStorage.removeItem('poured-cart'); } catch(e){} cleanupPortalUI(); await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',adminTab:'dashboard'}); };
 window.saveFeeOverride = function(eventId){
   var fields = ['ticketFlat','ticketPct','unlockPct','submissionFee','featuredFee'];
   var override = {};
@@ -3566,9 +3574,9 @@ window.saveFeeOverride = function(eventId){
   setState({feeOverrides:newOverrides});
   showToast('Fee overrides saved for this event');
 };
-window.signOutAgent  = async function(){ try { sessionStorage.removeItem('poured-cart'); } catch(e){} await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',selectedEventId:null,agentTab:'orders'}); };
-window.signOutCoord  = async function(){ try { sessionStorage.removeItem('poured-cart'); } catch(e){} await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',coordSelectedEventId:null,coordTab:'overview',createStep:1,createDone:false}); };
-window.signOutCust   = async function(){ try { sessionStorage.removeItem('poured-cart'); } catch(e){} await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',selectedEventId:null,custTab:'ticket',cart:[],orderDone:false}); };
+window.signOutAgent  = async function(){ try { sessionStorage.removeItem('poured-cart'); } catch(e){} cleanupPortalUI(); await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',selectedEventId:null,agentTab:'orders'}); };
+window.signOutCoord  = async function(){ try { sessionStorage.removeItem('poured-cart'); } catch(e){} cleanupPortalUI(); await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',coordSelectedEventId:null,coordTab:'overview',createStep:1,createDone:false}); };
+window.signOutCust   = async function(){ try { sessionStorage.removeItem('poured-cart'); } catch(e){} cleanupPortalUI(); await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',selectedEventId:null,custTab:'ticket',cart:[],orderDone:false}); };
 window.backToCoordList = function(){ setState({coordSelectedEventId:null}); };
 window.backToAgentList = function(){ setState({selectedEventId:null, portal:'agent_in'}); };
 window.backToCustList  = function(){ setState({selectedEventId:null, orderDone:false, cart:[]}); };
@@ -5348,6 +5356,12 @@ function render() {
   const p = state.portal;
   if(p === 'home') {
     document.body.classList.remove('dp');
+    var mobileNav = document.getElementById('dp-mobile-nav');
+    if(mobileNav) mobileNav.remove();
+    var drawer = document.getElementById('dp-drawer');
+    if(drawer) drawer.remove();
+    var drawerOverlay = document.getElementById('dp-drawer-overlay');
+    if(drawerOverlay) drawerOverlay.remove();
     app.innerHTML = homeHTML();
     return;
   }
