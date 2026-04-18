@@ -558,7 +558,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=71').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=72').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1698,7 +1698,7 @@ function tabBar(tabs, activeId, setFn) {
 function loginShell(role, icon, demoEmail, demoPw, portalId, accentColor) {
   return '<div style="min-height:100vh;background:#FFFFFF;display:flex;flex-direction:column">'
     // Wine header
-    + '<div style="background:#1A1A1A;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.3)">'
+    + '<div style="background:#1A1A1A;padding:calc(14px + env(safe-area-inset-top, 0px)) 20px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.3)">'
     + '<button onclick="setState({portal:\'home\'})" style="background:rgba(255,255,255,.15);border:none;border-radius:6px;color:#fff;font-size:11px;cursor:pointer;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;font-family:inherit">← Back</button>'
     + '<div style="display:flex;align-items:center;gap:9px">' + logoSVG
     + '<span style="font-size:16px;font-weight:900;color:#fff;letter-spacing:.16em;font-family:Nunito Sans,sans-serif">POURED</span></div>'
@@ -1741,7 +1741,7 @@ function loginShell(role, icon, demoEmail, demoPw, portalId, accentColor) {
 function signupShell(role, portalId, accentColor) {
   return '<div style="min-height:100vh;background:#FFFFFF;display:flex;flex-direction:column">'
     // Wine header
-    + '<div style="background:#1A1A1A;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.3)">'
+    + '<div style="background:#1A1A1A;padding:calc(14px + env(safe-area-inset-top, 0px)) 20px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.3)">'
     + '<button onclick="setState({portal:\''+portalId+'\'})" style="background:rgba(255,255,255,.15);border:none;border-radius:6px;color:#fff;font-size:11px;cursor:pointer;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;font-family:inherit">← Back</button>'
     + '<div style="display:flex;align-items:center;gap:9px">' + logoSVG
     + '<span style="font-size:16px;font-weight:900;color:#fff;letter-spacing:.16em;font-family:Nunito Sans,sans-serif">POURED</span></div>'
@@ -2058,7 +2058,7 @@ function homeHTML() {
   return '<div style="min-height:100vh;background:#FFFFFF;display:flex;flex-direction:column">'
     + demoBanner
     // Clean white header — logo centred like the reference image
-    + '<div style="padding:48px 24px 32px;text-align:center">'
+    + '<div style="padding:calc(48px + env(safe-area-inset-top, 0px)) 24px 32px;text-align:center">'
     +   '<svg width="44" height="54" viewBox="0 0 52 64" fill="none" style="margin-bottom:14px;display:block;margin-left:auto;margin-right:auto"><path d="M26 0C26 0 0 24 0 39C0 53 11.6 64 26 64C40.4 64 52 53 52 39C52 24 26 0 26 0Z" fill="#7A1020"/></svg>'
     +   '<div style="font-size:32px;font-weight:900;color:#1A1A1A;letter-spacing:.2em;text-transform:uppercase;line-height:1;margin-bottom:6px;font-family:Nunito Sans,sans-serif">POURED</div>'
     +   '<div style="font-size:10px;color:#BBBBBB;letter-spacing:.28em;text-transform:uppercase;font-weight:700">Beverage Events</div>'
