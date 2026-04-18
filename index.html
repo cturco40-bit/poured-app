@@ -565,7 +565,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=100').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=101').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1867,11 +1867,7 @@ function loginShell(role, icon, demoEmail, demoPw, portalId, accentColor) {
     + '<input id="login-email" type="email" autocomplete="email" value="'+(IS_DEMO?demoEmail:'')+'" placeholder="you@example.com" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:15px;color:#1A1A1A;background:transparent;outline:none;margin-bottom:20px;font-family:inherit;font-weight:600;transition:border-color .2s" onfocus="this.style.borderColor=\'#7A1020\'" onblur="this.style.borderColor=\'#E0E0E0\'">'
     + '<div style="font-size:9px;color:#AAA;font-weight:700;text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px">Password</div>'
     + '<input id="login-pw" type="password" autocomplete="current-password" value="'+(IS_DEMO?demoPw:'')+'" placeholder="Password" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:15px;color:#1A1A1A;background:transparent;outline:none;margin-bottom:8px;font-family:inherit;font-weight:600;transition:border-color .2s" onfocus="this.style.borderColor=\'#7A1020\'" onblur="this.style.borderColor=\'#E0E0E0\'" onkeydown="if(event.key===\'Enter\')tryLogin(\''+portalId+'\',\''+demoEmail+'\',\''+demoPw+'\')">'
-    + '<div style="text-align:right;margin-bottom:16px"><button onclick="forgotPassword()" style="background:none;border:none;font-size:11px;color:#7A1020;cursor:pointer;font-family:inherit;text-decoration:underline">Forgot password?</button></div>'
-    + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">'
-    + '<input type="checkbox" id="login-remember" style="width:16px;height:16px;accent-color:#7A1020;cursor:pointer">'
-    + '<label for="login-remember" style="font-size:12px;color:#888;cursor:pointer">Remember me</label>'
-    + '</div>'
+    + '<div style="text-align:right;margin-bottom:20px"><button onclick="forgotPassword()" style="background:none;border:none;font-size:11px;color:#7A1020;cursor:pointer;font-family:inherit;text-decoration:underline">Forgot password?</button></div>'
     + '<div id="login-err" style="display:none;color:#7A1020;font-size:12px;font-weight:700;margin-bottom:14px;letter-spacing:.04em;text-transform:uppercase"></div>'
     + '<button onclick="tryLogin(\''+portalId+'\',\''+demoEmail+'\',\''+demoPw+'\')" style="width:100%;padding:15px;background:linear-gradient(135deg,#1A1A1A,#2C2C2C);color:#fff;border:none;font-size:12px;font-weight:900;cursor:pointer;letter-spacing:.18em;text-transform:uppercase;font-family:inherit;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);transition:all .2s" onmouseenter="this.style.background=\'linear-gradient(135deg,#7A1020,#9B1A2A)\';this.style.boxShadow=\'0 6px 20px rgba(122,16,32,.4)\'" onmouseleave="this.style.background=\'linear-gradient(135deg,#1A1A1A,#2C2C2C)\';this.style.boxShadow=\'0 4px 16px rgba(0,0,0,.2)\'">Sign In</button>'
     + (portalId!=='admin' ? '<div style="height:1px;background:#F0F0F0;margin:20px 0"></div>'
@@ -2237,7 +2233,9 @@ function homeHTML() {
     + '<div style="height:1px;background:#F0F0F0;margin:0 24px 24px"></div>'
     // Portal buttons
     + '<div style="padding:0 24px;display:flex;flex-direction:column;gap:10px;margin-bottom:24px">'
-    +   '<div style="font-size:9px;color:#BBBBBB;letter-spacing:.22em;text-transform:uppercase;font-weight:700;text-align:center;margin-bottom:4px">Select your portal</div>'
+    +   (state.currentUser
+        ? '<div style="font-size:12px;color:#555;text-align:center;margin-bottom:4px">Welcome back, <span style="font-weight:700;color:#1A1A1A">'+(state.currentUser.name||state.currentUser.email)+'</span> \u00b7 <button onclick="signOutFromHome()" style="background:none;border:none;color:#7A1020;font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline">Sign out</button></div>'
+        : '<div style="font-size:9px;color:#BBBBBB;letter-spacing:.22em;text-transform:uppercase;font-weight:700;text-align:center;margin-bottom:4px">Select your portal</div>')
 
     +   '<button data-portal="coordinator" onclick="goPortal(this)" onmouseenter="roleCardHover(this,true)" onmouseleave="roleCardHover(this,false)" '
     +   'style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:linear-gradient(135deg,#1A1A1A,#2C2C2C);border:none;border-radius:10px;cursor:pointer;width:100%;box-shadow:0 4px 14px rgba(0,0,0,.18);text-align:left;transition:all .2s">'
@@ -3569,6 +3567,13 @@ function cleanupPortalUI() {
   if(drawerOverlay) drawerOverlay.remove();
 }
 window.signOutAdmin = async function(){ try { sessionStorage.removeItem('poured-cart'); } catch(e){} cleanupPortalUI(); await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',adminTab:'dashboard'}); };
+window.signOutFromHome = async function() {
+  await AUTH.signOut();
+  state.currentUser = null;
+  try { sessionStorage.removeItem('poured-cart'); } catch(e){}
+  cleanupPortalUI();
+  setState({portal:'home'});
+};
 window.saveFeeOverride = function(eventId){
   var fields = ['ticketFlat','ticketPct','unlockPct','submissionFee','featuredFee'];
   var override = {};
@@ -5445,10 +5450,27 @@ function injectDemoBanner() {
 
 try { var savedCart = sessionStorage.getItem('poured-cart'); if(savedCart) state.cart = JSON.parse(savedCart); } catch(e){}
 
+// Restore session if user was previously signed in
+function restoreSession() {
+  if(!LIVE_MODE || IS_DEMO || !_sb) return;
+  _sb.auth.getSession().then(function(res) {
+    if(res.data && res.data.session) {
+      var userId = res.data.session.user.id;
+      _sb.from('profiles').select('*').eq('id', userId).single().then(function(profileRes) {
+        if(profileRes.data) {
+          var p = profileRes.data;
+          state.currentUser = {id:p.id, email:p.email, name:p.full_name, company:p.company, phone:p.phone, role:p.role};
+          render();
+        }
+      });
+    }
+  });
+}
+
 if(document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function(){ render(); injectDemoBanner(); });
+  document.addEventListener('DOMContentLoaded', function(){ render(); injectDemoBanner(); setTimeout(restoreSession, 500); });
 } else {
-  render(); injectDemoBanner();
+  render(); injectDemoBanner(); setTimeout(restoreSession, 500);
 }
 </script>
 <div class="poured-loading" id="poured-loader">Processing...</div>
