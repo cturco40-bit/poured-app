@@ -520,6 +520,8 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 @media(max-width:768px){.dp-hamburger{color:#fff;}}
 .dp-sidebar-wrap{display:none !important;}
 .dp-collapse-btn{display:none !important;}
+.poured-loading{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:rgba(26,26,26,.9);color:#fff;padding:16px 28px;border-radius:10px;font-size:13px;font-weight:700;font-family:Nunito Sans,sans-serif;display:none}
+.poured-loading.show{display:block}
 </style>
 </head>
 <body>
@@ -560,7 +562,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=90').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=91').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1595,11 +1597,12 @@ window.handleCSVUpload=async function(input){
   if(LIVE_MODE && !IS_DEMO && state.selectedEventId) {
     var userId = state.currentUser && state.currentUser.id;
     if(!userId) { showToast('Please sign in first'); return; }
+    showLoader('Uploading products...');
     var text;
     try { text = await file.text(); }
-    catch(e) { showToast('Could not read file'); return; }
+    catch(e) { hideLoader(); showToast('Could not read file'); return; }
     var parsed = parseCSV(text);
-    if(parsed.length===0) { showToast('CSV is empty'); return; }
+    if(parsed.length===0) { hideLoader(); showToast('CSV is empty'); return; }
     var products = parsed.map(function(r){
       return {
         supplier:      r['Supplier/Producer']||r['Supplier']||'',
@@ -1640,6 +1643,7 @@ window.handleCSVUpload=async function(input){
       };
     });
     _sb.from('products').insert(rows).then(function(res){
+      hideLoader();
       if(res.error) { showToast('Upload error: '+res.error.message); return; }
       showToast(rows.length+' products uploaded successfully');
       loadUserEvents();
@@ -1671,9 +1675,22 @@ window.readFormAndAdvance = function(nextStep) {
   setState({createStep:nextStep});
 };
 
+window.disableBtn = function(btn) {
+  if(btn.disabled) return false;
+  btn.disabled = true;
+  btn.style.opacity = '.5';
+  setTimeout(function(){ btn.disabled = false; btn.style.opacity = '1'; }, 3000);
+  return true;
+};
+window.showLoader = function(msg){ var l=document.getElementById('poured-loader'); if(l){l.textContent=msg||'Processing...';l.classList.add('show');} };
+window.hideLoader = function(){ var l=document.getElementById('poured-loader'); if(l)l.classList.remove('show'); };
+
 var renderTimeout = null;
 function setState(updates) {
   Object.assign(state, updates);
+  if(updates.cart !== undefined) {
+    try { sessionStorage.setItem('poured-cart', JSON.stringify(state.cart)); } catch(e){}
+  }
   clearTimeout(renderTimeout);
   renderTimeout = setTimeout(render, 16);
 }
@@ -1846,7 +1863,8 @@ function loginShell(role, icon, demoEmail, demoPw, portalId, accentColor) {
     + '<div style="font-size:9px;color:#AAA;font-weight:700;text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px">Email</div>'
     + '<input id="login-email" type="email" autocomplete="email" value="'+(IS_DEMO?demoEmail:'')+'" placeholder="you@example.com" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:15px;color:#1A1A1A;background:transparent;outline:none;margin-bottom:20px;font-family:inherit;font-weight:600;transition:border-color .2s" onfocus="this.style.borderColor=\'#7A1020\'" onblur="this.style.borderColor=\'#E0E0E0\'">'
     + '<div style="font-size:9px;color:#AAA;font-weight:700;text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px">Password</div>'
-    + '<input id="login-pw" type="password" autocomplete="current-password" value="'+(IS_DEMO?demoPw:'')+'" placeholder="Password" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:15px;color:#1A1A1A;background:transparent;outline:none;margin-bottom:20px;font-family:inherit;font-weight:600;transition:border-color .2s" onfocus="this.style.borderColor=\'#7A1020\'" onblur="this.style.borderColor=\'#E0E0E0\'" onkeydown="if(event.key===\'Enter\')tryLogin(\''+portalId+'\',\''+demoEmail+'\',\''+demoPw+'\')">'
+    + '<input id="login-pw" type="password" autocomplete="current-password" value="'+(IS_DEMO?demoPw:'')+'" placeholder="Password" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:15px;color:#1A1A1A;background:transparent;outline:none;margin-bottom:8px;font-family:inherit;font-weight:600;transition:border-color .2s" onfocus="this.style.borderColor=\'#7A1020\'" onblur="this.style.borderColor=\'#E0E0E0\'" onkeydown="if(event.key===\'Enter\')tryLogin(\''+portalId+'\',\''+demoEmail+'\',\''+demoPw+'\')">'
+    + '<div style="text-align:right;margin-bottom:16px"><button onclick="forgotPassword()" style="background:none;border:none;font-size:11px;color:#7A1020;cursor:pointer;font-family:inherit;text-decoration:underline">Forgot password?</button></div>'
     + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">'
     + '<input type="checkbox" id="login-remember" style="width:16px;height:16px;accent-color:#7A1020;cursor:pointer">'
     + '<label for="login-remember" style="font-size:12px;color:#888;cursor:pointer">Remember me</label>'
@@ -2545,7 +2563,7 @@ function agentPortalHTML() {
         if(isUnlocked) content += '<div style="font-size:11px;color:#4A8A6A;margin-bottom:10px">Fee paid: $'+fee.toFixed(2)+'</div>';
         if(!isUnlocked) content += '<div style="margin-bottom:10px"></div>';
         content += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
-        if(!isUnlocked) content += '<button class="dp-btn dp-btn-primary dp-btn-sm" onclick="unlockOrder(\''+order.id+'\')">Unlock · $'+fee.toFixed(2)+'</button>';
+        if(!isUnlocked) content += '<button class="dp-btn dp-btn-primary dp-btn-sm" onclick="if(!disableBtn(this))return;unlockOrder(\''+order.id+'\')">Unlock · $'+fee.toFixed(2)+'</button>';
         if(isUnlocked && !isConfirmed) content += '<button class="dp-btn dp-btn-sage dp-btn-sm" onclick="confirmOrder(\''+order.id+'\')">Confirm</button>';
         if(isUnlocked) content += '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openInvoice(\''+order.id+'\')">Receipt</button>';
         if(isUnlocked) content += '<a href="mailto:'+order.email+'?subject=Your order — '+ev.name+'" class="dp-btn dp-btn-ghost dp-btn-sm" style="text-decoration:none">Email</a>';
@@ -3538,7 +3556,7 @@ window.calcOrderUnlockFee = function(sub) {
 };
 
 
-window.signOutAdmin = async function(){ await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',adminTab:'dashboard'}); };
+window.signOutAdmin = async function(){ try { sessionStorage.removeItem('poured-cart'); } catch(e){} await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',adminTab:'dashboard'}); };
 window.saveFeeOverride = function(eventId){
   var fields = ['ticketFlat','ticketPct','unlockPct','submissionFee','featuredFee'];
   var override = {};
@@ -3551,9 +3569,9 @@ window.saveFeeOverride = function(eventId){
   setState({feeOverrides:newOverrides});
   showToast('Fee overrides saved for this event');
 };
-window.signOutAgent  = async function(){ await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',selectedEventId:null,agentTab:'orders'}); };
-window.signOutCoord  = async function(){ await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',coordSelectedEventId:null,coordTab:'overview',createStep:1,createDone:false}); };
-window.signOutCust   = async function(){ await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',selectedEventId:null,custTab:'ticket',cart:[],orderDone:false}); };
+window.signOutAgent  = async function(){ try { sessionStorage.removeItem('poured-cart'); } catch(e){} await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',selectedEventId:null,agentTab:'orders'}); };
+window.signOutCoord  = async function(){ try { sessionStorage.removeItem('poured-cart'); } catch(e){} await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',coordSelectedEventId:null,coordTab:'overview',createStep:1,createDone:false}); };
+window.signOutCust   = async function(){ try { sessionStorage.removeItem('poured-cart'); } catch(e){} await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',selectedEventId:null,custTab:'ticket',cart:[],orderDone:false}); };
 window.backToCoordList = function(){ setState({coordSelectedEventId:null}); };
 window.backToAgentList = function(){ setState({selectedEventId:null, portal:'agent_in'}); };
 window.backToCustList  = function(){ setState({selectedEventId:null, orderDone:false, cart:[]}); };
@@ -3643,6 +3661,7 @@ window.submitOrderWithContact = async function() {
 
   if(LIVE_MODE && !IS_DEMO){
     if(!state.currentUser || !state.currentUser.id){ showErr('Please sign in to submit an order.'); return; }
+    showLoader('Submitting order...');
     var orderId = 'ORD-' + Date.now().toString(36).toUpperCase();
     var firstName = (document.getElementById('order-first')||{}).value||'';
     var lastName  = (document.getElementById('order-last')||{}).value||'';
@@ -3680,10 +3699,12 @@ window.submitOrderWithContact = async function() {
       var itemsRes = await _sb.from('order_items').insert(items);
       if(itemsRes.error){ throw itemsRes.error; }
 
+      hideLoader();
       setState({cart:[], orderDone:true, custTab:'order'});
       showToast('Order submitted successfully!');
       return;
     } catch(err) {
+      hideLoader();
       orderQueue.push({order: orderRow, items: items});
       setState({cart:[], orderDone:true, custTab:'order'});
       showToast('Order saved offline \u2014 will sync when connected');
@@ -3699,9 +3720,10 @@ window.publishEvent=async function(){
   var d=state.draft;
   if(!d.host||!d.host.trim()){showToast('Please enter your organization name');return;}
   if(LIVE_MODE&&_sb){
+    showLoader('Publishing event...');
     var user=await _sb.auth.getUser();
     var uid=(state.currentUser&&state.currentUser.id)||(user.data&&user.data.user&&user.data.user.id);
-    if(!uid){showToast('Not signed in');return;}
+    if(!uid){hideLoader();showToast('Not signed in');return;}
     var res=await _sb.from('events').insert({
       host_id:uid,name:d.name,date:d.date,time:(d.startTime||'18:00')+'-'+(d.endTime||'21:00'),
       venue:d.venue,address:d.address,city:d.city||'Toronto',
@@ -3709,7 +3731,7 @@ window.publishEvent=async function(){
       submission_deadline:d.submissionDeadline||null,status:'upcoming',
       require_passcode:d.requirePasscode!==false,allow_public_browse:d.allowPublicBrowse||false
     }).select().single();
-    if(res.error){showToast('Error: '+res.error.message);return;}
+    if(res.error){hideLoader();showToast('Error: '+res.error.message);return;}
     var eventId=res.data.id;
     var tiers=(d.tiers||[]).filter(function(t){return t.enabled;}).map(function(t){
       return{event_id:eventId,label:t.label,price:parseFloat(t.price)||0,capacity:parseInt(t.capacity)||100,sold:0};
@@ -3718,6 +3740,7 @@ window.publishEvent=async function(){
       var tierRes=await _sb.from('ticket_tiers').insert(tiers);
       if(tierRes.error)console.warn('Tier insert error:',tierRes.error);
     }
+    hideLoader();
     setState({createDone:true});
     showToast('Event created successfully');
   }else{
@@ -3949,7 +3972,7 @@ function createEventHTML() {
       })()}
       <div style="display:flex;gap:10px">
         <button onclick="setCreateStep(4)" style="flex:1;padding:12px;border-radius:10px;border:1px solid ${B.mist};background:#fff;color:${B.cork};font-size:13px;font-family:Nunito Sans,sans-serif;cursor:pointer">← Edit</button>
-        <button onclick="publishEvent()" style="flex:2;padding:14px;border-radius:10px;border:none;background:${B.pour};color:#fff;font-size:14px;font-family:Nunito Sans,sans-serif;cursor:pointer;font-weight:700">Publish Event</button>
+        <button onclick="if(!disableBtn(this))return;publishEvent()" style="flex:2;padding:14px;border-radius:10px;border:none;background:${B.pour};color:#fff;font-size:14px;font-family:Nunito Sans,sans-serif;cursor:pointer;font-weight:700">Publish Event</button>
       </div>
     </div>`;
   }
@@ -4590,7 +4613,7 @@ function custEventListHTML() {
         c+='<div style="font-size:15px;font-weight:800;color:#7A1020">$'+buyerPrice+'</div>';
         c+='</div>';
       });
-      c+='<button data-evid="'+ev.id+'" onclick="purchaseTicket(parseInt(this.dataset.evid))" style="width:100%;padding:13px;background:#7A1020;color:#FFFFFF;border:none;border-radius:10px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-top:12px">Buy Tickets →</button>';
+      c+='<button data-evid="'+ev.id+'" onclick="if(!disableBtn(this))return;purchaseTicket(parseInt(this.dataset.evid))" style="width:100%;padding:13px;background:#7A1020;color:#FFFFFF;border:none;border-radius:10px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-top:12px">Buy Tickets →</button>';
     }
     c+='</div></div>';
     return c;
@@ -4705,6 +4728,19 @@ function custEventListHTML() {
 }
 
 window.skipOnboarding = function(){ setState({onboardingDone:true}); };
+
+window.forgotPassword = function() {
+  var email = (document.getElementById('login-email')||{}).value||'';
+  if(!email || !email.includes('@')) { showToast('Enter your email address first'); return; }
+  if(LIVE_MODE) {
+    _sb.auth.resetPasswordForEmail(email, {redirectTo: window.location.origin}).then(function(res){
+      if(res.error) showToast('Error: '+res.error.message);
+      else showToast('Password reset email sent to '+email);
+    });
+  } else {
+    showToast('Demo mode \u2014 password reset not available');
+  }
+};
 
 function onboardingHTML() {
   if(state.onboardingDone || IS_DEMO) return '';
@@ -4959,7 +4995,7 @@ function custPortalHTML() {
           <div style="font-weight:700;color:#1A1A1A;margin-bottom:4px">HOW THIS WORKS</div>
           Your order is sent to each agent, who will contact you directly to confirm, arrange payment, and coordinate delivery through their standard channels. POURED does not process payment for wine — we simply connect you with the agent. A one-time $4.25 processing fee applies.
         </div>
-        <button onclick="submitOrderWithContact()" style="width:100%;padding:13px;border-radius:10px;border:none;background:${B.ink};color:${B.cream};font-size:14px;font-family:Nunito Sans,sans-serif;cursor:pointer;font-weight:700">Submit Order — ${cartCount} case${cartCount>1?'s':''} · ${Object.keys(byAgent).length} agent${Object.keys(byAgent).length>1?'s':''}</button>
+        <button onclick="if(!disableBtn(this))return;submitOrderWithContact()" style="width:100%;padding:13px;border-radius:10px;border:none;background:${B.ink};color:${B.cream};font-size:14px;font-family:Nunito Sans,sans-serif;cursor:pointer;font-weight:700">Submit Order — ${cartCount} case${cartCount>1?'s':''} · ${Object.keys(byAgent).length} agent${Object.keys(byAgent).length>1?'s':''}</button>
       </div>`}
     </div>`}
   </div>` : '';
@@ -5388,11 +5424,14 @@ function injectDemoBanner() {
   document.body.style.paddingTop = '32px';
 }
 
+try { var savedCart = sessionStorage.getItem('poured-cart'); if(savedCart) state.cart = JSON.parse(savedCart); } catch(e){}
+
 if(document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', function(){ render(); injectDemoBanner(); });
 } else {
   render(); injectDemoBanner();
 }
 </script>
+<div class="poured-loading" id="poured-loader">Processing...</div>
 </body>
 </html>
