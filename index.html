@@ -38,16 +38,15 @@
 *{-webkit-font-smoothing:antialiased;}
 
 html{
+  scroll-behavior:smooth;
   background:#1A1A1A;
-  padding-top:env(safe-area-inset-top, 0px);
-  height:-webkit-fill-available;
   overflow-x:hidden;
 }
 /* ── MOBILE BASE ─────────────────────────────────── */
 body{
   font-family:var(--font); background:var(--white);
   color:var(--ink); margin:0 auto;
-  min-height:calc(100vh - env(safe-area-inset-top, 0px)); font-size:15px;
+  min-height:100vh; font-size:15px;
   overflow-x:hidden;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:none;
@@ -122,9 +121,6 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 /* ── MOBILE RESPONSIVE FOR DESKTOP PORTALS ──────────────── */
 @media (max-width: 768px) {
   body.dp {
-    overflow: hidden;
-    height: 100vh;
-    height: 100dvh;
     max-width: 480px;
     margin: 0 auto;
   }
@@ -569,7 +565,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=97').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=98').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
