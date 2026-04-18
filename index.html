@@ -558,7 +558,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=65').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=66').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1530,16 +1530,18 @@ window.handleCSVUpload=async function(input){var file=input.files&&input.files[0
 // Read all current form values before advancing steps
 window.readFormAndAdvance = function(nextStep) {
   document.querySelectorAll('[data-field]').forEach(function(el){var key=el.getAttribute('data-field');if(key&&el.value!==undefined)state.draft[key]=el.value;});
-  // Step 1 validation
+  // Step 1 validation with red border feedback
   if(nextStep===2){
-    if(!state.draft.name||!state.draft.name.trim()){showToast('Please enter an event name');return;}
+    var hostEl=document.querySelector('[data-field="host"]');
+    if(!state.draft.name||!state.draft.name.trim()){showToast('Please enter an event name');var el=document.querySelector('[data-field="name"]');if(el)el.style.borderColor='#7A1020';return;}
     if(!state.draft.date){showToast('Please select a date');return;}
-    if(!state.draft.host||!state.draft.host.trim()){showToast('Please enter your organization name');return;}
-    if(!state.draft.venue||!state.draft.venue.trim()){showToast('Please enter a venue');return;}
+    if(!state.draft.host||!state.draft.host.trim()){showToast('Please enter your organization name');if(hostEl)hostEl.style.borderColor='#7A1020';return;}
+    if(!state.draft.venue||!state.draft.venue.trim()){showToast('Please enter a venue');var ve=document.querySelector('[data-field="venue"]');if(ve)ve.style.borderColor='#7A1020';return;}
+    if(!state.draft.address||!state.draft.address.trim()){showToast('Please enter the venue address');var ae=document.querySelector('[data-field="address"]');if(ae)ae.style.borderColor='#7A1020';return;}
   }
   state.draft.tiers.forEach(function(tier){['price','capacity','perks'].forEach(function(key){var el=document.querySelector('[data-tier="'+tier.id+'"][data-key="'+key+'"]');if(el)state.draft.tiers=state.draft.tiers.map(function(t){return t.id===tier.id?Object.assign({},t,{[key]:el.value}):t;});});});
   var d=state.draft;
-  if(state.createStep===1){var m=[];if(!d.name||!d.name.trim())m.push('Event name');if(!d.date)m.push('Date');if(!d.venue||!d.venue.trim())m.push('Venue');if(!d.address||!d.address.trim())m.push('Address');if(m.length){showToast('Required: '+m.join(', '));return;}}
+  if(state.createStep===1){var m=[];if(!d.name||!d.name.trim())m.push('Event name');if(!d.date)m.push('Date');if(!d.host||!d.host.trim())m.push('Organization');if(!d.venue||!d.venue.trim())m.push('Venue');if(!d.address||!d.address.trim())m.push('Address');if(m.length){showToast('Required: '+m.join(', '));return;}}
   if(state.createStep===2){if(!d.tiers.filter(function(t){return t.enabled;}).length){showToast('Enable at least one ticket tier');return;}}
   if(state.createStep===4){var m4=[];if(!d.passcode||!d.passcode.trim())m4.push('Passcode');if(!d.submissionDeadline)m4.push('Agent deadline');if(m4.length){showToast('Required: '+m4.join(', '));return;}}
   setState({createStep:nextStep});
@@ -3537,6 +3539,7 @@ function createEventHTML() {
         ${[[!!d.name,"Name"],[!!d.date,"Date"],[!!d.venue,"Venue"],[enabledTiers.length>0,"Tiers"],[!!d.passcode,"Passcode"],[!!d.submissionDeadline,"Deadline"]].map(([ok,l])=>`
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:12px;color:${ok?B.sage:'#CCC'}">${ok?'✓':'○'}</span><span style="font-size:12px;color:${ok?B.ink:B.cork}">${l}</span></div>`).join('')}
       </div>
+      ${(function(){var bh='<div style="background:#F8F5F2;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #E5E5E5">';bh+='<div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#888;margin-bottom:12px">POURED FEE BREAKDOWN</div>';enabledTiers.forEach(function(t){var price=parseFloat(t.price)||0;if(price>0){var fee=1.75+(price*0.029);var hostRec=price-fee;bh+='<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #E5E5E5">';bh+='<div style="font-size:13px;font-weight:700;margin-bottom:4px">'+t.label+' — $'+price.toFixed(2)+'</div>';bh+='<div style="display:flex;justify-content:space-between;font-size:12px;color:#888"><span>POURED service fee</span><span>-$'+fee.toFixed(2)+'</span></div>';bh+='<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#4A8A6A;margin-top:4px"><span>You receive per ticket</span><span>$'+hostRec.toFixed(2)+'</span></div>';bh+='</div>';}else{bh+='<div style="margin-bottom:10px"><div style="font-size:13px;font-weight:700">'+t.label+' — Free</div><div style="font-size:12px;color:#888">No ticket fees on free tiers</div></div>';}});var lf=parseFloat(d.listingFee)||0;if(lf>0){var comm=lf*0.02;bh+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid #E5E5E5">';bh+='<div style="font-size:13px;font-weight:700;margin-bottom:4px">Agent listing fee — $'+lf.toFixed(2)+'</div>';bh+='<div style="display:flex;justify-content:space-between;font-size:12px;color:#888"><span>Platform commission (2%)</span><span>-$'+comm.toFixed(2)+'</span></div>';bh+='<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#4A8A6A;margin-top:4px"><span>You receive per agent</span><span>$'+(lf-comm).toFixed(2)+'</span></div>';bh+='</div>';}bh+='<div style="margin-top:12px;font-size:11px;color:#AAA">Attendees pay a $4.25 processing fee per checkout. Agents pay 2.75% to unlock buyer details. These are platform fees — not deducted from your revenue.</div>';bh+='</div>';return bh;})()}
       <div style="display:flex;gap:10px">
         <button onclick="setCreateStep(4)" style="flex:1;padding:12px;border-radius:10px;border:1px solid ${B.mist};background:#fff;color:${B.cork};font-size:13px;font-family:Nunito Sans,sans-serif;cursor:pointer">← Edit</button>
         <button onclick="publishEvent()" style="flex:2;padding:14px;border-radius:10px;border:none;background:${B.pour};color:#fff;font-size:14px;font-family:Nunito Sans,sans-serif;cursor:pointer;font-weight:700">Publish Event</button>
