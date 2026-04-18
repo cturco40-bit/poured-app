@@ -559,7 +559,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=76').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=77').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1789,6 +1789,16 @@ function signupShell(role, portalId, accentColor) {
     + '</div>'
     // Event Host note
     + ''
+    // Age verification
+    + '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px">'
+    + '<input type="checkbox" id="signup-age" style="width:18px;height:18px;accent-color:#7A1020;cursor:pointer;flex-shrink:0;margin-top:2px">'
+    + '<label for="signup-age" style="font-size:12px;color:#888;cursor:pointer;line-height:1.5">I confirm that I am of legal drinking age in my jurisdiction</label>'
+    + '</div>'
+    // Terms acceptance
+    + '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:20px">'
+    + '<input type="checkbox" id="signup-terms" style="width:18px;height:18px;accent-color:#7A1020;cursor:pointer;flex-shrink:0;margin-top:2px">'
+    + '<label for="signup-terms" style="font-size:12px;color:#888;cursor:pointer;line-height:1.5">I agree to the <a href="https://pouredevents.com/terms" target="_blank" style="color:#7A1020">Terms of Service</a> and <a href="https://pouredevents.com/privacy" target="_blank" style="color:#7A1020">Privacy Policy</a></label>'
+    + '</div>'
     // Submit
     + '<button onclick="doSignup(\''+portalId+'\')" style="width:100%;padding:15px;background:linear-gradient(135deg,#1A1A1A,#2C2C2C);color:#fff;border:none;font-size:12px;font-weight:900;cursor:pointer;letter-spacing:.18em;text-transform:uppercase;font-family:inherit;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);transition:all .2s" onmouseenter="this.style.background=\'linear-gradient(135deg,#7A1020,#9B1A2A)\'" onmouseleave="this.style.background=\'linear-gradient(135deg,#1A1A1A,#2C2C2C)\'">Create Account</button>'
     + '<div style="text-align:center;margin-top:14px">'
@@ -1809,6 +1819,10 @@ window.doSignup = function(portalId) {
   var roleType = (document.getElementById('signup-role')||{}).value||'trade';
   var err   = document.getElementById('signup-err');
   function showErr(msg){ if(err){err.style.display='block';err.textContent=msg;} }
+  var ageCheck = document.getElementById('signup-age');
+  var termsCheck = document.getElementById('signup-terms');
+  if(!ageCheck || !ageCheck.checked) { showErr('Please confirm you are of legal drinking age.'); return; }
+  if(!termsCheck || !termsCheck.checked) { showErr('Please accept the Terms of Service and Privacy Policy.'); return; }
   if(!first.trim()||!last.trim()){ showErr('Please enter your first and last name.'); return; }
   if(portalId!=='customer'&&!org.trim()){ showErr('Please enter your organisation name.'); return; }
   if(!email.trim()||!email.includes('@')){ showErr('Please enter a valid email address.'); return; }
