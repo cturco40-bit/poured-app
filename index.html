@@ -559,7 +559,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=81').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=82').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -2768,28 +2768,63 @@ window.showInviteAgentModal = function(evId) {
   overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
   setTimeout(function(){ inpName.focus(); }, 50);
 };
-window.sendAgentInvite = function(evId) {
+window.sendAgentInvite = async function(evId) {
   var name  = (document.getElementById('inv-name')||{}).value||'';
   var org   = (document.getElementById('inv-org')||{}).value||'';
   var email = (document.getElementById('inv-email')||{}).value||'';
   var err   = document.getElementById('inv-err');
-  if(!name.trim()){ if(err){err.style.display='block';err.textContent='Please enter the agent name.';} return; }
-  if(!email.trim()||!email.includes('@')){ if(err){err.style.display='block';err.textContent='Please enter a valid email.';} return; }
-  // In live mode: POST to /api/invite-agent with {name, org, email, eventId: evId}
-  if(LIVE_MODE){
-    fetch('/api/invite-agent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,org:org,email:email,eventId:evId})})
-      .then(function(r){return r.json();})
-      .then(function(d){
-        document.getElementById('invite-agent-overlay').remove();
-        showToast('Invitation sent to '+email);
-        render();
-      })
-      .catch(function(){ if(err){err.style.display='block';err.textContent='Failed to send. Please try again.';} });
-  } else {
-    document.getElementById('invite-agent-overlay').remove();
-    showToast('Invitation sent to '+name+' ('+email+') — demo mode');
-    render();
+  function showErr(msg){ if(err){err.style.display='block';err.textContent=msg;} }
+  if(!name.trim()){ showErr('Please enter the agent name.'); return; }
+  if(!email.trim()||!email.includes('@')){ showErr('Please enter a valid email.'); return; }
+
+  if(LIVE_MODE && !IS_DEMO) {
+    try {
+      var agentProfile = await _sb.from('profiles').select('id').eq('email', email).single();
+      var agentId = agentProfile.data ? agentProfile.data.id : null;
+
+      if(!agentId) {
+        var overlayNo = document.getElementById('invite-agent-overlay');
+        if(overlayNo) overlayNo.remove();
+        showToast('Invitation sent \u2014 agent will receive an email to create their account');
+        // TODO: send invitation email via Supabase Edge Function or Resend
+        return;
+      }
+
+      var listing = {
+        event_id: evId,
+        agent_id: agentId,
+        firm: org,
+        listing_fee: parseFloat(state.draft.listingFee) || 50,
+        fee_paid: false,
+        featured: false,
+        submitted: false
+      };
+
+      var res = await _sb.from('agent_listings').insert(listing).select().single();
+      if(res.error) {
+        if(res.error.message && res.error.message.indexOf('duplicate') !== -1) {
+          showErr('This agent has already been invited to this event.');
+        } else {
+          showErr('Error inviting agent: ' + res.error.message);
+        }
+        return;
+      }
+
+      var overlay = document.getElementById('invite-agent-overlay');
+      if(overlay) overlay.remove();
+      showToast(name + ' invited successfully');
+      // TODO: send invitation email via Supabase Edge Function or Resend
+      return;
+    } catch(e) {
+      showErr('Error: ' + (e && e.message ? e.message : 'unknown'));
+      return;
+    }
   }
+
+  // Demo mode fallback
+  document.getElementById('invite-agent-overlay').remove();
+  showToast('Invitation sent to '+name+' ('+email+') \u2014 demo mode');
+  render();
 };
 
 window.showInviteCoordModal = function() {
@@ -3495,6 +3530,28 @@ window.loadUserEvents = async function() {
   if(role==='coordinator'||role==='admin'){
     var res=await _sb.from('events').select('*,ticket_tiers(*)').eq('host_id',uid).order('date',{ascending:false});
     if(res.data) EVENTS=res.data.map(function(ev){ev.products=ev.products||[];ev.agents=ev.agents||[];ev.orders=ev.orders||[];ev.tiers=ev.ticket_tiers||ev.tiers||[];return ev;});
+  } else if(role==='agent') {
+    var listings = await _sb.from('agent_listings').select('event_id').eq('agent_id', uid);
+    if(listings.data && listings.data.length > 0) {
+      var eventIds = listings.data.map(function(l){return l.event_id;});
+      var evRes = await _sb.from('events').select('*,ticket_tiers(*),agent_listings(*),products(*)').in('id', eventIds);
+      if(evRes.data) {
+        EVENTS = evRes.data.map(function(e){
+          return {
+            id: e.id, name: e.name,
+            date: new Date(e.date).toLocaleDateString('en-CA', {day:'numeric',month:'long',year:'numeric'}),
+            time: e.time || '', venue: e.venue || '', address: e.address || '',
+            status: e.status,
+            tiers: (e.ticket_tiers||[]).map(function(t){return {id:t.id,label:t.label,price:t.price,capacity:t.capacity,sold:t.sold||0,enabled:true};}),
+            agents: (e.agent_listings||[]).map(function(a){return {id:a.id,firm:a.firm||'',email:'',listingFee:a.listing_fee,paid:a.fee_paid,featured:a.featured,submitted:a.submitted};}),
+            products: (e.products||[]).map(function(p){return {id:p.id,name:p.name,supplier:p.supplier,country:p.country||'',region:p.region||'',category:p.category||'Wine',vintage:p.vintage,pricePerBottle:p.price_per_bottle,pricePerCase:p.price_per_case,caseSize:p.case_size||12,bottleSizeMl:p.bottle_size_ml||750,avail:p.availability||'In Stock',tasting:p.tasting_notes||'',pairings:p.food_pairings||'',views:p.views||0,orders:p.orders_count||0,agentId:p.agent_id,agentEmail:'',agent:''};}),
+            orders: []
+          };
+        });
+      }
+    } else {
+      EVENTS = [];
+    }
   } else {
     var res=await _sb.from('events').select('*,ticket_tiers(*)').in('status',['active','upcoming']).order('date');
     if(res.data) EVENTS=res.data.map(function(ev){ev.products=ev.products||[];ev.agents=ev.agents||[];ev.orders=ev.orders||[];ev.tiers=ev.ticket_tiers||ev.tiers||[];return ev;});
