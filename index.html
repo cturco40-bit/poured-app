@@ -559,7 +559,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=87').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=88').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -3594,7 +3594,7 @@ window.submitOrder = async function() {
   if(LIVE_MODE) DB.submitOrder(ev.id, state.cart);
   setState({orderDone:true});
 };
-window.submitOrderWithContact = function() {
+window.submitOrderWithContact = async function() {
   var first   = (document.getElementById('order-first')||{}).value||'';
   var last    = (document.getElementById('order-last')||{}).value||'';
   var email   = (document.getElementById('order-email')||{}).value||'';
@@ -3610,16 +3610,52 @@ window.submitOrderWithContact = function() {
   // Store contact with the order
   var contact = {first:first, last:last, company:company, email:email, phone:phone, preferred:pref};
   state.orderContact = contact;
-  // Submit
-  var ev = EVENTS.find(function(e){return e.id===state.selectedEventId;}) || EVENTS[0] || EV;
-  if(LIVE_MODE){
-    fetch('/api/submit-order',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({eventId:state.selectedEventId, cart:state.cart, contact:contact})})
-    .then(function(){ setState({orderDone:true}); })
-    .catch(function(){ showErr('Failed to submit. Please try again.'); });
-  } else {
-    setState({orderDone:true});
+
+  if(LIVE_MODE && !IS_DEMO){
+    if(!state.currentUser || !state.currentUser.id){ showErr('Please sign in to submit an order.'); return; }
+    var orderId = 'ORD-' + Date.now().toString(36).toUpperCase();
+    var firstName = (document.getElementById('order-first')||{}).value||'';
+    var lastName  = (document.getElementById('order-last')||{}).value||'';
+
+    var orderRes = await _sb.from('orders').insert({
+      id: orderId,
+      event_id: state.selectedEventId,
+      attendee_id: state.currentUser.id,
+      customer_name: firstName + ' ' + lastName,
+      customer_email: email,
+      customer_phone: phone,
+      customer_company: company,
+      processing_fee: 4.25,
+      status: 'submitted'
+    }).select().single();
+
+    if(orderRes.error){ showToast('Order error: ' + orderRes.error.message); return; }
+
+    var items = (state.cart||[]).map(function(i){
+      return {
+        order_id: orderId,
+        product_id: i.productId,
+        agent_id: i.agentId || null,
+        supplier: i.supplier || '',
+        product_name: i.name || '',
+        qty_cases: i.qtyCases || i.qty || 1,
+        case_size: i.caseSize || 12,
+        price_per_bottle: i.pricePerBottle || 0,
+        price_per_case: i.pricePerCase || 0,
+        bottle_size_ml: i.bottleSizeMl || 750
+      };
+    });
+
+    var itemsRes = await _sb.from('order_items').insert(items);
+    if(itemsRes.error){ showToast('Error saving order items: ' + itemsRes.error.message); return; }
+
+    setState({cart:[], orderDone:true, custTab:'order'});
+    showToast('Order submitted successfully!');
+    return;
   }
+
+  // Demo mode
+  setState({orderDone:true});
 };
 window.publishEvent=async function(){
   document.querySelectorAll('[data-field]').forEach(function(el){var k=el.getAttribute('data-field');if(k&&el.value!==undefined)state.draft[k]=el.value;});
