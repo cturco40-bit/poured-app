@@ -559,7 +559,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=85').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=86').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -2197,7 +2197,6 @@ function agentOrderCardHTML(order) {
 
 // ─── AGENT EVENT LIST ────────────────────────────────────────────────────────
 function agentEventListHTML() {
-  console.log('Agent sidebar building, agentTab:', state.agentTab);
   var AGENT_EMAIL = (state.currentUser&&state.currentUser.email) || (IS_DEMO?'christian@profilewinegroup.ca':'');
   var myListings = EVENTS.map(function(ev){
     var listing = ev.agents.find(function(a){return a.email===AGENT_EMAIL;});
@@ -2677,6 +2676,8 @@ function agentPortalHTML() {
     +   navItem('upload','-','Upload Wines')
     +   navItem('team','-','Table Staff')
     +   navItem('export','-','Export')
+    +   '<div class="dp-sidebar-section" style="margin-top:8px">ACCOUNT</div>'
+    +   '<button class="dp-nav-item" onclick="setState({selectedEventId:null,agentTab:\'account-team\'})"><span class="dp-nav-icon">◎</span><span class="dp-nav-label">Team</span></button>'
     +   '<div class="dp-sidebar-footer">'
     +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">'+(state.currentUser&&state.currentUser.company||(IS_DEMO?'Profile Wine Group':'Agent'))+'</div>'
     +     '<div style="font-size:10px;color:#555;margin-bottom:8px;padding:0 4px">'+(state.currentUser&&state.currentUser.email||(IS_DEMO?'christian@profilewinegroup.ca':''))+'</div>'
@@ -3115,15 +3116,17 @@ window.injectDrawer = function(portal) {
   var computeInitials = function(n){ return (n||'').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2)||'U'; };
   if(portal==='agent'){
     userName=cu.name||cu.company||(IS_DEMO?'Christian Turco':'Agent'); userEmail=cu.email||(IS_DEMO?'christian@profilewinegroup.ca':''); userInitials=computeInitials(userName); signOutFn='signOutAgent()';
+    var agentTeamOn = !state.selectedEventId && state.agentTab==='account-team';
     if(state.selectedEventId){
-      items=[{i:'\u2190',l:'All Events',a:'agentHome'}];
-    } else { items=[{i:'\u2630',l:'My Events',a:'agentHome',on:true}]; }
+      items=[{i:'\u2190',l:'All Events',a:'agentHome'},{i:'\u25CE',l:'Team',a:'agentTeam'}];
+    } else { items=[{i:'\u2630',l:'My Events',a:'agentHome',on:!agentTeamOn},{i:'\u25CE',l:'Team',a:'agentTeam',on:agentTeamOn}]; }
   } else if(portal==='coordinator'){
     userName=cu.name||cu.company||(IS_DEMO?'The Tasting Collective':'Event Host'); userEmail=cu.email||(IS_DEMO?'coordinator@tasting.ca':''); userInitials=computeInitials(userName); signOutFn='signOutCoord()';
+    var coordTeamOn = !state.coordSelectedEventId && state.coordTab==='account-team';
     if(state.coordSelectedEventId && state.coordSelectedEventId!==-1){
-      items=[{i:'\u2190',l:'All Events',a:'coordHome'}];
+      items=[{i:'\u2190',l:'All Events',a:'coordHome'},{i:'\u25CE',l:'Team',a:'coordTeam'}];
     } else {
-      items=[{i:'\u2630',l:'My Events',a:'coordHome',on:!state.coordSelectedEventId},{i:'+',l:'New Event',a:'coordCreate',on:state.coordSelectedEventId===-1}];
+      items=[{i:'\u2630',l:'My Events',a:'coordHome',on:!state.coordSelectedEventId && !coordTeamOn},{i:'\u25CE',l:'Team',a:'coordTeam',on:coordTeamOn},{i:'+',l:'New Event',a:'coordCreate',on:state.coordSelectedEventId===-1}];
     }
   } else if(portal==='admin'){
     userName=cu.name||(IS_DEMO?'Platform Admin':'Admin'); userEmail=cu.email||(IS_DEMO?'admin@pouredevents.com':''); userInitials=computeInitials(userName); signOutFn='signOutAdmin()';
@@ -3152,17 +3155,19 @@ window.injectDrawer = function(portal) {
 
 window.mobileNavAction = function(action) {
   switch(action) {
-    case 'coordHome':      setState({coordSelectedEventId:null}); break;
+    case 'coordHome':      setState({coordSelectedEventId:null, coordTab:'overview'}); break;
     case 'coordCreate':    setState({coordSelectedEventId:-1, coordTab:'create'}); break;
     case 'coordOverview':  setCoordTab('overview'); break;
     case 'coordDoor':      setCoordTab('door'); break;
     case 'coordAgents':    setCoordTab('agents'); break;
     case 'coordPayout':    setCoordTab('payout'); break;
+    case 'coordTeam':      setState({coordSelectedEventId:null, coordTab:'account-team'}); break;
     case 'coordSignOut':   signOutCoord(); break;
-    case 'agentHome':      setState({selectedEventId:null, portal:'agent_in'}); break;
+    case 'agentHome':      setState({selectedEventId:null, portal:'agent_in', agentTab:'orders'}); break;
     case 'agentOrders':    setAgentTab('orders'); break;
     case 'agentSuppliers': setAgentTab('suppliers'); break;
     case 'agentUpload':    setAgentTab('upload'); break;
+    case 'agentTeam':      setState({selectedEventId:null, portal:'agent_in', agentTab:'account-team'}); break;
     case 'agentSignOut':   signOutAgent(); break;
     case 'adminDashboard': setAdminTab('dashboard'); break;
     case 'adminCoords':    setAdminTab('coordinators'); break;
@@ -3768,8 +3773,6 @@ function createEventHTML() {
 }
 
 function coordEventListHTML() {
-  console.log('Coord sidebar building, coordTab:', state.coordTab);
-  console.log('coordEventListHTML called, EVENTS:', EVENTS.length);
   var myEvents = EVENTS;
   var active   = myEvents.filter(function(e){return e.status==='active';});
   var upcoming = myEvents.filter(function(e){return e.status==='upcoming';});
@@ -3946,7 +3949,6 @@ function coordAccountTeamHTML() {
 }
 
 function coordPortalHTML() {
-  console.log('coordPortalHTML called', 'EVENTS:', EVENTS.length, 'selectedEventId:', state.coordSelectedEventId, 'coordTab:', state.coordTab);
   try {
   if(state.coordTab === 'account-team' && !state.coordSelectedEventId) {
     return coordAccountTeamHTML();
@@ -4308,6 +4310,8 @@ function coordPortalHTML() {
     +   navItem('door','-','Door Check-in')
     +   navItem('payout','-','Payout')
     +   navItem('create','+','Create Event')
+    +   '<div class="dp-sidebar-section" style="margin-top:8px">ACCOUNT</div>'
+    +   '<button class="dp-nav-item" onclick="setState({coordSelectedEventId:null,coordTab:\'account-team\'})"><span class="dp-nav-icon">◎</span><span class="dp-nav-label">Team</span></button>'
     +   '<div class="dp-sidebar-footer">'
     +     '<div class="dp-sidebar-user"><div class="dp-sidebar-avatar">'+(state.currentUser&&state.currentUser.name?state.currentUser.name[0].toUpperCase():'H')+'</div><div><div class="dp-sidebar-user-name">'+(state.currentUser&&state.currentUser.name||(IS_DEMO?'The Tasting Collective':'Event Host'))+'</div><div class="dp-sidebar-user-email">'+(state.currentUser&&state.currentUser.email||(IS_DEMO?'coordinator@tasting.ca':''))+'</div></div></div>'
     +     '<button class="dp-signout" onclick="signOutCoord()">Sign out</button>'
