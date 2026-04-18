@@ -182,7 +182,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   .dp-content {
     padding: 12px;
     padding-top: 16px !important;
-    padding-bottom: calc(80px + env(safe-area-inset-bottom, 16px));
+    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
     background: #FFFFFF;
   }
   .dp-content * { max-width: 100%; box-sizing: border-box; }
@@ -229,17 +229,19 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   }
   .dp-mobile-nav {
     display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    max-width: 480px;
-    width: 100%;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 !important;
+    transform: none !important;
+    max-width: none !important;
+    width: 100% !important;
     background: #FFFFFF;
-    border-top: 1px solid #E5E5E5;
-    z-index: 200;
-    padding-bottom: max(env(safe-area-inset-bottom), 16px);
-    min-height: calc(56px + env(safe-area-inset-bottom, 16px));
+    border-top: 1px solid #EBEBEB;
+    z-index: 100;
+    padding: 8px 0;
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
   }
   .dp-mobile-nav-item {
     flex: 1;
@@ -565,7 +567,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=102').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=103').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
