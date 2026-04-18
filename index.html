@@ -3749,7 +3749,6 @@ window.publishEvent=async function(){
 };
 
 window.loadUserEvents = async function() {
-  console.log('loadUserEvents called, LIVE_MODE:', LIVE_MODE, 'IS_DEMO:', IS_DEMO, 'currentUser:', state.currentUser);
   if(!LIVE_MODE||!_sb||IS_DEMO) return;
   if(Date.now() - lastEventFetch < 30000 && EVENTS.length > 0) return;
   var user=await _sb.auth.getUser();
@@ -3758,7 +3757,6 @@ window.loadUserEvents = async function() {
   var role=(state.currentUser&&state.currentUser.role)||'attendee';
   if(role==='coordinator'||role==='admin'){
     var res=await _sb.from('events').select('*,ticket_tiers(*),agent_listings(*),products(*)').eq('host_id',uid).order('date',{ascending:false});
-    console.log('loadUserEvents coordinator result:', res.data, res.error);
     if(res.data) EVENTS=res.data.map(function(ev){ev.products=ev.products||[];ev.agents=ev.agent_listings||ev.agents||[];ev.orders=ev.orders||[];ev.tiers=ev.ticket_tiers||ev.tiers||[];return ev;});
   } else if(role==='agent') {
     var listings = await _sb.from('agent_listings').select('event_id').eq('agent_id', uid);
@@ -3784,7 +3782,6 @@ window.loadUserEvents = async function() {
     }
   } else {
     var res=await _sb.from('events').select('*,ticket_tiers(*)').in('status',['active','upcoming']).order('date');
-    console.log('loadUserEvents attendee result:', res.data, res.error);
     if(res.data) EVENTS=res.data.map(function(ev){ev.products=ev.products||[];ev.agents=ev.agents||[];ev.orders=ev.orders||[];ev.tiers=ev.ticket_tiers||ev.tiers||[];return ev;});
   }
   lastEventFetch = Date.now();
@@ -4168,7 +4165,6 @@ function coordPortalHTML() {
   if(!state.coordSelectedEventId) return coordEventListHTML();
   if(state.coordSelectedEventId===-1){
     // Create new event — full width
-    console.log('CREATE FLOW HIT, createStep:', state.createStep);
     document.body.classList.add('dp');
     return '<div class="dp-shell">'
       + '<div class="dp-sidebar-wrap"><div id="dp-sidebar" class="dp-sidebar"></div></div>'
@@ -5377,7 +5373,7 @@ function render() {
   if(p === 'agent_in') { document.body.classList.add('dp'); app.innerHTML = agentPortalHTML(); injectMobileNav('agent'); injectDrawer('agent'); return; }
   if(p === 'coordinator' && state.currentUser) { document.body.classList.add('dp'); app.innerHTML = coordPortalHTML(); injectMobileNav('coordinator'); injectDrawer('coordinator'); return; }
   if(p === 'coordinator') { document.body.classList.remove('dp'); app.innerHTML = loginShell('Event Host','','coordinator@tasting.ca','coord2025','coordinator','#1D4ED8'); return; }
-  if(p === 'coordinator_in') { console.log('rendering coordinator_in'); document.body.classList.add('dp'); app.innerHTML = coordPortalHTML(); injectMobileNav('coordinator'); injectDrawer('coordinator'); return; }
+  if(p === 'coordinator_in') { document.body.classList.add('dp'); app.innerHTML = coordPortalHTML(); injectMobileNav('coordinator'); injectDrawer('coordinator'); return; }
   if(p === 'customer' && state.currentUser) { document.body.classList.remove('dp'); app.innerHTML = custPortalHTML(); app.style.paddingBottom='0'; return; }
   if(p === 'customer') { document.body.classList.remove('dp'); app.innerHTML = loginShell('Attendee','','jane@example.com','jane2025','customer','#2a7a4a'); return; }
   if(p === 'customer_in') { document.body.classList.remove('dp'); app.innerHTML = custPortalHTML(); app.style.paddingBottom='0'; return; }
@@ -5452,14 +5448,11 @@ try { var savedCart = sessionStorage.getItem('poured-cart'); if(savedCart) state
 
 // Restore session if user was previously signed in
 function restoreSession() {
-  console.log('restoreSession called, LIVE_MODE:', LIVE_MODE, 'IS_DEMO:', IS_DEMO);
   if(!LIVE_MODE || IS_DEMO || !_sb) return;
   _sb.auth.getSession().then(function(res) {
-    console.log('getSession result:', res.data && res.data.session ? 'session found' : 'no session');
     if(res.data && res.data.session) {
       var userId = res.data.session.user.id;
       _sb.from('profiles').select('*').eq('id', userId).single().then(function(profileRes) {
-        console.log('profile fetch:', profileRes.data, profileRes.error);
         if(profileRes.data) {
           var p = profileRes.data;
           state.currentUser = {id:p.id, email:p.email, name:p.full_name, company:p.company, phone:p.phone, role:p.role};
