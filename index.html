@@ -558,7 +558,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=61').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=62').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -3541,6 +3541,7 @@ function createEventHTML() {
 }
 
 function coordEventListHTML() {
+  console.log('coordEventListHTML called, EVENTS:', EVENTS.length);
   var myEvents = EVENTS;
   var active   = myEvents.filter(function(e){return e.status==='active';});
   var upcoming = myEvents.filter(function(e){return e.status==='upcoming';});
@@ -3637,6 +3638,10 @@ function coordEventListHTML() {
 function coordPortalHTML() {
   console.log('coordPortalHTML called', 'EVENTS:', EVENTS.length, 'selectedEventId:', state.coordSelectedEventId, 'coordTab:', state.coordTab);
   try {
+  // If no events and not in create flow, force back to event list (which has empty state)
+  if(EVENTS.length === 0 && state.coordSelectedEventId !== -1) {
+    state.coordSelectedEventId = null;
+  }
   if(!state.coordSelectedEventId) return coordEventListHTML();
   if(state.coordSelectedEventId===-1){
     // Create new event — full width
