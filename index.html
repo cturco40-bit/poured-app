@@ -559,7 +559,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=86').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=87').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1530,7 +1530,98 @@ function refundModalHTML() {
   </div>`;
 }
 
-window.handleCSVUpload=async function(input){var file=input.files&&input.files[0];if(!file)return;var ev=EVENTS.find(function(e){return e.id===state.selectedEventId;})||EV;var count=await DB.uploadCSV(ev.id,file);if(count!==null){showToast(count + ' products uploaded');render();}};
+function parseCSV(text) {
+  var lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(function(l){return l.trim().length>0;});
+  if(lines.length<2) return [];
+  function split(line) {
+    var out=[], cur='', inQ=false;
+    for(var i=0;i<line.length;i++){
+      var c=line[i];
+      if(inQ){
+        if(c==='"' && line[i+1]==='"'){ cur+='"'; i++; }
+        else if(c==='"'){ inQ=false; }
+        else cur+=c;
+      } else {
+        if(c===','){ out.push(cur); cur=''; }
+        else if(c==='"'){ inQ=true; }
+        else cur+=c;
+      }
+    }
+    out.push(cur);
+    return out.map(function(s){return s.trim();});
+  }
+  var headers = split(lines[0]);
+  return lines.slice(1).map(function(line){
+    var cells = split(line);
+    var obj = {};
+    headers.forEach(function(h,i){ obj[h]=cells[i]||''; });
+    return obj;
+  });
+}
+
+window.handleCSVUpload=async function(input){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  var ev=EVENTS.find(function(e){return e.id===state.selectedEventId;})||EV;
+
+  if(LIVE_MODE && !IS_DEMO && state.selectedEventId) {
+    var userId = state.currentUser && state.currentUser.id;
+    if(!userId) { showToast('Please sign in first'); return; }
+    var text;
+    try { text = await file.text(); }
+    catch(e) { showToast('Could not read file'); return; }
+    var parsed = parseCSV(text);
+    if(parsed.length===0) { showToast('CSV is empty'); return; }
+    var products = parsed.map(function(r){
+      return {
+        supplier:      r['Supplier/Producer']||r['Supplier']||'',
+        name:          r['Product Name']||r['Name']||'',
+        vintage:       r['Vintage']||'',
+        category:      r['Category']||'Wine',
+        country:       r['Country']||'',
+        region:        r['Region']||'',
+        abv:           r['ABV(%)']||r['ABV']||'',
+        bottleSizeMl:  r['Bottle Size(mL)']||r['Bottle Size']||'750',
+        caseSize:      r['Case Size(bottles)']||r['Case Size']||'12',
+        pricePerBottle:r['Price Per Bottle($)']||r['Price Per Bottle']||'0',
+        pricePerCase:  r['Price Per Case($)']||r['Price Per Case']||'0',
+        avail:         r['Cases Available']||r['Availability']||'In Stock',
+        tasting:       r['Tasting Notes']||'',
+        pairings:      r['Food Pairings']||''
+      };
+    });
+    var rows = products.map(function(p){
+      return {
+        event_id: state.selectedEventId,
+        agent_id: userId,
+        supplier: p.supplier || '',
+        name: p.name || '',
+        vintage: parseInt(p.vintage) || null,
+        category: p.category || 'Wine',
+        country: p.country || '',
+        region: p.region || '',
+        abv: parseFloat(p.abv) || null,
+        bottle_size_ml: parseInt(p.bottleSizeMl) || 750,
+        case_size: parseInt(p.caseSize) || 12,
+        price_per_bottle: parseFloat(p.pricePerBottle) || 0,
+        price_per_case: parseFloat(p.pricePerCase) || 0,
+        availability: p.avail || 'In Stock',
+        tasting_notes: p.tasting || '',
+        food_pairings: p.pairings || '',
+        approved: null
+      };
+    });
+    _sb.from('products').insert(rows).then(function(res){
+      if(res.error) { showToast('Upload error: '+res.error.message); return; }
+      showToast(rows.length+' products uploaded successfully');
+      loadUserEvents();
+    });
+    return;
+  }
+
+  var count=await DB.uploadCSV(ev.id,file);
+  if(count!==null){ showToast(count + ' products uploaded'); render(); }
+};
 // ─── RENDER ENGINE ────────────────────────────────────────────────────────────
 // Read all current form values before advancing steps
 window.readFormAndAdvance = function(nextStep) {
@@ -3762,6 +3853,25 @@ function createEventHTML() {
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:12px;color:${ok?B.sage:'#CCC'}">${ok?'✓':'○'}</span><span style="font-size:12px;color:${ok?B.ink:B.cork}">${l}</span></div>`).join('')}
       </div>
       ${(function(){var bh='<div style="background:#F8F5F2;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #E5E5E5">';bh+='<div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#888;margin-bottom:12px">POURED FEE BREAKDOWN</div>';enabledTiers.forEach(function(t){var price=parseFloat(t.price)||0;if(price>0){var fee=1.75+(price*0.029);var hostRec=price-fee;bh+='<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #E5E5E5">';bh+='<div style="font-size:13px;font-weight:700;margin-bottom:4px">'+t.label+' — $'+price.toFixed(2)+'</div>';bh+='<div style="display:flex;justify-content:space-between;font-size:12px;color:#888"><span>POURED service fee</span><span>-$'+fee.toFixed(2)+'</span></div>';bh+='<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#4A8A6A;margin-top:4px"><span>You receive per ticket</span><span>$'+hostRec.toFixed(2)+'</span></div>';bh+='</div>';}else{bh+='<div style="margin-bottom:10px"><div style="font-size:13px;font-weight:700">'+t.label+' — Free</div><div style="font-size:12px;color:#888">No ticket fees on free tiers</div></div>';}});var lf=parseFloat(d.listingFee)||0;if(lf>0){var comm=lf*0.02;bh+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid #E5E5E5">';bh+='<div style="font-size:13px;font-weight:700;margin-bottom:4px">Agent listing fee — $'+lf.toFixed(2)+'</div>';bh+='<div style="display:flex;justify-content:space-between;font-size:12px;color:#888"><span>Platform commission (2%)</span><span>-$'+comm.toFixed(2)+'</span></div>';bh+='<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#4A8A6A;margin-top:4px"><span>You receive per agent</span><span>$'+(lf-comm).toFixed(2)+'</span></div>';bh+='</div>';}bh+='<div style="margin-top:12px;font-size:11px;color:#AAA">Attendees pay a $4.25 processing fee per checkout. Agents pay 2.75% to unlock buyer details. These are platform fees — not deducted from your revenue.</div>';bh+='</div>';return bh;})()}
+      ${(function(){
+        var tiers=(state.draft.tiers||[]).filter(function(t){return t.enabled;});
+        var totalCapacity=tiers.reduce(function(s,t){return s+(parseInt(t.capacity)||0);},0);
+        var allFree=tiers.length>0 && tiers.every(function(t){return parseFloat(t.price)===0;});
+        var noListingFee=parseFloat(state.draft.listingFee)===0 || !state.draft.listingFee;
+        if(!(allFree && noListingFee)) return '';
+        var fee=0, remaining=totalCapacity;
+        if(remaining>500){ fee+=(remaining-500)*2; remaining=500; }
+        if(remaining>250){ fee+=(remaining-250)*3; remaining=250; }
+        if(remaining>100){ fee+=(remaining-100)*4; remaining=100; }
+        fee+=remaining*5;
+        fee=Math.max(fee,500);
+        return '<div style="background:#FFF8F0;border:1.5px solid #E8D5B5;border-radius:10px;padding:16px;margin-top:16px;margin-bottom:16px">'
+          +'<div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#8B6914;margin-bottom:8px">PLATFORM ACCESS FEE</div>'
+          +'<div style="font-size:14px;color:#555;margin-bottom:8px">Free events with no listing fees require a one-time platform access fee.</div>'
+          +'<div style="font-size:24px;font-weight:900;color:#1A1A1A;margin-bottom:4px">$'+fee.toLocaleString()+'</div>'
+          +'<div style="font-size:12px;color:#888">Based on '+totalCapacity+' attendee capacity · Tiered rate starting at $5/person</div>'
+          +'</div>';
+      })()}
       <div style="display:flex;gap:10px">
         <button onclick="setCreateStep(4)" style="flex:1;padding:12px;border-radius:10px;border:1px solid ${B.mist};background:#fff;color:${B.cork};font-size:13px;font-family:Nunito Sans,sans-serif;cursor:pointer">← Edit</button>
         <button onclick="publishEvent()" style="flex:2;padding:14px;border-radius:10px;border:none;background:${B.pour};color:#fff;font-size:14px;font-family:Nunito Sans,sans-serif;cursor:pointer;font-weight:700">Publish Event</button>
