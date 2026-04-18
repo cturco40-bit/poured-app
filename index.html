@@ -549,7 +549,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=104').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=105').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1853,7 +1853,11 @@ function loginShell(role, icon, demoEmail, demoPw, portalId, accentColor) {
     + '<input id="login-email" type="email" autocomplete="email" value="'+(IS_DEMO?demoEmail:'')+'" placeholder="you@example.com" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:15px;color:#1A1A1A;background:transparent;outline:none;margin-bottom:20px;font-family:inherit;font-weight:600;transition:border-color .2s" onfocus="this.style.borderColor=\'#7A1020\'" onblur="this.style.borderColor=\'#E0E0E0\'">'
     + '<div style="font-size:9px;color:#AAA;font-weight:700;text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px">Password</div>'
     + '<input id="login-pw" type="password" autocomplete="current-password" value="'+(IS_DEMO?demoPw:'')+'" placeholder="Password" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:15px;color:#1A1A1A;background:transparent;outline:none;margin-bottom:8px;font-family:inherit;font-weight:600;transition:border-color .2s" onfocus="this.style.borderColor=\'#7A1020\'" onblur="this.style.borderColor=\'#E0E0E0\'" onkeydown="if(event.key===\'Enter\')tryLogin(\''+portalId+'\',\''+demoEmail+'\',\''+demoPw+'\')">'
-    + '<div style="text-align:right;margin-bottom:20px"><button onclick="forgotPassword()" style="background:none;border:none;font-size:11px;color:#7A1020;cursor:pointer;font-family:inherit;text-decoration:underline">Forgot password?</button></div>'
+    + '<div style="text-align:right;margin-bottom:14px"><button onclick="forgotPassword()" style="background:none;border:none;font-size:11px;color:#7A1020;cursor:pointer;font-family:inherit;text-decoration:underline">Forgot password?</button></div>'
+    + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">'
+    + '<input type="checkbox" id="login-remember" checked style="width:16px;height:16px;accent-color:#7A1020;cursor:pointer">'
+    + '<label for="login-remember" style="font-size:12px;color:#888;cursor:pointer">Remember me</label>'
+    + '</div>'
     + '<div id="login-err" style="display:none;color:#7A1020;font-size:12px;font-weight:700;margin-bottom:14px;letter-spacing:.04em;text-transform:uppercase"></div>'
     + '<button onclick="tryLogin(\''+portalId+'\',\''+demoEmail+'\',\''+demoPw+'\')" style="width:100%;padding:15px;background:linear-gradient(135deg,#1A1A1A,#2C2C2C);color:#fff;border:none;font-size:12px;font-weight:900;cursor:pointer;letter-spacing:.18em;text-transform:uppercase;font-family:inherit;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);transition:all .2s" onmouseenter="this.style.background=\'linear-gradient(135deg,#7A1020,#9B1A2A)\';this.style.boxShadow=\'0 6px 20px rgba(122,16,32,.4)\'" onmouseleave="this.style.background=\'linear-gradient(135deg,#1A1A1A,#2C2C2C)\';this.style.boxShadow=\'0 4px 16px rgba(0,0,0,.2)\'">Sign In</button>'
     + (portalId!=='admin' ? '<div style="height:1px;background:#F0F0F0;margin:20px 0"></div>'
@@ -3754,6 +3758,7 @@ window.publishEvent=async function(){
 };
 
 window.loadUserEvents = async function() {
+  console.log('loadUserEvents called, LIVE_MODE:', LIVE_MODE, 'IS_DEMO:', IS_DEMO, 'currentUser:', state.currentUser);
   if(!LIVE_MODE||!_sb||IS_DEMO) return;
   if(Date.now() - lastEventFetch < 30000 && EVENTS.length > 0) return;
   var user=await _sb.auth.getUser();
@@ -3761,8 +3766,9 @@ window.loadUserEvents = async function() {
   var uid=user.data.user.id;
   var role=(state.currentUser&&state.currentUser.role)||'attendee';
   if(role==='coordinator'||role==='admin'){
-    var res=await _sb.from('events').select('*,ticket_tiers(*)').eq('host_id',uid).order('date',{ascending:false});
-    if(res.data) EVENTS=res.data.map(function(ev){ev.products=ev.products||[];ev.agents=ev.agents||[];ev.orders=ev.orders||[];ev.tiers=ev.ticket_tiers||ev.tiers||[];return ev;});
+    var res=await _sb.from('events').select('*,ticket_tiers(*),agent_listings(*),products(*)').eq('host_id',uid).order('date',{ascending:false});
+    console.log('loadUserEvents coordinator result:', res.data, res.error);
+    if(res.data) EVENTS=res.data.map(function(ev){ev.products=ev.products||[];ev.agents=ev.agent_listings||ev.agents||[];ev.orders=ev.orders||[];ev.tiers=ev.ticket_tiers||ev.tiers||[];return ev;});
   } else if(role==='agent') {
     var listings = await _sb.from('agent_listings').select('event_id').eq('agent_id', uid);
     if(listings.data && listings.data.length > 0) {
@@ -3787,6 +3793,7 @@ window.loadUserEvents = async function() {
     }
   } else {
     var res=await _sb.from('events').select('*,ticket_tiers(*)').in('status',['active','upcoming']).order('date');
+    console.log('loadUserEvents attendee result:', res.data, res.error);
     if(res.data) EVENTS=res.data.map(function(ev){ev.products=ev.products||[];ev.agents=ev.agents||[];ev.orders=ev.orders||[];ev.tiers=ev.ticket_tiers||ev.tiers||[];return ev;});
   }
   lastEventFetch = Date.now();
@@ -5399,6 +5406,16 @@ setInterval(async function(){
 }, 15000);
 
 // ── CONNECTION STATUS BANNER ─────────────────────────────────────────────────
+// Remember me: sign out on tab close if unchecked at login time
+window.addEventListener('beforeunload', function() {
+  try {
+    var remember = document.getElementById('login-remember');
+    if(remember && !remember.checked && LIVE_MODE && _sb) {
+      _sb.auth.signOut();
+    }
+  } catch(e){}
+});
+
 window.addEventListener('online', function(){
   var b = document.getElementById('offline-banner');
   if(b) b.remove();
@@ -5440,15 +5457,19 @@ try { var savedCart = sessionStorage.getItem('poured-cart'); if(savedCart) state
 
 // Restore session if user was previously signed in
 function restoreSession() {
+  console.log('restoreSession called, LIVE_MODE:', LIVE_MODE, 'IS_DEMO:', IS_DEMO);
   if(!LIVE_MODE || IS_DEMO || !_sb) return;
   _sb.auth.getSession().then(function(res) {
+    console.log('getSession result:', res.data && res.data.session ? 'session found' : 'no session');
     if(res.data && res.data.session) {
       var userId = res.data.session.user.id;
       _sb.from('profiles').select('*').eq('id', userId).single().then(function(profileRes) {
+        console.log('profile fetch:', profileRes.data, profileRes.error);
         if(profileRes.data) {
           var p = profileRes.data;
           state.currentUser = {id:p.id, email:p.email, name:p.full_name, company:p.company, phone:p.phone, role:p.role};
           render();
+          loadUserEvents();
         }
       });
     }
