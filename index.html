@@ -9,6 +9,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1A1A1A">
 <meta name="description" content="Poured — Beverage Trade Events Platform">
+<link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 64'%3E%3Cpath d='M26 0C26 0 0 24 0 39C0 53 11.6 64 26 64C40.4 64 52 53 52 39C52 24 26 0 26 0Z' fill='%237A1020'/%3E%3C/svg%3E">
 <!-- iOS home screen icons (inline SVG converted to data URI) -->
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%231A1A1A' rx='40'/%3E%3Cpath d='M90 30C90 30 50 72 50 92.5C50 109 64.5 122 90 122C115.5 122 130 109 130 92.5C130 72 90 30 90 30Z' fill='%237A1020'/%3E%3C/svg%3E">
@@ -558,7 +559,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=72').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=73').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);

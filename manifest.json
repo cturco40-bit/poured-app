@@ -1,0 +1,23 @@
+{
+  "name": "POURED",
+  "short_name": "POURED",
+  "description": "Beverage trade events platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1A1A1A",
+  "theme_color": "#1A1A1A",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%231A1A1A'/%3E%3Cpath d='M256 80C256 80 152 200 152 275C152 332 199 380 256 380C313 380 360 332 360 275C360 200 256 80 256 80Z' fill='%237A1020'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='36' fill='%231A1A1A'/%3E%3Cpath d='M96 30C96 30 57 75 57 103C57 124 75 143 96 143C117 143 135 124 135 103C135 75 96 30 96 30Z' fill='%237A1020'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
