@@ -558,7 +558,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=63').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=64').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -3640,26 +3640,26 @@ function coordPortalHTML() {
   try {
   // Empty state — no events, not creating
   if(EVENTS.length === 0 && state.coordSelectedEventId !== -1) {
+    console.log('EMPTY STATE — no events, showing create prompt');
     var emptyContent = '<div style="text-align:center;padding:80px 20px">'
       + '<div style="font-size:48px;opacity:.2;margin-bottom:16px">🍷</div>'
       + '<div style="font-size:18px;font-weight:800;margin-bottom:8px">No events yet</div>'
       + '<div style="font-size:14px;color:#888;margin-bottom:24px">Create your first event to get started</div>'
       + '<button class="dp-btn dp-btn-primary" onclick="setState({coordSelectedEventId:-1,coordTab:\'create\',createStep:1})">+ Create Event</button>'
       + '</div>';
-    return '<div class="dp-shell"><div class="dp-main" style="margin:0;width:100%"><div class="dp-topbar"><div><div class="dp-topbar-title">Events</div></div></div><div class="dp-content">' + emptyContent + '</div></div></div>';
+    return '<div class="dp-shell">'
+      + '<div class="dp-sidebar-wrap"><div id="dp-sidebar" class="dp-sidebar"></div></div>'
+      + '<div class="dp-main"><div class="dp-topbar"><div><div class="dp-topbar-title" style="text-transform:uppercase;letter-spacing:.1em">Event Host</div></div><div class="dp-topbar-actions"><button class="dp-btn" onclick="signOutCoord()">Sign out</button></div></div>'
+      + '<div class="dp-content">' + emptyContent + '</div></div></div>';
   }
   if(!state.coordSelectedEventId) return coordEventListHTML();
   if(state.coordSelectedEventId===-1){
     // Create new event — full width
+    console.log('CREATE FLOW HIT, createStep:', state.createStep);
     document.body.classList.add('dp');
     return '<div class="dp-shell">'
-      + '<div class="dp-sidebar-wrap"><button id="sb-toggle-btn" class="dp-collapse-btn" onclick="toggleSidebar()">‹</button><div id="dp-sidebar" class="dp-sidebar">'
-      + '<div class="dp-sidebar-logo">'+logoSVG+'<div><div class="dp-sidebar-logo-text">POURED</div><span class="dp-sidebar-logo-sub">BEVERAGE EVENTS</span></div></div>'
-      + '<button class="dp-nav-item" onclick="backToCoordList()"><span class="dp-nav-icon">←</span>My Events</button>'
-      + '<button class="dp-nav-item active"><span class="dp-nav-icon">+</span>New Event</button>'
-      + '<div class="dp-sidebar-footer"><button class="dp-signout" onclick="signOutCoord()">Sign out</button></div>'
-      + '</div>'
-      + '<div class="dp-main"><div class="dp-topbar"><div><div class="dp-topbar-title" style="text-transform:uppercase;letter-spacing:.1em">Create New Event</div></div><div class="dp-topbar-actions"><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="backToCoordList()">← Back to events</button></div></div>'
+      + '<div class="dp-sidebar-wrap"><div id="dp-sidebar" class="dp-sidebar"></div></div>'
+      + '<div class="dp-main"><div class="dp-topbar"><div><div class="dp-topbar-title" style="text-transform:uppercase;letter-spacing:.1em">Create New Event</div></div><div class="dp-topbar-actions"><button class="dp-btn" onclick="backToCoordList()">← Back</button><button class="dp-btn" onclick="signOutCoord()">Sign out</button></div></div>'
       + '<div class="dp-content" style="max-width:720px">'+createEventHTML()+'</div></div></div>';
   }
 
