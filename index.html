@@ -559,7 +559,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=74').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=76').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -3889,26 +3889,26 @@ function coordPortalHTML() {
   }
 
   else if(tab==='door') {
-    var attendees = [
+    var attendees = IS_DEMO ? [
       {id:'a001',name:'Jane Smith',tier:'VIP Reserve',ticket:'VIP-001',paid:170,trade:false},
       {id:'a002',name:'Marc Bouchard',tier:'General Admission',ticket:'GA-042',paid:91,trade:false},
       {id:'a003',name:'Priya Mehta',tier:'Trade',ticket:'TR-018',paid:0,trade:true,cred:'Smart Serve #44821'},
       {id:'a004',name:'Tom Ricci',tier:'General Admission',ticket:'GA-067',paid:91,trade:false},
       {id:'a005',name:'Aisha Chen',tier:'VIP Reserve',ticket:'VIP-008',paid:170,trade:false},
       {id:'a006',name:'David Park',tier:'Trade',ticket:'TR-022',paid:0,trade:true,cred:'ORCA Member'},
-    ];
+    ] : [];
     var checked = attendees.filter(function(a){return !!(state.checkedIn && state.checkedIn[a.id]);}).length;
     if(isMobile()) {
       content += mobileStatGrid([
         {value:checked+'', label:'Checked In', color:'#4A8A6A'},
         {value:(attendees.length-checked)+'', label:'Not Arrived'},
-        {value:Math.round(checked/attendees.length*100)+'%', label:'Attendance'}
+        {value:(attendees.length?Math.round(checked/attendees.length*100):0)+'%', label:'Attendance'}
       ]);
     } else {
       content += '<div class="dp-stats dp-stats-3" style="margin-bottom:24px">';
       content += '<div class="dp-stat"><div class="dp-stat-val" style="color:#4A8A6A">'+checked+'</div><div class="dp-stat-label">Checked in</div></div>';
       content += '<div class="dp-stat"><div class="dp-stat-val">'+(attendees.length-checked)+'</div><div class="dp-stat-label">Not yet arrived</div></div>';
-      content += '<div class="dp-stat"><div class="dp-stat-val">'+Math.round(checked/attendees.length*100)+'%</div><div class="dp-stat-label">Attendance rate</div></div>';
+      content += '<div class="dp-stat"><div class="dp-stat-val">'+(attendees.length?Math.round(checked/attendees.length*100):0)+'%</div><div class="dp-stat-label">Attendance rate</div></div>';
       content += '</div>';
     }
     content += '<div class="dp-card">';
