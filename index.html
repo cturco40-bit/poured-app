@@ -193,6 +193,10 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   }
   .dp-content * { max-width: 100%; box-sizing: border-box; }
   .dp-content table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .dp-input-row-2, .dp-input-row-3 { grid-template-columns: 1fr !important; }
+  .dp-content input, .dp-content textarea, .dp-content select { width: 100% !important; box-sizing: border-box; }
+  .dp-content [style*="grid-template-columns:1fr 1fr"],
+  .dp-content [style*="grid-template-columns:2fr 1fr"] { grid-template-columns: 1fr !important; }
   .dp-content [style*="max-width:720px"],
   .dp-content [style*="max-width:700px"],
   .dp-content [style*="max-width:600px"] {
@@ -554,7 +558,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=57').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=58').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
