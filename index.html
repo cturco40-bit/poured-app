@@ -559,7 +559,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=78').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=79').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -982,6 +982,8 @@ let state = {
   openOrder: null,
   payModal: null,
   unlockAllModal: false,
+  agentTeams: {},          // { [eventId]: [{id,name,role,email,phone,smartServe}] }
+  agentTeamAddOpen: false,
   // Coordinator
   coordTab: "overview",
   expandedAgent: null,
@@ -2517,6 +2519,71 @@ function agentPortalHTML() {
     content += '</div></div></div>';
   }
 
+  else if(tab==='team') {
+    var evId = ev.id;
+    var demoStaff = IS_DEMO ? [
+      {id:'ts1', name:'Christian Turco', role:'Agent Rep', smartServe:'SS#44821', email:'', phone:''},
+      {id:'ts2', name:'Maria Fantini', role:'Producer', smartServe:'', email:'', phone:'', company:'Fantini Group'}
+    ] : [];
+    var teamStore = state.agentTeams || {};
+    var members = teamStore[evId] !== undefined ? teamStore[evId] : demoStaff;
+
+    content += '<div style="max-width:720px">';
+
+    // Table Staff card
+    content += '<div class="dp-card" style="margin-bottom:16px">';
+    content += '<div class="dp-card-header"><span class="dp-card-title">Table Staff</span></div>';
+    content += '<div style="padding:4px 20px 0 20px;font-size:12px;color:#888">People working your table at this event</div>';
+    content += '<div style="padding:16px 20px">';
+
+    if(members.length === 0) {
+      content += '<div style="text-align:center;padding:24px 0;font-size:13px;color:#888">No team members yet</div>';
+    } else {
+      members.forEach(function(m){
+        var sub = [m.role, m.smartServe, m.company, m.email, m.phone].filter(function(s){return s;}).join(' · ');
+        content += '<div style="background:#fff;border:1px solid #E5E5E5;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">';
+        content += '<div><div style="font-size:14px;font-weight:700;margin-bottom:2px">'+m.name+'</div>';
+        content += '<div style="font-size:12px;color:#888">'+sub+'</div></div>';
+        content += '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="removeTeamMember(\''+m.id+'\')">Remove</button>';
+        content += '</div>';
+      });
+    }
+
+    if(state.agentTeamAddOpen) {
+      var inpCss = 'width:100%;padding:9px 11px;border:1.5px solid #E5E5E5;border-radius:6px;font-size:13px;color:#1A1A1A;background:#fff;font-family:Nunito Sans,sans-serif;box-sizing:border-box';
+      var lblCss = 'font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px';
+      content += '<div style="border-top:1px solid #F0F0F0;padding-top:14px;margin-top:10px">';
+      content += '<div style="font-size:12px;font-weight:700;color:#1A1A1A;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Add Team Member</div>';
+      content += '<div style="margin-bottom:10px"><div style="'+lblCss+'">Name *</div><input id="team-name" type="text" placeholder="Full name" style="'+inpCss+'"></div>';
+      content += '<div style="margin-bottom:10px"><div style="'+lblCss+'">Role</div><select id="team-role" style="'+inpCss+'"><option>Agent Rep</option><option>Producer</option><option>Brand Ambassador</option></select></div>';
+      content += '<div style="margin-bottom:10px"><div style="'+lblCss+'">Email</div><input id="team-email" type="email" placeholder="optional" style="'+inpCss+'"></div>';
+      content += '<div style="margin-bottom:10px"><div style="'+lblCss+'">Phone</div><input id="team-phone" type="tel" placeholder="optional" style="'+inpCss+'"></div>';
+      content += '<div style="margin-bottom:14px"><div style="'+lblCss+'">Smart Serve #</div><input id="team-smartserve" type="text" placeholder="optional" style="'+inpCss+'"></div>';
+      content += '<div style="display:flex;gap:8px">';
+      content += '<button class="dp-btn dp-btn-primary dp-btn-sm" onclick="addTeamMember()">Add</button>';
+      content += '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="setState({agentTeamAddOpen:false})">Cancel</button>';
+      content += '</div></div>';
+    } else {
+      content += '<button class="dp-btn dp-btn-primary dp-btn-sm" onclick="setState({agentTeamAddOpen:true})" style="margin-top:4px">+ Add Person</button>';
+    }
+
+    content += '</div></div>';
+
+    // Dashboard Collaborators card
+    content += '<div class="dp-card">';
+    content += '<div class="dp-card-header"><span class="dp-card-title">Dashboard Collaborators</span><span class="dp-badge dp-badge-gray">Coming soon</span></div>';
+    content += '<div style="padding:4px 20px 0 20px;font-size:12px;color:#888">Team members who can view orders and manage your portfolio</div>';
+    content += '<div style="padding:16px 20px">';
+    content += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;opacity:.55">';
+    content += '<input type="email" placeholder="colleague@company.com" disabled style="flex:1;padding:9px 11px;border:1.5px solid #E5E5E5;border-radius:6px;font-size:13px;background:#F8F8F8;font-family:Nunito Sans,sans-serif">';
+    content += '<button class="dp-btn dp-btn-primary dp-btn-sm" disabled style="cursor:not-allowed">Invite Collaborator</button>';
+    content += '</div>';
+    content += '<div style="font-size:11px;color:#888;margin-top:8px">Collaborators get full access to your agent dashboard for this event</div>';
+    content += '</div></div>';
+
+    content += '</div>';
+  }
+
   else if(tab==='export') {
     content += '<div style="max-width:700px">';
     content += '<div class="dp-card" style="margin-bottom:16px">';
@@ -2575,6 +2642,7 @@ function agentPortalHTML() {
     +   navItem('orders','-','Orders',newCount||null)
     +   navItem('suppliers','-','My Suppliers')
     +   navItem('upload','-','Upload Wines')
+    +   navItem('team','-','My Team')
     +   navItem('export','-','Export')
     +   '<div class="dp-sidebar-footer">'
     +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">'+(state.currentUser&&state.currentUser.company||(IS_DEMO?'Profile Wine Group':'Agent'))+'</div>'
@@ -3311,6 +3379,31 @@ window.setCoordTab    = t => setState({coordTab:t});
 window.setCustTab     = t => setState({custTab:t});
 window.setCustListTab = t => setState({custListTab:t});
 window.setAgentTab    = t => setState({agentTab:t});
+window.addTeamMember = function() {
+  var nameEl = document.getElementById('team-name');
+  var name = (nameEl&&nameEl.value||'').trim();
+  if(!name) { showToast('Name is required'); if(nameEl) nameEl.focus(); return; }
+  var role  = (document.getElementById('team-role')||{}).value || 'Agent Rep';
+  var email = (document.getElementById('team-email')||{}).value || '';
+  var phone = (document.getElementById('team-phone')||{}).value || '';
+  var smartServe = (document.getElementById('team-smartserve')||{}).value || '';
+  var evId = state.selectedEventId;
+  if(!evId) return;
+  var teams = Object.assign({}, state.agentTeams || {});
+  var current = (teams[evId] || []).slice();
+  current.push({id:'tm_'+Date.now(), name:name, role:role, email:email, phone:phone, smartServe:smartServe});
+  teams[evId] = current;
+  setState({agentTeams: teams, agentTeamAddOpen: false});
+  showToast('Team member added');
+};
+window.removeTeamMember = function(id) {
+  var evId = state.selectedEventId;
+  if(!evId) return;
+  var teams = Object.assign({}, state.agentTeams || {});
+  var current = (teams[evId] || []).filter(function(m){return m.id !== id;});
+  teams[evId] = current;
+  setState({agentTeams: teams});
+};
 window.toggleAgent = id => setState({expandedAgent: state.expandedAgent===id?null:id});
 window.toggleCoordSupplier = name => setState({expandedSupplier: state.expandedSupplier===name?null:name});
 window.setCreateStep = n => setState({createStep:n});
