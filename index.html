@@ -559,7 +559,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=83').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=84').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -2255,6 +2255,7 @@ function agentEventListHTML() {
     +   '<div class="dp-sidebar-logo">'+logoSVG+'<div><div class="dp-sidebar-logo-text">POURED</div><span class="dp-sidebar-logo-sub">BEVERAGE EVENTS</span></div></div>'
     +   '<div class="dp-sidebar-section">AGENT / PRODUCER</div>'
     +   '<button class="dp-nav-item active"><span class="dp-nav-icon">≡</span><span class="dp-nav-label">My Events</span></button>'
+    +   '<button class="dp-nav-item" onclick="setState({selectedEventId:null,agentTab:\'account-team\'})"><span class="dp-nav-icon">◎</span><span class="dp-nav-label">Team</span></button>'
     +   '<div class="dp-sidebar-section" style="margin-top:8px">ACCOUNT</div>'
     +   '<button class="dp-nav-item"><span class="dp-nav-icon">◎</span>Profile</button>'
     +   '<div class="dp-sidebar-footer">'
@@ -2296,7 +2297,50 @@ function agentEventListHTML() {
 }
 
 
+function agentAccountTeamHTML() {
+  return '<div class="dp-shell">'
+    + '<div class="dp-sidebar-wrap"><button id="sb-toggle-btn" class="dp-collapse-btn" onclick="toggleSidebar()">\u2039</button><div id="dp-sidebar" class="dp-sidebar">'
+    +   '<div class="dp-sidebar-logo">'+logoSVG+'<div><div class="dp-sidebar-logo-text">POURED</div><span class="dp-sidebar-logo-sub">BEVERAGE EVENTS</span></div></div>'
+    +   '<div class="dp-sidebar-section">AGENT / PRODUCER</div>'
+    +   '<button class="dp-nav-item" onclick="setState({selectedEventId:null,agentTab:\'orders\'})"><span class="dp-nav-icon">\u2630</span><span class="dp-nav-label">My Events</span></button>'
+    +   '<button class="dp-nav-item active"><span class="dp-nav-icon">\u25CE</span><span class="dp-nav-label">Team</span></button>'
+    +   '<div class="dp-sidebar-footer">'
+    +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">'+(state.currentUser&&state.currentUser.company||(IS_DEMO?'Profile Wine Group':'Agent'))+'</div>'
+    +     '<div style="font-size:10px;color:#555;margin-bottom:8px;padding:0 4px">'+(state.currentUser&&state.currentUser.email||(IS_DEMO?'christian@profilewinegroup.ca':''))+'</div>'
+    +     '<button class="dp-signout" onclick="signOutAgent()">Sign out</button>'
+    +   '</div>'
+    + '</div></div>'
+    + '<div class="dp-main">'
+    +   '<div class="dp-topbar">'
+    +     '<div><div class="dp-topbar-title" style="text-transform:uppercase;letter-spacing:.1em">My Team</div><div class="dp-topbar-sub">Account-level collaborators</div></div>'
+    +     '<div class="dp-topbar-actions">'
+    +       '<button class="dp-btn" onclick="setState({selectedEventId:null,agentTab:\'orders\'})">\u2190 Back</button>'
+    +       '<button class="dp-btn" onclick="signOutAgent()">Sign out</button>'
+    +     '</div>'
+    +   '</div>'
+    +   '<div class="dp-content">'
+    +     '<div style="max-width:720px">'
+    +       '<div class="dp-card">'
+    +         '<div class="dp-card-header"><span class="dp-card-title">Collaborators</span></div>'
+    +         '<div style="padding:4px 20px 0 20px;font-size:12px;color:#888">Team members who can view orders and manage your portfolio</div>'
+    +         '<div style="padding:16px 20px">'
+    +           '<div style="font-size:12px;color:#555;margin-bottom:12px">Collaborators will have full access to your dashboard across all events</div>'
+    +           '<button class="dp-btn dp-btn-primary dp-btn-sm" disabled style="opacity:.5;cursor:not-allowed">Invite Collaborator</button>'
+    +           '<div style="font-size:11px;color:#888;margin-top:10px;font-style:italic">Coming soon</div>'
+    +         '</div>'
+    +       '</div>'
+    +     '</div>'
+    +   '</div>'
+    + '</div></div>';
+}
+
 function agentPortalHTML() {
+  if(!state.selectedEventId && state.agentTab === 'account-team') {
+    return agentAccountTeamHTML();
+  }
+  if(!state.selectedEventId) {
+    return agentEventListHTML();
+  }
   var AGENT_EMAIL = (state.currentUser&&state.currentUser.email) || (IS_DEMO?'christian@profilewinegroup.ca':'');
   var ev = EVENTS.find(function(e){return e.id===state.selectedEventId;})||EV;
   var tab = state.agentTab || 'orders';
@@ -2569,16 +2613,6 @@ function agentPortalHTML() {
 
     content += '</div></div>';
 
-    // Dashboard Collaborators card
-    content += '<div class="dp-card">';
-    content += '<div class="dp-card-header"><span class="dp-card-title">Dashboard Collaborators</span></div>';
-    content += '<div style="padding:4px 20px 0 20px;font-size:12px;color:#888">Team members who can view orders and manage your portfolio for this event</div>';
-    content += '<div style="padding:16px 20px">';
-    content += '<div style="font-size:12px;color:#555;margin-bottom:12px">Collaborators get full access to your agent dashboard for this event</div>';
-    content += '<button class="dp-btn dp-btn-primary dp-btn-sm" disabled style="opacity:.5;cursor:not-allowed">Invite Collaborator</button>';
-    content += '<div style="font-size:11px;color:#888;margin-top:10px;font-style:italic">Coming soon</div>';
-    content += '</div></div>';
-
     content += '</div>';
   }
 
@@ -2640,7 +2674,7 @@ function agentPortalHTML() {
     +   navItem('orders','-','Orders',newCount||null)
     +   navItem('suppliers','-','My Suppliers')
     +   navItem('upload','-','Upload Wines')
-    +   navItem('team','-','My Team')
+    +   navItem('team','-','Table Staff')
     +   navItem('export','-','Export')
     +   '<div class="dp-sidebar-footer">'
     +     '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;padding:0 4px">'+(state.currentUser&&state.currentUser.company||(IS_DEMO?'Profile Wine Group':'Agent'))+'</div>'
@@ -2665,7 +2699,7 @@ function agentPortalHTML() {
     +     '</div>'
     +     '<div style="font-size:12px;color:#888">'+ev.date+' · '+ev.venue+'</div>'
     +   '</div>'
-    +   tabBar([['orders','Orders'],['suppliers','Wines'],['upload','Upload'],['team','My Team']], tab, 'setAgentTab')
+    +   tabBar([['orders','Orders'],['suppliers','Wines'],['upload','Upload'],['team','Table Staff']], tab, 'setAgentTab')
     +   '<div class="dp-content">'+content+'</div>'
     + '</div>'
     + '</div>';
@@ -3783,6 +3817,7 @@ function coordEventListHTML() {
     +   '</div>'
     +   '<div class="dp-sidebar-section">EVENT HOST</div>'
     +   '<button class="dp-nav-item active"><span class="dp-nav-icon">≡</span><span class="dp-nav-label">My Events</span></button>'
+    +   '<button class="dp-nav-item" onclick="setState({coordSelectedEventId:null,coordTab:\'account-team\'})"><span class="dp-nav-icon">◎</span><span class="dp-nav-label">Team</span></button>'
     +   '<button class="dp-nav-item" onclick="setState({coordSelectedEventId:-1,coordTab:\'create\'})"><span class="dp-nav-icon">+</span>New Event</button>'
     +   '<div class="dp-sidebar-section" style="margin-top:8px">ACCOUNT</div>'
     +   '<button class="dp-nav-item"><span class="dp-nav-icon">◈</span>Settings</button>'
@@ -3827,9 +3862,93 @@ function coordEventListHTML() {
 }
 
 
+function coordAccountTeamHTML() {
+  var demoEventStaff = IS_DEMO ? [
+    {id:'es1', name:'Sarah Chen', role:'Door Staff', email:'', phone:''},
+    {id:'es2', name:'Mike Rodriguez', role:'Volunteer', email:'', phone:''},
+    {id:'es3', name:'Lisa Park', role:'Co-Host', email:'', phone:''}
+  ] : [];
+  var staff = (state.eventStaff && state.eventStaff.length) ? state.eventStaff : demoEventStaff;
+
+  var body = '<div style="max-width:720px">';
+  body += '<div class="dp-card" style="margin-bottom:16px">';
+  body += '<div class="dp-card-header"><span class="dp-card-title">Staff</span></div>';
+  body += '<div style="padding:4px 20px 0 20px;font-size:12px;color:#888">Team members work across all your events</div>';
+  body += '<div style="padding:16px 20px">';
+
+  if(staff.length === 0) {
+    body += '<div style="text-align:center;padding:24px 0;font-size:13px;color:#888">No staff members yet</div>';
+  } else {
+    staff.forEach(function(m){
+      var sub = [m.role, m.email, m.phone].filter(function(s){return s;}).join(' \u00b7 ');
+      body += '<div style="background:#fff;border:1px solid #E5E5E5;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">';
+      body += '<div><div style="font-size:14px;font-weight:700;margin-bottom:2px">'+m.name+'</div>';
+      body += '<div style="font-size:12px;color:#888">'+sub+'</div></div>';
+      body += '<button onclick="removeEventStaff(\''+m.id+'\')" style="background:none;border:none;font-size:18px;color:#888;cursor:pointer;padding:4px 8px;line-height:1" aria-label="Remove">\u00d7</button>';
+      body += '</div>';
+    });
+  }
+
+  if(state.showAddEventStaff) {
+    var inpCss = 'width:100%;padding:9px 11px;border:1.5px solid #E5E5E5;border-radius:6px;font-size:13px;color:#1A1A1A;background:#fff;font-family:Nunito Sans,sans-serif;box-sizing:border-box';
+    var lblCss = 'font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px';
+    body += '<div style="border-top:1px solid #F0F0F0;padding-top:14px;margin-top:10px">';
+    body += '<div style="font-size:12px;font-weight:700;color:#1A1A1A;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Add Staff Member</div>';
+    body += '<div style="margin-bottom:10px"><div style="'+lblCss+'">Name *</div><input id="evstaff-name" type="text" placeholder="Full name" style="'+inpCss+'"></div>';
+    body += '<div style="margin-bottom:10px"><div style="'+lblCss+'">Role</div><select id="evstaff-role" style="'+inpCss+'"><option>Co-Host</option><option>Door Staff</option><option>Volunteer</option></select></div>';
+    body += '<div style="margin-bottom:10px"><div style="'+lblCss+'">Email</div><input id="evstaff-email" type="email" placeholder="optional" style="'+inpCss+'"></div>';
+    body += '<div style="margin-bottom:14px"><div style="'+lblCss+'">Phone</div><input id="evstaff-phone" type="tel" placeholder="optional" style="'+inpCss+'"></div>';
+    body += '<div style="display:flex;gap:8px">';
+    body += '<button class="dp-btn dp-btn-primary dp-btn-sm" onclick="addEventStaff()">Add</button>';
+    body += '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="setState({showAddEventStaff:false})">Cancel</button>';
+    body += '</div></div>';
+  } else {
+    body += '<button class="dp-btn dp-btn-primary dp-btn-sm" onclick="setState({showAddEventStaff:true})" style="margin-top:4px">+ Add Staff</button>';
+  }
+
+  body += '</div></div>';
+
+  // Role reference card
+  body += '<div class="dp-card">';
+  body += '<div class="dp-card-header"><span class="dp-card-title">Role Reference</span></div>';
+  body += '<div style="padding:16px 20px;font-size:13px;color:#1A1A1A;line-height:1.7">';
+  body += '<div style="margin-bottom:10px"><strong>Co-Host</strong> \u2014 <span style="color:#555">Full dashboard access, can manage agents and view payouts</span></div>';
+  body += '<div style="margin-bottom:10px"><strong>Door Staff</strong> \u2014 <span style="color:#555">Check-in access only, can scan QR codes and admit attendees</span></div>';
+  body += '<div><strong>Volunteer</strong> \u2014 <span style="color:#555">Check-in view only, no management access</span></div>';
+  body += '</div></div>';
+
+  body += '</div>';
+
+  return '<div class="dp-shell">'
+    + '<div class="dp-sidebar-wrap"><button id="sb-toggle-btn" class="dp-collapse-btn" onclick="toggleSidebar()">\u2039</button><div id="dp-sidebar" class="dp-sidebar">'
+    +   '<div class="dp-sidebar-logo">'+logoSVG+'<div><div class="dp-sidebar-logo-text">POURED</div><span class="dp-sidebar-logo-sub">BEVERAGE EVENTS</span></div></div>'
+    +   '<div class="dp-sidebar-section">EVENT HOST</div>'
+    +   '<button class="dp-nav-item" onclick="setState({coordSelectedEventId:null,coordTab:\'overview\'})"><span class="dp-nav-icon">\u2261</span><span class="dp-nav-label">My Events</span></button>'
+    +   '<button class="dp-nav-item active"><span class="dp-nav-icon">\u25CE</span><span class="dp-nav-label">Team</span></button>'
+    +   '<button class="dp-nav-item" onclick="setState({coordSelectedEventId:-1,coordTab:\'create\'})"><span class="dp-nav-icon">+</span>New Event</button>'
+    +   '<div class="dp-sidebar-footer">'
+    +     '<div class="dp-sidebar-user"><div class="dp-sidebar-avatar">'+(state.currentUser&&state.currentUser.name?state.currentUser.name[0].toUpperCase():'H')+'</div><div><div class="dp-sidebar-user-name">'+(state.currentUser&&state.currentUser.name||(IS_DEMO?'The Tasting Collective':'Event Host'))+'</div><div class="dp-sidebar-user-email">'+(state.currentUser&&state.currentUser.email||(IS_DEMO?'coordinator@tasting.ca':''))+'</div></div></div>'
+    +     '<button class="dp-signout" onclick="signOutCoord()">Sign out</button>'
+    +   '</div>'
+    + '</div></div>'
+    + '<div class="dp-main">'
+    +   '<div class="dp-topbar">'
+    +     '<div><div class="dp-topbar-title" style="text-transform:uppercase;letter-spacing:.1em">My Team</div><div class="dp-topbar-sub">Staff across all your events</div></div>'
+    +     '<div class="dp-topbar-actions">'
+    +       '<button class="dp-btn" onclick="setState({coordSelectedEventId:null,coordTab:\'overview\'})">\u2190 Back</button>'
+    +       '<button class="dp-btn" onclick="signOutCoord()">Sign out</button>'
+    +     '</div>'
+    +   '</div>'
+    +   '<div class="dp-content">' + body + '</div>'
+    + '</div></div>';
+}
+
 function coordPortalHTML() {
   console.log('coordPortalHTML called', 'EVENTS:', EVENTS.length, 'selectedEventId:', state.coordSelectedEventId, 'coordTab:', state.coordTab);
   try {
+  if(!state.coordSelectedEventId && state.coordTab === 'account-team') {
+    return coordAccountTeamHTML();
+  }
   // Empty state — no events, not creating
   if(EVENTS.length === 0 && state.coordSelectedEventId !== -1) {
     console.log('EMPTY STATE — no events, showing create prompt');
@@ -4173,66 +4292,6 @@ function coordPortalHTML() {
     content += '</div>';
   }
 
-  else if(tab==='team') {
-    var demoEventStaff = IS_DEMO ? [
-      {id:'es1', name:'Sarah Chen', role:'Door Staff', email:'', phone:''},
-      {id:'es2', name:'Mike Rodriguez', role:'Volunteer', email:'', phone:''},
-      {id:'es3', name:'Lisa Park', role:'Co-Host', email:'', phone:''}
-    ] : [];
-    var eventStaffList = (state.eventStaff && state.eventStaff.length) ? state.eventStaff : demoEventStaff;
-
-    content += '<div style="max-width:720px">';
-
-    // Event Staff card
-    content += '<div class="dp-card" style="margin-bottom:16px">';
-    content += '<div class="dp-card-header"><span class="dp-card-title">Event Staff</span></div>';
-    content += '<div style="padding:4px 20px 0 20px;font-size:12px;color:#888">People helping run your event</div>';
-    content += '<div style="padding:16px 20px">';
-
-    if(eventStaffList.length === 0) {
-      content += '<div style="text-align:center;padding:24px 0;font-size:13px;color:#888">No staff members yet</div>';
-    } else {
-      eventStaffList.forEach(function(m){
-        var sub = [m.role, m.email, m.phone].filter(function(s){return s;}).join(' · ');
-        content += '<div style="background:#fff;border:1px solid #E5E5E5;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">';
-        content += '<div><div style="font-size:14px;font-weight:700;margin-bottom:2px">'+m.name+'</div>';
-        content += '<div style="font-size:12px;color:#888">'+sub+'</div></div>';
-        content += '<button onclick="removeEventStaff(\''+m.id+'\')" style="background:none;border:none;font-size:18px;color:#888;cursor:pointer;padding:4px 8px;line-height:1" aria-label="Remove">\u00d7</button>';
-        content += '</div>';
-      });
-    }
-
-    if(state.showAddEventStaff) {
-      var inpCss = 'width:100%;padding:9px 11px;border:1.5px solid #E5E5E5;border-radius:6px;font-size:13px;color:#1A1A1A;background:#fff;font-family:Nunito Sans,sans-serif;box-sizing:border-box';
-      var lblCss = 'font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px';
-      content += '<div style="border-top:1px solid #F0F0F0;padding-top:14px;margin-top:10px">';
-      content += '<div style="font-size:12px;font-weight:700;color:#1A1A1A;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Add Staff Member</div>';
-      content += '<div style="margin-bottom:10px"><div style="'+lblCss+'">Name *</div><input id="evstaff-name" type="text" placeholder="Full name" style="'+inpCss+'"></div>';
-      content += '<div style="margin-bottom:10px"><div style="'+lblCss+'">Role</div><select id="evstaff-role" style="'+inpCss+'"><option>Co-Host</option><option>Door Staff</option><option>Volunteer</option></select></div>';
-      content += '<div style="margin-bottom:10px"><div style="'+lblCss+'">Email</div><input id="evstaff-email" type="email" placeholder="optional" style="'+inpCss+'"></div>';
-      content += '<div style="margin-bottom:14px"><div style="'+lblCss+'">Phone</div><input id="evstaff-phone" type="tel" placeholder="optional" style="'+inpCss+'"></div>';
-      content += '<div style="display:flex;gap:8px">';
-      content += '<button class="dp-btn dp-btn-primary dp-btn-sm" onclick="addEventStaff()">Add</button>';
-      content += '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="setState({showAddEventStaff:false})">Cancel</button>';
-      content += '</div></div>';
-    } else {
-      content += '<button class="dp-btn dp-btn-primary dp-btn-sm" onclick="setState({showAddEventStaff:true})" style="margin-top:4px">+ Add Staff</button>';
-    }
-
-    content += '</div></div>';
-
-    // Role reference card
-    content += '<div class="dp-card">';
-    content += '<div class="dp-card-header"><span class="dp-card-title">Role Reference</span></div>';
-    content += '<div style="padding:16px 20px;font-size:13px;color:#1A1A1A;line-height:1.7">';
-    content += '<div style="margin-bottom:10px"><strong>Co-Host</strong> — <span style="color:#555">Full dashboard access, can manage agents and view payouts</span></div>';
-    content += '<div style="margin-bottom:10px"><strong>Door Staff</strong> — <span style="color:#555">Check-in access only, can scan QR codes and admit attendees</span></div>';
-    content += '<div><strong>Volunteer</strong> — <span style="color:#555">Check-in view only, no management access</span></div>';
-    content += '</div></div>';
-
-    content += '</div>';
-  }
-
   else if(tab==='create') {
     content += '<div style="max-width:720px">'+createEventHTML()+'</div>';
   }
@@ -4260,7 +4319,6 @@ function coordPortalHTML() {
     +   navItem('approvals','-','Approvals',EV.products.filter(function(p){return state.coordApprovals[p.id]===undefined;}).length||null)
     +   navItem('door','-','Door Check-in')
     +   navItem('payout','-','Payout')
-    +   navItem('team','-','Team')
     +   navItem('create','+','Create Event')
     +   '<div class="dp-sidebar-footer">'
     +     '<div class="dp-sidebar-user"><div class="dp-sidebar-avatar">'+(state.currentUser&&state.currentUser.name?state.currentUser.name[0].toUpperCase():'H')+'</div><div><div class="dp-sidebar-user-name">'+(state.currentUser&&state.currentUser.name||(IS_DEMO?'The Tasting Collective':'Event Host'))+'</div><div class="dp-sidebar-user-email">'+(state.currentUser&&state.currentUser.email||(IS_DEMO?'coordinator@tasting.ca':''))+'</div></div></div>'
@@ -4286,7 +4344,7 @@ function coordPortalHTML() {
     +     '</div>'
     +     '<div style="font-size:12px;color:#888">'+EV.date+' · '+EV.venue+'</div>'
     +   '</div>'
-    +   tabBar([['overview','Overview'],['door','Check-in'],['agents','Agents'],['payout','Payout'],['team','Team']], tab, 'setCoordTab')
+    +   tabBar([['overview','Overview'],['door','Check-in'],['agents','Agents'],['payout','Payout']], tab, 'setCoordTab')
     +   '<div class="dp-content">'+content+'</div>'
     + '</div>'
     + dupModalHTML(EV)
