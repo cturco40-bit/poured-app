@@ -558,7 +558,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=69').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=70').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -4067,7 +4067,7 @@ window.toggleSupplierTable = key => {
 
 // ─── CUSTOMER EVENT LIST ─────────────────────────────────────────────────────
 function custEventListHTML() {
-  var myTicketIds=[1,4];
+  var myTicketIds=IS_DEMO?[1,4]:[];
   var myTickets=EVENTS.filter(function(e){return myTicketIds.includes(e.id);});
   var myActive=myTickets.filter(function(e){return e.status==='active'||e.status==='upcoming';});
   var myPast=myTickets.filter(function(e){return e.status==='past';});
