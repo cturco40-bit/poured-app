@@ -558,7 +558,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=59').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=60').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -3650,7 +3650,7 @@ function coordPortalHTML() {
       + '<div class="dp-content" style="max-width:720px">'+createEventHTML()+'</div></div></div>';
   }
 
-  var EV = EVENTS.find(function(e){return e.id===state.coordSelectedEventId;})||EVENTS[0];
+  var EV = EVENTS.find(function(e){return e.id===state.coordSelectedEventId;})||EVENTS[0]||{id:0,name:'',date:'',venue:'',address:'',time:'',status:'',description:'',products:[],agents:[],orders:[],tiers:[],attendees:[],passcode:''};
   var allStats    = supplierStats(EV.products, EV.orders);
   var totalSold   = EV.tiers.reduce(function(s,t){return s+t.sold;},0);
   var totalCap    = EV.tiers.reduce(function(s,t){return s+t.capacity;},0);
