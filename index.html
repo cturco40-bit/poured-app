@@ -558,7 +558,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=70').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=71').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -2863,10 +2863,9 @@ window.showFeeSettingsModal = function(coordName) {
 
 // Ticket purchase — route to Stripe or show info
 window.purchaseTicket = function(evId, tierId, price) {
-  if(LIVE_MODE){
-    fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:evId,tierId:tierId})})
-      .then(function(r){return r.json();})
-      .then(function(d){if(d.url)window.location.href=d.url;});
+  if(LIVE_MODE&&!IS_DEMO){
+    showToast('Ticket purchasing coming soon — Stripe integration in progress');
+    return;
   } else {
     showToast('Ticket purchased! Entering event...');
     setTimeout(function(){
