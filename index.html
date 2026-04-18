@@ -558,7 +558,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=67').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=69').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -3250,7 +3250,7 @@ window.calcOrderUnlockFee = function(sub) {
 };
 
 
-window.signOutAdmin = async function(){ await AUTH.signOut(); setState({portal:'home'}); };
+window.signOutAdmin = async function(){ await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',adminTab:'dashboard'}); };
 window.saveFeeOverride = function(eventId){
   var fields = ['ticketFlat','ticketPct','unlockPct','submissionFee','featuredFee'];
   var override = {};
@@ -3263,9 +3263,9 @@ window.saveFeeOverride = function(eventId){
   setState({feeOverrides:newOverrides});
   showToast('Fee overrides saved for this event');
 };
-window.signOutAgent  = async function(){ await AUTH.signOut(); setState({portal:'agent'}); };
-window.signOutCoord  = async function(){ await AUTH.signOut(); setState({portal:'coordinator'}); };
-window.signOutCust   = async function(){ await AUTH.signOut(); setState({portal:'home'}); };
+window.signOutAgent  = async function(){ await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',selectedEventId:null,agentTab:'orders'}); };
+window.signOutCoord  = async function(){ await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',coordSelectedEventId:null,coordTab:'overview',createStep:1,createDone:false}); };
+window.signOutCust   = async function(){ await AUTH.signOut(); state.currentUser=null; EVENTS=IS_DEMO?DEMO_EVENTS:[]; setState({portal:'home',selectedEventId:null,custTab:'ticket',cart:[],orderDone:false}); };
 window.backToCoordList = function(){ setState({coordSelectedEventId:null}); };
 window.backToAgentList = function(){ setState({selectedEventId:null, portal:'agent_in'}); };
 window.backToCustList  = function(){ setState({selectedEventId:null, orderDone:false, cart:[]}); };
