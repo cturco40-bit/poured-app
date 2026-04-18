@@ -559,7 +559,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=82').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=83').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1446,10 +1446,10 @@ function payoutDashboardHTML(ev) {
     </div>
     <div style="background:#fff;border-radius:10px;padding:14px;border:1px solid ${B.mist}">
       <div style="font-size:10px;color:${B.cork};letter-spacing:.12em;margin-bottom:10px">PAYOUT HISTORY</div>
-      ${[
+      ${(IS_DEMO?[
         ['SIP Toronto 2025','17 Oct 2025','$9,840.00','Paid'],
         ['Wine Fest Toronto 2025','9 May 2025','$6,205.25','Paid'],
-      ].map(([name,date,amount,status])=>`
+      ]:[]).map(([name,date,amount,status])=>`
         <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid ${B.linen}">
           <div><div style="font-size:12px;font-weight:500">${name}</div><div style="font-size:10px;color:${B.cork}">${date}</div></div>
           <div style="text-align:right"><div style="font-size:13px;font-weight:700">${amount}</div><div style="font-size:10px;color:${B.sage}">${status}</div></div>
@@ -2665,7 +2665,7 @@ function agentPortalHTML() {
     +     '</div>'
     +     '<div style="font-size:12px;color:#888">'+ev.date+' · '+ev.venue+'</div>'
     +   '</div>'
-    +   tabBar([['orders','Orders'],['suppliers','Wines'],['upload','Upload']], tab, 'setAgentTab')
+    +   tabBar([['orders','Orders'],['suppliers','Wines'],['upload','Upload'],['team','My Team']], tab, 'setAgentTab')
     +   '<div class="dp-content">'+content+'</div>'
     + '</div>'
     + '</div>';
@@ -4147,9 +4147,12 @@ function coordPortalHTML() {
       + '<span>Net payout</span><span style="color:#4A8A6A">$'+netPayout.toFixed(2)+'</span></div>';
     content += '</div></div>';
     content += '<div class="dp-card"><div class="dp-card-header"><span class="dp-card-title">Payout History</span></div>';
-    if(isMobile()) {
+    var payoutHistory = IS_DEMO ? [['SIP Toronto 2025','17 Oct 2025','$9,840.00'],['Wine Fest Toronto 2025','9 May 2025','$6,205.25']] : [];
+    if(payoutHistory.length === 0) {
+      content += '<div class="dp-empty"><div class="dp-empty-icon"></div><div class="dp-empty-text">No payouts yet</div></div>';
+    } else if(isMobile()) {
       content += '<div style="padding:12px">';
-      [['SIP Toronto 2025','17 Oct 2025','$9,840.00'],['Wine Fest Toronto 2025','9 May 2025','$6,205.25']].forEach(function(row){
+      payoutHistory.forEach(function(row){
         content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
         content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+row[0]+'</div>';
         content += '<div style="font-size:12px;color:#888;margin-bottom:8px">'+row[1]+'</div>';
@@ -4161,7 +4164,7 @@ function coordPortalHTML() {
       content += '</div>';
     } else {
       content += '<table class="dp-table"><thead><tr><th>Event</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>';
-      [['SIP Toronto 2025','17 Oct 2025','$9,840.00'],['Wine Fest Toronto 2025','9 May 2025','$6,205.25']].forEach(function(row){
+      payoutHistory.forEach(function(row){
         content += '<tr><td style="font-weight:600;font-size:13px">'+row[0]+'</td><td style="color:var(--muted);font-size:12px">'+row[1]+'</td><td style="font-weight:600">'+row[2]+'</td><td><span class="dp-badge dp-badge-green">Paid</span></td></tr>';
       });
       content += '</tbody></table>';
@@ -4283,7 +4286,7 @@ function coordPortalHTML() {
     +     '</div>'
     +     '<div style="font-size:12px;color:#888">'+EV.date+' · '+EV.venue+'</div>'
     +   '</div>'
-    +   tabBar([['overview','Overview'],['door','Check-in'],['agents','Agents'],['payout','Payout']], tab, 'setCoordTab')
+    +   tabBar([['overview','Overview'],['door','Check-in'],['agents','Agents'],['payout','Payout'],['team','Team']], tab, 'setCoordTab')
     +   '<div class="dp-content">'+content+'</div>'
     + '</div>'
     + dupModalHTML(EV)
