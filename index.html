@@ -146,8 +146,8 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
     position: relative !important;
     flex-shrink: 0;
     padding: 0 14px;
-    padding-top: calc(14px + env(safe-area-inset-top, 0px));
-    min-height: calc(48px + env(safe-area-inset-top, 0px));
+    padding-top: calc(48px + env(safe-area-inset-top, 0px)) !important;
+    min-height: calc(80px + env(safe-area-inset-top, 0px));
     height: auto;
     background: #1A1A1A !important;
     border-bottom: none !important;
@@ -565,7 +565,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=99').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=100').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -4637,7 +4637,7 @@ function custEventListHTML() {
   var html='<div style="background:#F8F8F8;min-height:100vh;padding-bottom:60px">';
   // Header
   html+='<div style="position:sticky;top:0;z-index:100">';
-  html+='<div style="background:#1A1A1A;padding:calc(14px + env(safe-area-inset-top, 0px)) 18px 12px">';
+  html+='<div style="background:#1A1A1A;padding:calc(48px + env(safe-area-inset-top, 0px)) 18px 12px">';
   html+='<div style="display:flex;justify-content:space-between;align-items:center">';
   html+='<div style="display:flex;align-items:center;gap:10px">';
   html+=logoSVG;
@@ -5029,7 +5029,7 @@ function custPortalHTML() {
 
   return `<div style="padding-bottom:${cartCount>0?'140':'80'}px">
     <div style="position:sticky;top:0;z-index:100;background:#1A1A1A;box-shadow:0 2px 8px rgba(0,0,0,.25)">
-      <div style="padding:calc(14px + env(safe-area-inset-top, 0px)) 16px 10px">
+      <div style="padding:calc(48px + env(safe-area-inset-top, 0px)) 16px 10px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div style="display:flex;align-items:center;gap:10px">
             <button onclick="backToCustList()" style="background:rgba(255,255,255,.15);border:none;border-radius:5px;color:#fff;font-size:11px;cursor:pointer;padding:5px 10px;font-weight:700;letter-spacing:.06em;font-family:Nunito Sans,sans-serif">← Dashboard</button>
