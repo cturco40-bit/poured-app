@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Poured">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1A1A1A">
@@ -222,6 +222,12 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   .dp-btn-sm { min-height: 44px; padding: 10px 14px; font-size: 12px; }
   /* Bottom-nav system removed — all navigation lives in the topbar + drawer */
   .dp-mobile-nav { display: none !important; }
+}
+
+@media (display-mode: standalone) {
+  .dp-topbar {
+    padding-top: calc(12px + env(safe-area-inset-top, 54px)) !important;
+  }
 }
 
 .dp-shell{
@@ -537,7 +543,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=109').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=110').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
