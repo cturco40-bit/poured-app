@@ -558,7 +558,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=62').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=63').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -3638,9 +3638,15 @@ function coordEventListHTML() {
 function coordPortalHTML() {
   console.log('coordPortalHTML called', 'EVENTS:', EVENTS.length, 'selectedEventId:', state.coordSelectedEventId, 'coordTab:', state.coordTab);
   try {
-  // If no events and not in create flow, force back to event list (which has empty state)
+  // Empty state — no events, not creating
   if(EVENTS.length === 0 && state.coordSelectedEventId !== -1) {
-    state.coordSelectedEventId = null;
+    var emptyContent = '<div style="text-align:center;padding:80px 20px">'
+      + '<div style="font-size:48px;opacity:.2;margin-bottom:16px">🍷</div>'
+      + '<div style="font-size:18px;font-weight:800;margin-bottom:8px">No events yet</div>'
+      + '<div style="font-size:14px;color:#888;margin-bottom:24px">Create your first event to get started</div>'
+      + '<button class="dp-btn dp-btn-primary" onclick="setState({coordSelectedEventId:-1,coordTab:\'create\',createStep:1})">+ Create Event</button>'
+      + '</div>';
+    return '<div class="dp-shell"><div class="dp-main" style="margin:0;width:100%"><div class="dp-topbar"><div><div class="dp-topbar-title">Events</div></div></div><div class="dp-content">' + emptyContent + '</div></div></div>';
   }
   if(!state.coordSelectedEventId) return coordEventListHTML();
   if(state.coordSelectedEventId===-1){
