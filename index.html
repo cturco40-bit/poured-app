@@ -273,8 +273,9 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
   }
   body.dp { overflow-x: hidden; }
   .dp-shell { overflow-x: hidden; }
-  .dp-main { overflow-x: hidden; max-width: 100vw; }
-  .dp-content { overflow-x: hidden; box-sizing: border-box; }
+  .dp-main { overflow-x: hidden; max-width: 100vw; -webkit-overflow-scrolling: touch; }
+  .dp-content { overflow-x: hidden; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
+  .dp-btn-sm { min-height: 44px; padding: 10px 14px; font-size: 12px; }
 }
 
 .dp-shell{display:flex;height:100vh;overflow:hidden;}
@@ -559,7 +560,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=88').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=89').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -982,13 +983,20 @@ let state = {
   openOrder: null,
   payModal: null,
   unlockAllModal: false,
-  tableStaff: [],          // [{id,name,role,email,phone,smartServe}]
+  tableStaff: IS_DEMO ? [
+    {id:1, name:'Christian Turco', role:'Agent Rep', smartServe:'SS#44821', email:'christian@profilewinegroup.ca', phone:''},
+    {id:2, name:'Maria Fantini', role:'Producer', smartServe:'', email:'maria@fantinigroup.it', phone:''}
+  ] : [],
   showAddStaff: false,
   // Coordinator
   coordTab: "overview",
   expandedAgent: null,
   expandedSupplier: null,
-  eventStaff: [],
+  eventStaff: IS_DEMO ? [
+    {id:1, name:'Sarah Chen', role:'Door Staff', email:'sarah@tasting.ca', phone:''},
+    {id:2, name:'Mike Rodriguez', role:'Volunteer', email:'', phone:''},
+    {id:3, name:'Lisa Park', role:'Co-Host', email:'lisa@tasting.ca', phone:''}
+  ] : [],
   showAddEventStaff: false,
   // Customer
   custTab: "ticket",
