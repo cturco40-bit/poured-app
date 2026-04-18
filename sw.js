@@ -1,4 +1,4 @@
-var CACHE_VERSION = 'poured-v107';
+var CACHE_VERSION = 'poured-v109';
 
 self.addEventListener('install', function(e) {
   e.waitUntil(
