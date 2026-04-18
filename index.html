@@ -559,7 +559,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=77').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=78').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1773,6 +1773,14 @@ function signupShell(role, portalId, accentColor) {
     + '</div>'
     // Company / Organisation
     + '<div style="margin-bottom:20px"><div style="font-size:9px;color:#AAA;font-weight:700;text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px">'+(portalId==='coordinator'?'Organisation':portalId==='agent'?'Agency / Company':'Company / Restaurant (optional)')+'</div><input id="signup-org" type="text" placeholder="'+(portalId==='coordinator'?'e.g. The Tasting Collective':portalId==='agent'?'e.g. Profile Wine Group':'e.g. Canoe Restaurant, Wine Align, etc.')+'" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:15px;color:#1A1A1A;background:transparent;outline:none;font-family:inherit;font-weight:600;transition:border-color .2s" onfocus="this.style.borderColor=\'#7A1020\'" onblur="this.style.borderColor=\'#E0E0E0\'"></div>'
+    + (portalId==='agent' ?
+        '<div style="margin-bottom:20px"><div style="font-size:9px;color:#AAA;font-weight:700;text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px">SMART SERVE # <span style="color:#CCC">(optional)</span></div>'
+      + '<input id="signup-smartserve" type="text" placeholder="e.g. SS-123456" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:15px;color:#1A1A1A;background:transparent;outline:none;font-family:inherit;font-weight:600;transition:border-color .2s" onfocus="this.style.borderColor=\'#7A1020\'" onblur="this.style.borderColor=\'#E0E0E0\'">'
+      + '</div>'
+      + '<div style="margin-bottom:20px"><div style="font-size:9px;color:#AAA;font-weight:700;text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px">LICENSE / CREDENTIAL <span style="color:#CCC">(optional)</span></div>'
+      + '<input id="signup-credential" type="text" placeholder="e.g. AGCO #12345, ORCA Member" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:15px;color:#1A1A1A;background:transparent;outline:none;font-family:inherit;font-weight:600;transition:border-color .2s" onfocus="this.style.borderColor=\'#7A1020\'" onblur="this.style.borderColor=\'#E0E0E0\'">'
+      + '</div>'
+      : '')
     + '<div style="margin-bottom:20px">'
     + '<div style="font-size:9px;color:#AAA;font-weight:700;text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px">Email</div>'
     + '<input id="signup-email" type="email" autocomplete="email" placeholder="you@example.com" style="width:100%;padding:13px 0;border:none;border-bottom:2px solid #E0E0E0;font-size:15px;color:#1A1A1A;background:transparent;outline:none;font-family:inherit;font-weight:600;transition:border-color .2s" onfocus="this.style.borderColor=\'#7A1020\'" onblur="this.style.borderColor=\'#E0E0E0\'">'
@@ -1829,7 +1837,7 @@ window.doSignup = function(portalId) {
   if(pw.length<8){ showErr('Password must be at least 8 characters.'); return; }
   if(pw!==pw2){ showErr('Passwords do not match.'); return; }
   if(LIVE_MODE){
-    AUTH.signUp(email, pw, {first_name:first, last_name:last, org:org, role:portalId}).then(function(res){
+    AUTH.signUp(email, pw, {first_name:first, last_name:last, org:org, role:portalId, smart_serve: (document.getElementById('signup-smartserve')||{}).value||'', credential: (document.getElementById('signup-credential')||{}).value||''}).then(function(res){
       if(res.error){ showErr(res.error.message); return; }
       setState({portal:portalId+'_in', currentUser:{email:email, name:first+' '+last, role:portalId}});
     });
