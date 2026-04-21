@@ -508,6 +508,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 <body>
 <div id="app"></div>
 <script>
+console.time('app-load');
 // ── PWA MANIFEST (generated inline so no separate file needed) ───────────────
 (function() {
   var manifest = {
@@ -543,7 +544,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=110').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=111').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -5472,9 +5473,9 @@ function restoreSession() {
 }
 
 if(document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function(){ render(); injectDemoBanner(); setTimeout(restoreSession, 500); });
+  document.addEventListener('DOMContentLoaded', function(){ console.timeEnd('app-load'); render(); injectDemoBanner(); setTimeout(restoreSession, 500); });
 } else {
-  render(); injectDemoBanner(); setTimeout(restoreSession, 500);
+  console.timeEnd('app-load'); render(); injectDemoBanner(); setTimeout(restoreSession, 500);
 }
 </script>
 <div class="poured-loading" id="poured-loader">Processing...</div>
