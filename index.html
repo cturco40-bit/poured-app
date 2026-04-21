@@ -544,7 +544,7 @@ console.time('app-load');
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=112').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=113').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -4286,22 +4286,47 @@ function coordPortalHTML() {
   else if(tab==='agents') {
     content += '<div class="dp-card">';
     content += '<div class="dp-card-header"><span class="dp-card-title">Exhibitors</span><div style="display:flex;gap:8px"><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="sendAgentReminder(state.selectedEventId)">Send reminders</button><button class="dp-btn dp-btn-primary dp-btn-sm" onclick="showInviteAgentModal(state.selectedEventId||state.coordSelectedEventId||1)">+ Invite Exhibitor</button></div></div>';
+    var agentProductsFor = function(agent){
+      return (EV.products||[]).filter(function(p){
+        return p.agentEmail===agent.email
+          || (agent.agent_id && p.agent_id===agent.agent_id)
+          || (agent.id && (p.agent_id===agent.id || p.agentId===agent.id));
+      });
+    };
+    var productListHTML = function(prods){
+      return '<div style="font-size:10px;color:#888;font-weight:700;letter-spacing:.08em;margin-bottom:6px">PRODUCTS ('+prods.length+')</div>'
+        + prods.map(function(p){
+            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px">'
+              + '<div><span style="font-weight:600">'+(p.name||p.product_name||'')+'</span>'
+              + (p.vintage?' <span style="color:#888">'+p.vintage+'</span>':'')
+              + ' — <span style="color:#888">'+(p.supplier||p.producer||'')+'</span></div>'
+              + '<div style="color:#4A8A6A;font-weight:600">$'+(p.price_per_bottle||p.pricePerBottle||p.pricePerCase||0)+'/btl</div>'
+              + '</div>';
+          }).join('');
+    };
     if(isMobile()) {
       content += '<div style="padding:12px">';
       EV.agents.forEach(function(agent){
+        var agentProds = agentProductsFor(agent);
         content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
         content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+agent.firm+'</div>';
         content += '<div style="font-size:12px;color:#888;margin-bottom:8px">'+agent.email+'</div>';
         content += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
         content += '<span class="dp-badge '+(agent.submitted?'dp-badge-green':'dp-badge-gray')+'">'+(agent.submitted?'Submitted':'Pending')+'</span>';
         content += '<span class="dp-badge '+(agent.paid?'dp-badge-green':'dp-badge-amber')+'">'+(agent.paid?'Fee paid':'Unpaid')+'</span>';
-        content += '</div></div>';
+        content += '</div>';
+        if(agentProds.length > 0) {
+          content += '<div style="margin-top:10px;padding:8px 12px;background:#F8F8F8;border-radius:8px;border:1px solid #EBEBEB">'+productListHTML(agentProds)+'</div>';
+        } else {
+          content += '<div style="margin-top:10px;padding:8px 12px;background:#F8F8F8;border-radius:8px;border:1px solid #EBEBEB;font-size:11px;color:#AAA">No products uploaded yet</div>';
+        }
+        content += '</div>';
       });
       content += '</div>';
     } else {
       content += '<table class="dp-table"><thead><tr><th>Exhibitor</th><th>Listing fee</th><th>Submission</th><th>Products</th><th>Actions</th></tr></thead><tbody>';
       EV.agents.forEach(function(agent){
-        var agentProds = EV.products.filter(function(p){return p.agentEmail===agent.email;});
+        var agentProds = agentProductsFor(agent);
         content += '<tr>'
           + '<td><div style="font-weight:600;font-size:13px">'+agent.firm+'</div><div style="font-size:11px;color:var(--muted)">'+agent.email+'</div></td>'
           + '<td><span class="dp-badge '+(agent.paid?'dp-badge-green':'dp-badge-amber')+'">$'+agent.listingFee+' '+(agent.paid?'paid':'unpaid')+'</span></td>'
@@ -4309,6 +4334,11 @@ function coordPortalHTML() {
           + '<td style="font-size:13px">'+agentProds.length+' products</td>'
           + '<td><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="sendAgentReminder(state.selectedEventId)">Remind</button></td>'
           + '</tr>';
+        if(agentProds.length > 0) {
+          content += '<tr><td colspan="5" style="padding:8px 12px;background:#F8F8F8;border-top:1px solid #EBEBEB">'+productListHTML(agentProds)+'</td></tr>';
+        } else {
+          content += '<tr><td colspan="5" style="padding:8px 12px;background:#F8F8F8;border-top:1px solid #EBEBEB;font-size:11px;color:#AAA">No products uploaded yet</td></tr>';
+        }
       });
       content += '</tbody></table>';
     }
