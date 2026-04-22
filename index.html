@@ -504,20 +504,7 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 .poured-loading{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:rgba(26,26,26,.9);color:#fff;padding:16px 28px;border-radius:10px;font-size:13px;font-weight:700;font-family:Nunito Sans,sans-serif;display:none}
 .poured-loading.show{display:block}
 </style>
-<script src="https://browser.sentry-cdn.com/7.119.0/bundle.min.js" crossorigin="anonymous" defer></script>
-<script>
-  // Replace YOUR_SENTRY_DSN with your real Sentry DSN from sentry.io
-  window.addEventListener('load', function(){
-    if(window.Sentry) {
-      Sentry.init({
-        dsn: 'YOUR_SENTRY_DSN',
-        environment: window.location.hostname.indexOf('localhost') >= 0 ? 'development' : 'production',
-        sampleRate: 1.0,
-        beforeSend: function(event) { return event; }
-      });
-    }
-  });
-</script>
+<script src="https://js.sentry-cdn.com/798f0a4ec4c39903ea62bf672dedf14c.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 <div id="app"></div>
@@ -558,7 +545,7 @@ console.time('app-load');
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=118').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=119').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
