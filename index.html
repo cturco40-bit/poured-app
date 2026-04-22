@@ -544,7 +544,7 @@ console.time('app-load');
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=113').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=114').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1006,6 +1006,8 @@ let state = {
   custTab: "ticket",
   browseMode: "table",
   catFilter: "all",
+  wineSearch: "",
+  editEventModal: false,
   cart: [],
   favs: {1:true,3:true},
   notes: {3:"Fine brioche, extraordinary persistence."},
@@ -1356,6 +1358,40 @@ window.duplicateEvent = () => {
   showToast('Event duplicated — update the date and deadline before publishing');
   setState({dupModal:false});
 };
+function editEventModalHTML(ev) {
+  if(!state.editEventModal || !ev) return '';
+  var esc = function(s){ return (s==null?'':String(s)).replace(/"/g,'&quot;'); };
+  var dateVal = ev.date_iso || ev.dateISO || (ev.date && /^\d{4}-\d{2}-\d{2}/.test(ev.date) ? ev.date.slice(0,10) : '');
+  var field = function(label, id, type, val, placeholder){
+    return '<div style="margin-bottom:12px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px;font-weight:700">'+label+'</div>'
+      + '<input id="'+id+'" type="'+type+'" value="'+esc(val)+'"'+(placeholder?' placeholder="'+esc(placeholder)+'"':'')
+      + ' style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:13px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
+  };
+  return '<div onclick="if(event.target===this)setState({editEventModal:false})" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">'
+    + '<div style="background:#fff;border-radius:16px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)">'
+    + '<div style="background:#1A1A1A;padding:16px 20px;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center">'
+    + '<div style="font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.08em">Edit Event</div>'
+    + '<button onclick="setState({editEventModal:false})" style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:28px;height:28px;color:#fff;font-size:16px;cursor:pointer">×</button>'
+    + '</div>'
+    + '<div style="padding:20px">'
+    + field('EVENT NAME','edit-name','text',ev.name,'')
+    + '<div style="display:flex;gap:10px">'
+    +   '<div style="flex:1">'+field('DATE','edit-date','date',dateVal,'')+'</div>'
+    +   '<div style="flex:1">'+field('TIME','edit-time','text',ev.time,'e.g. 6:00 PM')+'</div>'
+    + '</div>'
+    + field('VENUE','edit-venue','text',ev.venue,'')
+    + field('ADDRESS','edit-address','text',ev.address,'')
+    + field('CITY','edit-city','text',ev.city,'')
+    + '<div style="margin-bottom:12px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px;font-weight:700">DESCRIPTION</div>'
+    +   '<textarea id="edit-desc" rows="4" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:13px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box;resize:vertical">'+esc(ev.description||'')+'</textarea>'
+    + '</div>'
+    + '<div style="display:flex;gap:10px;margin-top:16px">'
+    +   '<button onclick="setState({editEventModal:false})" style="flex:1;padding:12px;border-radius:10px;border:1px solid #E5E5E5;background:#fff;color:#555;font-size:13px;font-family:Nunito Sans,sans-serif;cursor:pointer">Cancel</button>'
+    +   '<button onclick="editEvent()" style="flex:2;padding:12px;border-radius:10px;border:none;background:#7A1020;color:#fff;font-size:13px;font-weight:700;font-family:Nunito Sans,sans-serif;cursor:pointer">Save Changes</button>'
+    + '</div>'
+    + '</div></div></div>';
+}
+
 function dupModalHTML(ev) {
   if(!state.dupModal) return '';
   return `<div onclick="if(event.target===this)closeDupModal()" style="position:fixed;inset:0;background:rgba(8,4,2,.88);z-index:500;display:flex;align-items:flex-end">
@@ -3224,15 +3260,15 @@ window.showAccountModal = function(portal, name, email) {
     + '<button onclick="document.getElementById(\'account-modal\').remove()" style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:30px;height:30px;color:#fff;font-size:16px;cursor:pointer">\u00d7</button>'
     + '</div>'
     + '<div style="padding:20px;display:flex;flex-direction:column;gap:14px">'
-    + '<div><div style="'+labelStyle+'">Full Name</div><input value="'+name+'" style="'+fieldStyle+'"></div>'
-    + '<div><div style="'+labelStyle+'">Email</div><input value="'+email+'" type="email" style="'+fieldStyle+'"></div>'
-    + '<div><div style="'+labelStyle+'">Company / Organization</div><input value="'+company+'" style="'+fieldStyle+'"></div>'
-    + '<div><div style="'+labelStyle+'">Phone</div><input value="'+phone+'" type="tel" style="'+fieldStyle+'"></div>'
+    + '<div><div style="'+labelStyle+'">Full Name</div><input id="acct-name" value="'+name+'" style="'+fieldStyle+'"></div>'
+    + '<div><div style="'+labelStyle+'">Email</div><input id="acct-email" value="'+email+'" type="email" style="'+fieldStyle+'"></div>'
+    + '<div><div style="'+labelStyle+'">Company / Organization</div><input id="acct-company" value="'+company+'" style="'+fieldStyle+'"></div>'
+    + '<div><div style="'+labelStyle+'">Phone</div><input id="acct-phone" value="'+phone+'" type="tel" style="'+fieldStyle+'"></div>'
     + '<div style="border-top:1px solid #F0F0F0;padding-top:14px">'
     + '<div style="'+labelStyle+'">Password</div>'
     + '<button onclick="showToast(\'Connect Supabase for password reset\')" style="padding:8px 16px;border-radius:8px;border:1.5px solid #E5E5E5;background:#fff;color:#555;font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">Change Password</button>'
     + '</div>'
-    + '<button onclick="showToast(\'Changes saved\');document.getElementById(\'account-modal\').remove()" style="width:100%;padding:13px;border-radius:10px;border:none;background:#1A1A1A;color:#fff;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-top:4px">Save Changes</button>'
+    + '<button onclick="saveProfile(\'host\');document.getElementById(\'account-modal\').remove()" style="width:100%;padding:13px;border-radius:10px;border:none;background:#1A1A1A;color:#fff;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-top:4px">Save Changes</button>'
     + '</div></div>';
   document.body.appendChild(ov);
 };
@@ -3415,15 +3451,30 @@ window.verifyTrade = function(id) {
 window.openInvoice = function(orderId) {
   setState({invoiceOrder: orderId});
 };
-window.approveProduct = function(id) {
+window.approveProduct = async function(id, approved) {
+  if(arguments.length < 2) approved = true;
   if(!state.coordApprovals) state.coordApprovals = {};
-  state.coordApprovals[id] = 'approved';
+  state.coordApprovals[id] = approved ? 'approved' : 'rejected';
+  (EVENTS||[]).forEach(function(e){
+    (e.products||[]).forEach(function(p){ if(p.id===id) p.approved = approved; });
+  });
   render();
+  if(LIVE_MODE && !IS_DEMO && _sb) {
+    var res = await _sb.from('products').update({approved: approved}).eq('id', id);
+    if(res && res.error) showToast('Error saving: '+res.error.message);
+  }
 };
-window.rejectProduct = function(id) {
+window.rejectProduct = function(id) { return window.approveProduct(id, false); };
+window.undoApproval = async function(id) {
   if(!state.coordApprovals) state.coordApprovals = {};
-  state.coordApprovals[id] = 'rejected';
+  delete state.coordApprovals[id];
+  (EVENTS||[]).forEach(function(e){
+    (e.products||[]).forEach(function(p){ if(p.id===id) p.approved = null; });
+  });
   render();
+  if(LIVE_MODE && !IS_DEMO && _sb) {
+    await _sb.from('products').update({approved: null}).eq('id', id);
+  }
 };
 window.dlSupplierCSV = function(supplier) {
   var ev = EVENTS.find(function(e){return e.id===state.selectedEventId;})||EV;
@@ -3437,6 +3488,33 @@ window.dlSupplierCSV = function(supplier) {
   a.click();
 };
 window.openDupModal = function() { setState({dupModal:true}); };
+window.openEditEventModal = function() { setState({editEventModal:true}); };
+window.editEvent = async function() {
+  var val = function(id){ var el = document.getElementById(id); return el ? el.value : ''; };
+  var name = val('edit-name'), date = val('edit-date'), time = val('edit-time');
+  var venue = val('edit-venue'), address = val('edit-address'), city = val('edit-city');
+  var description = val('edit-desc');
+  if(!name) { showToast('Event name is required'); return; }
+  var evId = state.coordSelectedEventId || state.selectedEventId;
+  if(LIVE_MODE && !IS_DEMO && _sb && evId) {
+    var res = await _sb.from('events').update({
+      name: name, date: date||null, time: time, venue: venue,
+      address: address, city: city, description: description
+    }).eq('id', evId);
+    if(res.error) { showToast('Error: '+res.error.message); return; }
+    showToast('Event updated');
+    lastEventFetch = 0;
+    await loadUserEvents();
+  } else {
+    var ev = (EVENTS||[]).find(function(e){return e.id===evId;});
+    if(ev) {
+      ev.name = name; if(date) ev.date = date; ev.time = time;
+      ev.venue = venue; ev.address = address; ev.city = city; ev.description = description;
+    }
+    showToast('Event updated');
+  }
+  setState({editEventModal:false});
+};
 window.openEditProduct = function(id) { setState({editProductId:id}); };
 window.printPourSheet = function(email) {
   var ev = EVENTS.find(function(e){return e.id===state.selectedEventId;})||EV;
@@ -3466,15 +3544,97 @@ window.adjustCart = function(productId, delta) {
   }).filter(function(i){return i.qty>0;});
   setState({cart:cart});
 };
+window.saveProfile = async function(source) {
+  var val = function(id){ var el = document.getElementById(id); return el ? el.value : ''; };
+  var fullName, phone, company;
+  if(source === 'attendee') {
+    var first = val('prof-first'), last = val('prof-last');
+    fullName = (first+' '+last).trim();
+    phone = val('prof-phone'); company = val('prof-company');
+  } else {
+    fullName = val('acct-name').trim();
+    phone = val('acct-phone'); company = val('acct-company');
+  }
+  if(LIVE_MODE && !IS_DEMO && _sb && state.currentUser && state.currentUser.id) {
+    var res = await _sb.from('profiles').update({
+      full_name: fullName, phone: phone, company: company
+    }).eq('id', state.currentUser.id);
+    if(res.error) { showToast('Error saving: '+res.error.message); return; }
+    state.currentUser.name = fullName;
+    state.currentUser.phone = phone;
+    state.currentUser.company = company;
+    showToast('Profile saved');
+    render();
+  } else {
+    if(state.currentUser) {
+      state.currentUser.name = fullName;
+      state.currentUser.phone = phone;
+      state.currentUser.company = company;
+    }
+    showToast('Profile saved');
+  }
+};
 window.setNote = function(productId, note) {
   var notes = Object.assign({}, state.notes||{});
-  notes[productId] = note;
-  setState({notes:notes});
+  if(note === undefined) delete notes[productId];
+  else notes[productId] = note;
+  state.notes = notes;
+  if(note === undefined) render();
+  if(LIVE_MODE && !IS_DEMO && _sb && state.currentUser && state.currentUser.id) {
+    window._noteDeb = window._noteDeb || {};
+    if(window._noteDeb[productId]) clearTimeout(window._noteDeb[productId]);
+    window._noteDeb[productId] = setTimeout(function(){
+      if(note === undefined) {
+        _sb.from('tasting_notes').delete()
+          .eq('attendee_id', state.currentUser.id)
+          .eq('product_id', productId);
+      } else {
+        _sb.from('tasting_notes').upsert({
+          attendee_id: state.currentUser.id,
+          product_id: productId,
+          event_id: state.selectedEventId,
+          note: note,
+          rating: (state.ratings||{})[productId] || null
+        }, {onConflict: 'attendee_id,product_id'});
+      }
+    }, 500);
+  }
+};
+window.onWineSearchInput = function(val) {
+  state.wineSearch = val;
+  if(window._wsDeb) clearTimeout(window._wsDeb);
+  window._wsDeb = setTimeout(function(){
+    var active = document.activeElement;
+    var wasSearch = active && active.id === 'wine-search';
+    var caret = wasSearch ? active.selectionStart : null;
+    render();
+    if(wasSearch) {
+      requestAnimationFrame(function(){
+        var w = document.getElementById('wine-search');
+        if(w) { w.focus(); try { if(caret!=null) w.setSelectionRange(caret, caret); } catch(e){} }
+      });
+    }
+  }, 160);
 };
 window.toggleFav = function(productId) {
   var favs = Object.assign({}, state.favs||{});
-  favs[productId] = !favs[productId];
+  var nowSaved;
+  if(favs[productId]) { delete favs[productId]; nowSaved = false; }
+  else { favs[productId] = true; nowSaved = true; }
   setState({favs:favs});
+  if(LIVE_MODE && !IS_DEMO && _sb && state.currentUser && state.currentUser.id) {
+    if(nowSaved) {
+      _sb.from('saved_wines').upsert({
+        attendee_id: state.currentUser.id,
+        product_id: productId,
+        event_id: state.selectedEventId
+      }, {onConflict: 'attendee_id,product_id'});
+    } else {
+      _sb.from('saved_wines').delete()
+        .eq('attendee_id', state.currentUser.id)
+        .eq('product_id', productId);
+    }
+  }
 };
 window.setDraft      = function(k,v) { var d=Object.assign({},state.draft); d[k]=v; setState({draft:d}); };
 window.updateTier = function(id, key, val) {
@@ -3593,7 +3753,28 @@ window.toggleCustDrawer = function(){
   o.style.pointerEvents = isOpen ? 'none' : 'auto';
 };
 window.openCoordEvent  = function(id){ setState({coordSelectedEventId:id, coordTab:'overview'}); };
-window.openCustEvent   = function(id){ setState({selectedEventId:id, custTab:'ticket'}); };
+window.openCustEvent   = function(id){
+  setState({selectedEventId:id, custTab:'ticket'});
+  if(LIVE_MODE && !IS_DEMO && _sb && state.currentUser && state.currentUser.id) {
+    var uid = state.currentUser.id;
+    _sb.from('tasting_notes').select('product_id,note,rating').eq('attendee_id', uid).then(function(res){
+      if(res && res.data) {
+        var n = {}, r = {};
+        res.data.forEach(function(row){ if(row.note) n[row.product_id] = row.note; if(row.rating) r[row.product_id] = row.rating; });
+        state.notes = n; state.ratings = Object.assign({}, state.ratings||{}, r);
+        render();
+      }
+    });
+    _sb.from('saved_wines').select('product_id').eq('attendee_id', uid).then(function(res){
+      if(res && res.data) {
+        var f = {};
+        res.data.forEach(function(row){ f[row.product_id] = true; });
+        state.favs = f;
+        render();
+      }
+    });
+  }
+};
 window.openAgentEvent  = function(id, tab){ setState({selectedEventId:id, agentTab:tab||'orders'}); };
 window.setCoordTab    = t => setState({coordTab:t});
 window.addEventStaff = function() {
@@ -4206,6 +4387,7 @@ function coordPortalHTML() {
   var content = '';
 
   if(tab==='overview') {
+    content += '<div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openEditEventModal()">✎ Edit Event</button></div>';
     if(isMobile()) {
       content += mobileStatGrid([
         {value:totalSold+'/'+totalCap, label:'Tickets Sold ('+pctSold+'%)'},
@@ -4296,11 +4478,24 @@ function coordPortalHTML() {
     var productListHTML = function(prods){
       return '<div style="font-size:10px;color:#888;font-weight:700;letter-spacing:.08em;margin-bottom:6px">PRODUCTS ('+prods.length+')</div>'
         + prods.map(function(p){
-            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px">'
-              + '<div><span style="font-weight:600">'+(p.name||p.product_name||'')+'</span>'
+            var st = (p.approved===true) ? 'approved' : (p.approved===false) ? 'rejected' : 'pending';
+            var actions = '';
+            if(st==='pending') {
+              actions = '<button class="dp-btn dp-btn-sage dp-btn-sm" onclick="approveProduct('+p.id+',true)" style="padding:3px 8px;font-size:10px">✓ Approve</button>'
+                + '<button class="dp-btn dp-btn-danger dp-btn-sm" onclick="approveProduct('+p.id+',false)" style="padding:3px 8px;font-size:10px">✗ Reject</button>';
+            } else if(st==='approved') {
+              actions = '<span class="dp-badge dp-badge-green">APPROVED</span>'
+                + '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="undoApproval('+p.id+')" style="padding:3px 8px;font-size:10px">Undo</button>';
+            } else {
+              actions = '<span class="dp-badge dp-badge-red">REJECTED</span>'
+                + '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="undoApproval('+p.id+')" style="padding:3px 8px;font-size:10px">Undo</button>';
+            }
+            return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;font-size:12px;border-bottom:1px dashed #EBEBEB">'
+              + '<div style="flex:1;min-width:0"><span style="font-weight:600">'+(p.name||p.product_name||'')+'</span>'
               + (p.vintage?' <span style="color:#888">'+p.vintage+'</span>':'')
               + ' — <span style="color:#888">'+(p.supplier||p.producer||'')+'</span></div>'
-              + '<div style="color:#4A8A6A;font-weight:600">$'+(p.price_per_bottle||p.pricePerBottle||p.pricePerCase||0)+'/btl</div>'
+              + '<div style="color:#4A8A6A;font-weight:600;flex-shrink:0">$'+(p.price_per_bottle||p.pricePerBottle||p.pricePerCase||0)+'/btl</div>'
+              + '<div style="display:flex;gap:4px;flex-shrink:0">'+actions+'</div>'
               + '</div>';
           }).join('');
     };
@@ -4590,6 +4785,7 @@ function coordPortalHTML() {
     +   '<div class="dp-content">'+content+'</div>'
     + '</div>'
     + dupModalHTML(EV)
+    + editEventModalHTML(EV)
     + '</div>';
   } catch(err) { console.error('coordPortalHTML crash:', err); return '<div style="padding:40px;color:red">Error rendering portal: '+err.message+'</div>'; }
 }
@@ -4758,7 +4954,7 @@ function custEventListHTML() {
     html+='<div style="margin-bottom:14px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">PHONE</div><input id="prof-phone" type="tel" value="'+_profPhone+'" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
     html+='<div style="margin-bottom:14px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">COMPANY / RESTAURANT <span style="color:#CCC">(optional)</span></div><input id="prof-company" type="text" value="" placeholder="e.g. Canoe Restaurant" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
     html+='<div style="margin-bottom:20px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">PASSWORD</div><input id="prof-pw" type="password" value="********" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
-    html+='<button onclick="showToast(\'Profile saved\')" style="width:100%;padding:13px;border-radius:10px;border:none;background:#1A1A1A;color:#fff;font-size:13px;font-weight:700;font-family:Nunito Sans,sans-serif;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px">Save Changes</button>';
+    html+='<button onclick="saveProfile(\'attendee\')" style="width:100%;padding:13px;border-radius:10px;border:none;background:#1A1A1A;color:#fff;font-size:13px;font-weight:700;font-family:Nunito Sans,sans-serif;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px">Save Changes</button>';
     html+='<div style="border-top:1px solid #EBEBEB;padding-top:16px;margin-top:8px">';
     html+='<div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:8px">MEMBER SINCE OCTOBER 2024</div>';
     html+='<button onclick="signOutCust()" style="width:100%;padding:12px;border-radius:10px;border:1px solid #E5E5E5;background:none;cursor:pointer;font-size:13px;font-weight:600;color:#888;font-family:Nunito Sans,sans-serif">Sign out</button>';
@@ -4811,12 +5007,24 @@ function onboardingHTML() {
 function custPortalHTML() {
   if (!state.selectedEventId) return custEventListHTML();
   const activeEV = EVENTS.find(e=>e.id===state.selectedEventId) || EV;
-  const tables = getSupplierTables(activeEV.products);
   const EV = activeEV; // use selected event throughout this function
+  const searchTerm = (state.wineSearch||'').toLowerCase();
+  const visibleProducts = (EV.products||[]).filter(function(p){
+    if(p.approved === false) return false;
+    if(!searchTerm) return true;
+    return (p.name||'').toLowerCase().indexOf(searchTerm) >= 0
+      || (p.supplier||'').toLowerCase().indexOf(searchTerm) >= 0
+      || (p.country||'').toLowerCase().indexOf(searchTerm) >= 0
+      || (p.region||'').toLowerCase().indexOf(searchTerm) >= 0
+      || (p.category||'').toLowerCase().indexOf(searchTerm) >= 0
+      || (p.tasting||'').toLowerCase().indexOf(searchTerm) >= 0;
+  });
+  const filteredForTables = visibleProducts.filter(p => state.catFilter==='all' || p.category===state.catFilter);
+  const tables = getSupplierTables(filteredForTables);
   const cartCount = (state.cart||[]).reduce(function(s,i){return s+(i.qtyCases||i.qty||1);},0);
   const cartTotal = (state.cart||[]).reduce((s,i)=>s+(i.qtyCases||1)*(i.pricePerCase||0),0);
   const byAgent = (state.cart||[]).reduce((acc,i)=>{if(!acc[i.agent])acc[i.agent]=[];acc[i.agent].push(i);return acc;},{});
-  const cats = ["all",...new Set(EV.products.map(p=>p.category))];
+  const cats = ["all",...new Set(visibleProducts.map(p=>p.category))];
   const tabs = [["ticket","My Ticket"],["browse","Browse"],["saved",`Saved(${Object.keys(state.favs||{}).length})`],["notes","Notes"],["order","Order"],["history","History"]];
 
   const ticketTab = state.custTab==='ticket' ? `<div style="padding:16px;background:#FFFFFF">
@@ -4850,6 +5058,14 @@ function custPortalHTML() {
 
   const browseTab = state.custTab==='browse' ? `<div style="padding:12px 14px">
     ${orderingBanner(EV)}
+    <div style="margin-bottom:10px">
+      <input id="wine-search" type="search" placeholder="Search wines, producers, countries..." value="${(state.wineSearch||'').replace(/"/g,'&quot;')}" oninput="onWineSearchInput(this.value)" style="width:100%;padding:10px 14px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:13px;font-family:Nunito Sans,sans-serif;box-sizing:border-box;color:#1A1A1A">
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px">
+      ${cats.map(cat=>`<button onclick="setCatFilter('${cat}')" style="flex-shrink:0;display:flex;align-items:center;gap:4px;padding:5px 12px;border-radius:20px;border:1px solid ${state.catFilter===cat?B.pour:B.mist};background:${state.catFilter===cat?B.pour:'#fff'};color:${state.catFilter===cat?'#fff':B.cork};font-size:11px;font-family:Nunito Sans,sans-serif;cursor:pointer">
+        <span style="font-size:13px">${cat==="all"?"":(IC[cat]||"")}</span><span>${cat==="all"?"All":cat}</span>
+      </button>`).join('')}
+    </div>
     <div style="display:flex;gap:6px;margin-bottom:12px">
       ${[["table","By Producer"],["category","By Region"]].map(([m,l])=>`<button onclick="setBrowseMode('${m}')" style="flex:1;padding:8px;border-radius:10px;border:1px solid ${state.browseMode===m?B.ink:B.mist};background:${state.browseMode===m?B.ink:'#fff'};color:${state.browseMode===m?B.cream:B.cork};font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">${l}</button>`).join('')}
     </div>
@@ -4900,13 +5116,8 @@ function custPortalHTML() {
       }).join('');
     })():
     `<div>
-      <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px">
-        ${cats.map(cat=>`<button onclick="setCatFilter('${cat}')" style="flex-shrink:0;display:flex;align-items:center;gap:4px;padding:5px 12px;border-radius:20px;border:1px solid ${state.catFilter===cat?B.pour:B.mist};background:${state.catFilter===cat?B.pour:'#fff'};color:${state.catFilter===cat?'#fff':B.cork};font-size:11px;font-family:Nunito Sans,sans-serif;cursor:pointer">
-          <span style="font-size:13px">${cat==="all"?"":(IC[cat]||"")}</span><span>${cat==="all"?"All":cat}</span>
-        </button>`).join('')}
-      </div>
       ${Object.keys(state.custFilters||{}).length>0?`<div style="background:#EBF5EE;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:${B.sage}">Filtering by: ${Object.keys(state.custFilters||{}).join(', ')} — tags are set by agents in their product CSV upload.</div>`:''}
-      ${EV.products.filter(p=>state.catFilter==='all'||p.category===state.catFilter).map(p=>productCardHTML(p)).join('')}
+      ${(function(){var vp=visibleProducts.filter(p=>state.catFilter==='all'||p.category===state.catFilter);return vp.length?vp.map(p=>productCardHTML(p)).join(''):'<div style="text-align:center;padding:40px 20px;color:'+B.cork+';font-style:italic">No wines match your search</div>';})()}
     </div>`}
   </div>` : '';
 
