@@ -420,6 +420,14 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 .dp-empty-icon{font-size:36px;margin-bottom:14px;opacity:.3;}
 .dp-empty-text{font-size:15px;color:var(--muted);margin-bottom:18px;font-weight:600;}
 
+/* EVENTS PAGE — desktop only: force stats on top of event list, compact stat cards */
+@media(min-width:769px){
+  .dp-events-page{display:block;max-width:1200px;margin:0 auto;width:100%;}
+  .dp-events-page > .dp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;align-items:start;}
+  .dp-events-page > .dp-stats > .dp-stat{align-self:start;height:auto;min-height:0;padding:16px 18px;}
+  .dp-events-page > .dp-card{display:block;width:100%;}
+}
+
 /* EVENT ROW */
 .dp-event-row{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;gap:14px;}
 .dp-event-row:hover{background:var(--off);}
@@ -551,7 +559,7 @@ console.time('app-load');
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=121').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=122').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -2516,7 +2524,7 @@ function agentEventListHTML() {
     + '</div>'
     + '<div class="dp-main">'
     +   '<div class="dp-content">'
-    +     '<div style="max-width:1200px;margin:0 auto;width:100%">'
+    +     '<div class="dp-events-page" style="max-width:1200px;margin:0 auto;width:100%;display:block">'
     +     (isMobile() ? mobileStatGrid([
             {value:myListings.length+'', label:'Total Events'},
             {value:active.length+'', label:'Live Now', color:'#2a7a4a'},
@@ -4694,7 +4702,7 @@ function coordEventListHTML() {
     // Main
     + '<div class="dp-main">'
     +   '<div class="dp-content">'
-    +     '<div style="max-width:1200px;margin:0 auto;width:100%">'
+    +     '<div class="dp-events-page" style="max-width:1200px;margin:0 auto;width:100%;display:block">'
     // Stats
     +     (isMobile() ? mobileStatGrid([
             {value:myEvents.length+'', label:'Total Events'},
