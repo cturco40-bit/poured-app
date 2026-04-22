@@ -504,6 +504,20 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 .poured-loading{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:rgba(26,26,26,.9);color:#fff;padding:16px 28px;border-radius:10px;font-size:13px;font-weight:700;font-family:Nunito Sans,sans-serif;display:none}
 .poured-loading.show{display:block}
 </style>
+<script src="https://browser.sentry-cdn.com/7.119.0/bundle.min.js" crossorigin="anonymous" defer></script>
+<script>
+  // Replace YOUR_SENTRY_DSN with your real Sentry DSN from sentry.io
+  window.addEventListener('load', function(){
+    if(window.Sentry) {
+      Sentry.init({
+        dsn: 'YOUR_SENTRY_DSN',
+        environment: window.location.hostname.indexOf('localhost') >= 0 ? 'development' : 'production',
+        sampleRate: 1.0,
+        beforeSend: function(event) { return event; }
+      });
+    }
+  });
+</script>
 </head>
 <body>
 <div id="app"></div>
@@ -544,7 +558,7 @@ console.time('app-load');
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=116').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=117').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1027,6 +1041,7 @@ let state = {
   editEventModal: false,
   eventSearch: "",
   appliedPromo: null,
+  promoOpen: false,
   cart: [],
   favs: {1:true,3:true},
   notes: {3:"Fine brioche, extraordinary persistence."},
@@ -3059,8 +3074,8 @@ window.sendAgentInvite = async function(evId) {
       if(!agentId) {
         var overlayNo = document.getElementById('invite-agent-overlay');
         if(overlayNo) overlayNo.remove();
+        queueEmail('exhibitor-invite', email, {eventName:(EV&&EV.name)||'', hostName:(state.currentUser&&state.currentUser.name)||'', listingFee:parseFloat(state.draft.listingFee)||50, agentName:name, org:org});
         showToast('Invitation sent \u2014 agent will receive an email to create their account');
-        // TODO: send invitation email via Supabase Edge Function or Resend
         return;
       }
 
@@ -3086,8 +3101,8 @@ window.sendAgentInvite = async function(evId) {
 
       var overlay = document.getElementById('invite-agent-overlay');
       if(overlay) overlay.remove();
+      queueEmail('exhibitor-invite', email, {eventName:(EV&&EV.name)||'', hostName:(state.currentUser&&state.currentUser.name)||'', listingFee:parseFloat(state.draft.listingFee)||50, agentName:name, org:org});
       showToast(name + ' invited successfully');
-      // TODO: send invitation email via Supabase Edge Function or Resend
       return;
     } catch(e) {
       showErr('Error: ' + (e && e.message ? e.message : 'unknown'));
@@ -3097,6 +3112,7 @@ window.sendAgentInvite = async function(evId) {
 
   // Demo mode fallback
   document.getElementById('invite-agent-overlay').remove();
+  queueEmail('exhibitor-invite', email, {eventName:(EV&&EV.name)||'', hostName:(state.currentUser&&state.currentUser.name)||'', listingFee:parseFloat(state.draft.listingFee)||50, agentName:name, org:org});
   showToast('Invitation sent to '+name+' ('+email+') \u2014 demo mode');
   render();
 };
@@ -3342,6 +3358,12 @@ window.showAccountModal = function(portal, name, email) {
     + '<button onclick="changePassword(\'host\')" style="padding:8px 16px;border-radius:8px;border:1.5px solid #E5E5E5;background:#fff;color:#555;font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">Change Password</button>'
     + '</div>'
     + (portal==='agent' ? '<div style="border-top:1px solid #F0F0F0;padding-top:14px"><div style="'+labelStyle+'">Public Profile</div><button onclick="shareProfile()" style="padding:8px 16px;border-radius:8px;border:1.5px solid #E5E5E5;background:#fff;color:#555;font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">🔗 Share Profile Link</button></div>' : '')
+    + '<div style="border-top:1px solid #F0F0F0;padding-top:14px;margin-top:4px">'
+    + '<div style="'+labelStyle+'">Account</div>'
+    + '<button onclick="downloadMyData()" style="padding:8px 16px;border-radius:8px;border:1.5px solid #E5E5E5;background:#fff;color:#555;font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-right:6px">📦 Download My Data</button>'
+    + '<button onclick="deleteMyAccount()" style="padding:8px 16px;border-radius:8px;border:1.5px solid #FECDD3;background:#fff;color:#7A1020;font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">🗑 Delete Account</button>'
+    + '<div style="font-size:10px;color:#AAA;margin-top:6px">This permanently removes all your data from POURED.</div>'
+    + '</div>'
     + '<button onclick="saveProfile(\'host\');document.getElementById(\'account-modal\').remove()" style="width:100%;padding:13px;border-radius:10px;border:none;background:#1A1A1A;color:#fff;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-top:4px">Save Changes</button>'
     + '</div></div>';
   document.body.appendChild(ov);
@@ -3539,6 +3561,136 @@ window.approveProduct = async function(id, approved) {
   }
 };
 window.rejectProduct = function(id) { return window.approveProduct(id, false); };
+window.queueEmail = function(type, to, data) {
+  try {
+    console.log('EMAIL QUEUED:', type, to, data);
+    var key = 'poured-email-queue';
+    var q = JSON.parse(localStorage.getItem(key) || '[]');
+    q.push({type: type, to: to, data: data, timestamp: Date.now()});
+    localStorage.setItem(key, JSON.stringify(q));
+  } catch(e) {
+    console.warn('queueEmail failed:', e);
+  }
+};
+
+window.sendPostEventEmail = function() {
+  var ev = EVENTS.find(function(e){return e.id===(state.coordSelectedEventId||state.selectedEventId);}) || EV;
+  if(!ev || !ev.id) { showToast('No event selected'); return; }
+  var hostName = (state.currentUser && state.currentUser.name) || 'The Host';
+  var subject = 'Thanks for attending ' + ev.name + '!';
+  var body = 'Hi there,\n\nThank you for attending ' + ev.name + '!\n\n'
+    + 'Your orders are confirmed and our exhibitors will be in touch shortly.\n\n'
+    + 'Remember: you have 48 hours after the event to add more wines to your order at app.pouredevents.com\n\n'
+    + 'Cheers,\n' + hostName;
+  queueEmail('post-event', 'all-attendees', {eventId: ev.id, subject: subject, body: body});
+  showToast('Post-event email queued for all attendees');
+};
+
+window.downloadEventReport = function() {
+  var ev = EVENTS.find(function(e){return e.id===(state.coordSelectedEventId||state.selectedEventId);}) || EV;
+  if(!ev || !ev.id) { showToast('No event selected'); return; }
+  var totalSold = (ev.tiers||[]).reduce(function(s,t){return s+(t.sold||0);},0);
+  var totalCap = (ev.tiers||[]).reduce(function(s,t){return s+(t.capacity||0);},0);
+  var grossRev = (ev.tiers||[]).reduce(function(s,t){return s+(t.price||0)*(t.sold||0);},0);
+  var totalOrders = (ev.orders||[]).length;
+  var totalProducts = (ev.products||[]).length;
+  var totalExhibitors = (ev.agents||[]).length;
+
+  var report = 'POURED — POST-EVENT REPORT\n';
+  report += '================================\n\n';
+  report += 'Event: ' + (ev.name||'') + '\n';
+  report += 'Date: ' + (ev.date||'') + '\n';
+  report += 'Venue: ' + (ev.venue||'') + ', ' + (ev.address||'') + ', ' + (ev.city||'') + '\n\n';
+  report += 'SUMMARY\n';
+  report += '--------\n';
+  report += 'Tickets Sold: ' + totalSold + ' / ' + totalCap + '\n';
+  report += 'Gross Ticket Revenue: $' + grossRev.toLocaleString() + '\n';
+  report += 'Exhibitors: ' + totalExhibitors + '\n';
+  report += 'Products Listed: ' + totalProducts + '\n';
+  report += 'Total Orders: ' + totalOrders + '\n\n';
+  report += 'TICKET TIERS\n';
+  report += '-------------\n';
+  (ev.tiers||[]).forEach(function(t){
+    report += (t.label||'') + ': ' + (t.sold||0) + '/' + (t.capacity||0) + ' ($' + (t.price||0) + ') — $' + ((t.price||0)*(t.sold||0)) + ' revenue\n';
+  });
+  report += '\nEXHIBITORS\n';
+  report += '-----------\n';
+  (ev.agents||[]).forEach(function(a){
+    var prods = (ev.products||[]).filter(function(p){return p.agentId===a.id || p.agent_id===a.id || p.agent_id===a.agent_id;});
+    report += (a.firm||a.name||'Unknown') + ' — ' + prods.length + ' products\n';
+  });
+  report += '\nGenerated by POURED · pouredevents.com\n';
+
+  var blob = new Blob([report], {type:'text/plain'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (ev.name||'event').replace(/[^a-zA-Z0-9]/g,'-') + '-report.txt';
+  a.click();
+  showToast('Report downloaded');
+};
+
+window.downloadMyData = async function() {
+  if(!state.currentUser) { showToast('Sign in to download your data'); return; }
+  var data = {profile: state.currentUser, exportDate: new Date().toISOString()};
+  if(LIVE_MODE && !IS_DEMO && _sb && state.currentUser.id) {
+    try {
+      var notes  = await _sb.from('tasting_notes').select('*').eq('attendee_id', state.currentUser.id);
+      var saved  = await _sb.from('saved_wines').select('*').eq('attendee_id', state.currentUser.id);
+      var orders = await _sb.from('orders').select('*,order_items(*)').eq('attendee_id', state.currentUser.id);
+      data.tastingNotes = (notes && notes.data) || [];
+      data.savedWines   = (saved && saved.data) || [];
+      data.orders       = (orders && orders.data) || [];
+    } catch(e) {
+      console.warn('downloadMyData fetch failed:', e);
+    }
+  } else {
+    data.favs = state.favs || {};
+    data.notes = state.notes || {};
+    data.ratings = state.ratings || {};
+    data.orderHistory = state.orderHistory || [];
+  }
+  var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'poured-my-data-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  showToast('Your data has been downloaded');
+};
+
+window.deleteMyAccount = async function() {
+  if(!confirm('Are you sure you want to delete your account? This cannot be undone. All your data including orders, tasting notes, and saved wines will be permanently deleted.')) return;
+  var typed = prompt('This is permanent. Type DELETE to confirm.');
+  if(!typed || String(typed).trim().toUpperCase() !== 'DELETE') { showToast('Cancelled'); return; }
+
+  if(LIVE_MODE && !IS_DEMO && _sb && state.currentUser && state.currentUser.id) {
+    try {
+      var uid = state.currentUser.id;
+      await _sb.from('tasting_notes').delete().eq('attendee_id', uid);
+      await _sb.from('saved_wines').delete().eq('attendee_id', uid);
+      var oRes = await _sb.from('orders').select('id').eq('attendee_id', uid);
+      var orderIds = ((oRes && oRes.data) || []).map(function(o){return o.id;});
+      if(orderIds.length) await _sb.from('order_items').delete().in('order_id', orderIds);
+      await _sb.from('orders').delete().eq('attendee_id', uid);
+      await _sb.from('profiles').delete().eq('id', uid);
+      await AUTH.signOut();
+    } catch(e) {
+      console.warn('deleteMyAccount failed:', e);
+      showToast('Error deleting account: ' + (e && e.message || 'unknown'));
+      return;
+    }
+    state.currentUser = null;
+    EVENTS = IS_DEMO ? DEMO_EVENTS : [];
+    cleanupPortalUI();
+    showToast('Account deleted');
+    setState({portal:'home'});
+  } else {
+    showToast('Account deleted (demo)');
+    state.currentUser = null;
+    cleanupPortalUI();
+    setState({portal:'home'});
+  }
+};
+
 window.addToCalendar = function(ev) {
   if(!ev) return;
   var dateStr = ev.dateISO || ev.date || '';
@@ -3900,9 +4052,13 @@ window.acceptInvite   = function(evId) {
 window.confirmOrder = async function(id) {
   state.confirmed = Object.assign({},state.confirmed||{},{});
   state.confirmed[id] = true;
+  var order = null, parentEv = null;
   (EVENTS||[]).forEach(function(e){
-    (e.orders||[]).forEach(function(o){ if(o.id===id) o.status = 'confirmed'; });
+    (e.orders||[]).forEach(function(o){ if(o.id===id) { o.status = 'confirmed'; order = o; parentEv = e; } });
   });
+  if(order && (order.email || order.customer_email)) {
+    queueEmail('order-confirmed', order.email || order.customer_email, {orderId: id, exhibitorName:(state.currentUser&&state.currentUser.name)||'', eventName:(parentEv&&parentEv.name)||''});
+  }
   render();
   if(LIVE_MODE && !IS_DEMO && _sb) {
     var res = await _sb.from('orders').update({status:'confirmed'}).eq('id', id);
@@ -3917,6 +4073,12 @@ window.unlockOrder  = function(id) {
   state.unlocked[id] = true;
   state.payModal = null;
   state.openOrder = id;
+  var order = null;
+  (EVENTS||[]).forEach(function(e){ (e.orders||[]).forEach(function(o){ if(o.id===id) order = o; }); });
+  if(order && order.email) {
+    var ev = (EVENTS||[]).find(function(e){return (e.orders||[]).some(function(o){return o.id===id;});}) || EV;
+    queueEmail('order-unlocked', order.email, {orderId: id, exhibitorName:(state.currentUser&&state.currentUser.name)||'', eventName: (ev&&ev.name)||''});
+  }
   render();
 };
 window.reorderItems = function(orderId) {
@@ -4154,6 +4316,8 @@ window.submitOrderWithContact = async function() {
         }
       });
 
+      queueEmail('order-confirmation', email, {orderId: orderId, eventName: (EV&&EV.name)||'', items: items, customer: firstName+' '+lastName});
+
       hideLoader();
       setState({cart:[], orderDone:true, custTab:'order'});
       showToast('Order submitted successfully!');
@@ -4168,6 +4332,7 @@ window.submitOrderWithContact = async function() {
   }
 
   // Demo mode
+  queueEmail('order-confirmation', email, {orderId: 'ORD-DEMO', eventName: (EV&&EV.name)||'', items: (state.cart||[]), customer: first+' '+last});
   setState({orderDone:true});
 };
 window.publishEvent=async function(){
@@ -4674,7 +4839,12 @@ function coordPortalHTML() {
   var content = '';
 
   if(tab==='overview') {
-    content += '<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;flex-wrap:wrap"><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="dlAttendeesCSV()">⬇ Export Attendees CSV</button><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openEditEventModal()">✎ Edit Event</button></div>';
+    content += '<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;flex-wrap:wrap">'
+      + '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="downloadEventReport()">📊 Download Report</button>'
+      + '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="sendPostEventEmail()">📧 Post-Event Email</button>'
+      + '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="dlAttendeesCSV()">⬇ Export Attendees CSV</button>'
+      + '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openEditEventModal()">✎ Edit Event</button>'
+      + '</div>';
     if(isMobile()) {
       content += mobileStatGrid([
         {value:totalSold+'/'+totalCap, label:'Tickets Sold ('+pctSold+'%)'},
@@ -5173,6 +5343,7 @@ function custEventListHTML() {
         } else {
           c+='<button onclick="togglePromoInput()" style="margin-top:10px;background:none;border:none;color:#7A1020;font-size:12px;cursor:pointer;text-decoration:underline;font-family:Nunito Sans,sans-serif;padding:0">Have a promo code?</button>';
         }
+        c+='<div style="font-size:10px;color:#888;margin-top:8px;line-height:1.5">Ticket refund policies are set by the event host. POURED\'s service fees are non-refundable. By purchasing, you agree to the <a href="https://pouredevents.com/terms" target="_blank" style="color:#7A1020">Terms of Service</a>.</div>';
         c+='<button data-evid="'+ev.id+'" onclick="if(!disableBtn(this))return;purchaseTicket(parseInt(this.dataset.evid))" style="width:100%;padding:13px;background:#7A1020;color:#FFFFFF;border:none;border-radius:10px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-top:12px">Buy Tickets →</button>';
       }
     }
@@ -5297,6 +5468,9 @@ function custEventListHTML() {
     html+='<div style="border-top:1px solid #EBEBEB;padding-top:16px;margin-top:8px">';
     html+='<div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:8px">MEMBER SINCE OCTOBER 2024</div>';
     html+='<button onclick="signOutCust()" style="width:100%;padding:12px;border-radius:10px;border:1px solid #E5E5E5;background:none;cursor:pointer;font-size:13px;font-weight:600;color:#888;font-family:Nunito Sans,sans-serif">Sign out</button>';
+    html+='<button onclick="downloadMyData()" style="width:100%;padding:12px;background:#fff;border:1.5px solid #E5E5E5;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:Nunito Sans,sans-serif;margin-top:12px;color:#1A1A1A">📦 Download My Data</button>';
+    html+='<button onclick="deleteMyAccount()" style="width:100%;padding:12px;background:#fff;border:1.5px solid #FECDD3;border-radius:8px;font-size:12px;font-weight:700;color:#7A1020;cursor:pointer;font-family:Nunito Sans,sans-serif;margin-top:8px">🗑 Delete Account</button>';
+    html+='<div style="font-size:10px;color:#AAA;margin-top:6px;text-align:center">This permanently removes all your data from POURED.</div>';
     html+='</div></div>';
   }
 
