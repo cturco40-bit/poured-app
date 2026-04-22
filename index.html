@@ -545,7 +545,7 @@ console.time('app-load');
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=119').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=120').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -2510,6 +2510,7 @@ function agentEventListHTML() {
     + '</div>'
     + '<div class="dp-main">'
     +   '<div class="dp-content">'
+    +     '<div style="max-width:1200px;margin:0 auto;width:100%">'
     +     (isMobile() ? mobileStatGrid([
             {value:myListings.length+'', label:'Total Events'},
             {value:active.length+'', label:'Live Now', color:'#2a7a4a'},
@@ -2527,6 +2528,7 @@ function agentEventListHTML() {
           ? '<div style="padding:12px">'+mobileCards+'</div>'
           : '<div>'+rows+'</div>')
     +       (myListings.length===0?'<div class="dp-empty"><div class="dp-empty-icon"></div><div class="dp-empty-text">No event invitations yet</div></div>':'')
+    +     '</div>'
     +     '</div>'
     +   '</div>'
     + '</div>'
@@ -4686,6 +4688,7 @@ function coordEventListHTML() {
     // Main
     + '<div class="dp-main">'
     +   '<div class="dp-content">'
+    +     '<div style="max-width:1200px;margin:0 auto;width:100%">'
     // Stats
     +     (isMobile() ? mobileStatGrid([
             {value:myEvents.length+'', label:'Total Events'},
@@ -4705,6 +4708,7 @@ function coordEventListHTML() {
           ? '<div style="padding:12px">'+coordMobileCards+'</div>'
           : '<div>'+rows+'</div>')
     +       (myEvents.length===0?'<div class="dp-empty"><div class="dp-empty-icon"></div><div class="dp-empty-text">No events yet</div><button class="dp-btn dp-btn-primary" onclick="setState({coordSelectedEventId:-1,coordTab:\'create\'})">Create your first event</button></div>':'')
+    +     '</div>'
     +     '</div>'
     +   '</div>'
     + '</div>'
