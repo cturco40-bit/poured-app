@@ -544,7 +544,7 @@ console.time('app-load');
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=114').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=115').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -686,11 +686,28 @@ const pouredFee = sub => +Math.min(ORDER_FEE_CAP, sub * ORDER_FEE_PCT).toFixed(2
 const calcTicketFee = p => p === 0 ? 0 : +(1.75 + p * 0.029).toFixed(2);
 const pct = (a,b) => Math.min(100, Math.round((a/b)*100));
 const ORDERING_WINDOW_HOURS = 48;
+function isSoldOut(prod) {
+  if(!prod) return false;
+  var a = prod.avail;
+  if(a === 0 || a === '0') return true;
+  if(typeof a === 'number') return a <= 0;
+  if(typeof a === 'string' && /sold\s*out/i.test(a)) return true;
+  return false;
+}
+function getEventDeadline(ev) {
+  if(!ev) return null;
+  var d = ev.submissionDeadline ? new Date(ev.submissionDeadline) : null;
+  if(d && !isNaN(d.getTime())) return d;
+  var ed = ev.date || ev.dateISO || ev.event_date;
+  if(!ed) return null;
+  var eventDate = new Date(ed);
+  if(isNaN(eventDate.getTime())) return null;
+  return eventDate;
+}
 function orderingStatus(ev) {
   // Returns: 'open' (before deadline), 'extended' (within 48h after), 'closed' (after 48h)
-  if(!ev || !ev.submissionDeadline) return 'open';
-  var deadline = new Date(ev.submissionDeadline);
-  if(isNaN(deadline.getTime())) return 'open';
+  var deadline = getEventDeadline(ev);
+  if(!deadline) return 'open';
   var now = new Date();
   var extendedEnd = new Date(deadline.getTime() + ORDERING_WINDOW_HOURS * 60 * 60 * 1000);
   if(now <= deadline) return 'open';
@@ -709,9 +726,9 @@ function orderingMessage(ev) {
   return 'Ordering closed. Contact agents directly for late orders.';
 }
 function orderingBanner(ev) {
+  var deadline = getEventDeadline(ev);
+  if(!deadline) return '';
   var status = orderingStatus(ev);
-  if(!ev || !ev.submissionDeadline) return '';
-  var deadline = new Date(ev.submissionDeadline);
   var now = new Date();
   if(status === 'open') {
     var msLeft = deadline.getTime() - now.getTime();
@@ -729,13 +746,13 @@ function orderingBanner(ev) {
     var msLeft = extEnd.getTime() - now.getTime();
     var hrsLeft = Math.floor(msLeft / (1000*60*60));
     var minsLeft = Math.floor((msLeft % (1000*60*60)) / (1000*60));
-    return '<div style="background:#FFF8E6;border:1px solid #E8D8A0;border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">'
-      + '<div style="font-size:13px;color:#8A6020;font-weight:600">Extended ordering: '+hrsLeft+'h '+minsLeft+'m remaining</div>'
-      + '<div style="font-size:11px;color:#888">48h post-event window</div>'
+    return '<div style="background:#FFF8F0;border:1px solid #E8D5B5;border-radius:10px;padding:10px 14px;margin-bottom:12px;text-align:center">'
+      + '<div style="font-size:11px;font-weight:700;color:#8B6914;letter-spacing:.08em">ORDERING CLOSES IN</div>'
+      + '<div style="font-size:20px;font-weight:900;color:#1A1A1A">'+hrsLeft+'h '+minsLeft+'m</div>'
       + '</div>';
   }
-  return '<div style="background:#F5F5F5;border:1px solid #E5E5E5;border-radius:10px;padding:12px 16px;margin-bottom:14px">'
-    + '<div style="font-size:13px;color:#888;font-weight:600">Ordering closed — contact agents directly for late orders</div>'
+  return '<div style="background:#FEF2F2;border:1px solid #FECDD3;padding:10px 14px;border-radius:8px;margin-bottom:12px;text-align:center">'
+    + '<div style="font-size:11px;font-weight:700;color:#7A1020;letter-spacing:.08em">ORDERING CLOSED</div>'
     + '</div>';
 }
 const fmt = n => n.toFixed(2);
@@ -1154,13 +1171,13 @@ function orderHistoryHTML() {
     <div style="font-size:11px;color:${B.cork};letter-spacing:.14em;margin-bottom:16px">ORDER HISTORY</div>
     ${myOrders.length>0?`
       <div style="font-size:11px;color:${B.cork};margin-bottom:8px">THIS EVENT</div>
-      ${myOrders.map(o=>`<div style="background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:8px;border:1px solid ${B.mist}">
+      ${myOrders.map(o=>{const st=(o.status==='confirmed'?'CONFIRMED':'SUBMITTED');return `<div style="background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:8px;border:1px solid ${B.mist}">
         <div style="display:flex;justify-content:space-between;margin-bottom:6px">
           <span style="font-size:12px;font-weight:700">${o.id}</span>
-          <span class="tag" style="background:${o.status==='confirmed'?'#EBF5EE':'#FBF5E6'};color:${o.status==='confirmed'?B.sage:'#8A6020'}">${o.status}</span>
+          <span class="tag" style="background:${o.status==='confirmed'?'#EBF5EE':'#FBF5E6'};color:${o.status==='confirmed'?B.sage:'#8A6020'};font-weight:700;letter-spacing:.06em">${st}</span>
         </div>
         ${o.items.map(i=>`<div style="font-size:12px;color:${B.cork};padding:4px 0;border-bottom:1px solid ${B.linen}">${i.supplier} · ${i.name} · ${i.qtyCases} case${i.qtyCases>1?'s':''}</div>`).join('')}
-      </div>`).join('')}`:''}
+      </div>`;}).join('')}`:''}
     ${state.orderHistory.length>0?`
       <div style="font-size:11px;color:${B.cork};margin-top:16px;margin-bottom:8px">PAST EVENTS</div>
       ${state.orderHistory.map(h=>`<div style="background:#fff;border-radius:12px;overflow:hidden;margin-bottom:10px;border:1px solid ${B.mist}">
@@ -1788,7 +1805,6 @@ function unlockAll() {
   state.unlockAllModal = false;
   render();
 }
-function confirmOrder(id){state.confirmed={...state.confirmed,[id]:true};render();DB.confirmOrder(id);}
 
 // ─── LOGO SVG ─────────────────────────────────────────────────────────────────
 var logoSVG = '<svg width="16" height="20" viewBox="0 0 52 64" fill="none" style="flex-shrink:0"><path d="M26 0C26 0 0 24 0 39C0 53 11.6 64 26 64C40.4 64 52 53 52 39C52 24 26 0 26 0Z" fill="#7A1020"/></svg>';
@@ -2182,12 +2198,12 @@ function productCardHTML(prod) {
           </div>
           <div style="font-size:10px;color:${B.cork};margin-top:2px">$${prod.pricePerCase} per case of ${prod.caseSize}</div>
         </div>
-        ${typeof prod.avail==='number'?(prod.avail>10?`<span style="font-size:10px;font-weight:700;color:${B.sage};background:#EBF5EE;padding:3px 8px;border-radius:20px">${prod.avail} cases</span>`:prod.avail>0?`<span style="font-size:10px;font-weight:700;color:#8A6020;background:#FBF5E6;padding:3px 8px;border-radius:20px">Only ${prod.avail} left</span>`:`<span style="font-size:10px;font-weight:700;color:#888;background:#F0F0F0;padding:3px 8px;border-radius:20px">SOLD OUT</span>`):tagHTML(prod.avail, B.sage, '#EBF5EE')}
+        ${isSoldOut(prod)?`<span style="font-size:10px;font-weight:700;color:#fff;background:${B.wine};padding:3px 8px;border-radius:20px;letter-spacing:.06em">SOLD OUT</span>`:typeof prod.avail==='number'?(prod.avail>10?`<span style="font-size:10px;font-weight:700;color:${B.sage};background:#EBF5EE;padding:3px 8px;border-radius:20px">${prod.avail} cases</span>`:`<span style="font-size:10px;font-weight:700;color:#8A6020;background:#FBF5E6;padding:3px 8px;border-radius:20px">Only ${prod.avail} left</span>`):tagHTML(prod.avail, B.sage, '#EBF5EE')}
       </div>
       <div style="display:flex;gap:6px">
         <button onclick="setState({detail:${prod.id}})" class="btn-secondary" style="font-size:11px;padding:7px 12px">Details</button>
-        <button onclick="${!canOrder||prod.avail===0?'showToast(\''+(prod.avail===0?'Sold out':'Ordering closed — contact agent directly')+'\')':'addToCart('+prod.id+')'}" style="flex:1;padding:7px 8px;border-radius:8px;border:none;background:${!canOrder||prod.avail===0?'#ccc':inCart?B.sage:B.pour};color:#fff;font-size:12px;font-family:Nunito Sans,sans-serif;cursor:${!canOrder||prod.avail===0?'not-allowed':'pointer'};font-weight:600;opacity:${prod.avail===0?'.5':'1'}">
-          ${prod.avail===0?'Sold Out':!canOrder?'Ordering Closed':inCart?`✓ In Cart (${inCart.qtyCases})`:'Add to Order'}
+        <button onclick="${!canOrder||isSoldOut(prod)?'showToast(\''+(isSoldOut(prod)?'Sold out':'Ordering closed — contact agent directly')+'\')':'addToCart('+prod.id+')'}" style="flex:1;padding:7px 8px;border-radius:8px;border:none;background:${!canOrder||isSoldOut(prod)?'#ccc':inCart?B.sage:B.pour};color:#fff;font-size:12px;font-family:Nunito Sans,sans-serif;cursor:${!canOrder||isSoldOut(prod)?'not-allowed':'pointer'};font-weight:600;opacity:${isSoldOut(prod)?'.5':'1'}">
+          ${isSoldOut(prod)?'Sold Out':!canOrder?'Ordering Closed':inCart?`✓ In Cart (${inCart.qtyCases})`:'Add to Order'}
         </button>
       </div>
     </div>
@@ -2231,8 +2247,8 @@ function detailModalHTML(prodId) {
         </div>
         <div style="display:flex;gap:8px">
           <button onclick="toggleFav(${prod.id})" style="flex:1;padding:10px;border-radius:10px;border:1px solid ${isFav?B.pour:B.mist};background:${isFav?'#FFF0F3':'#fff'};color:${isFav?B.pour:B.cork};font-size:12px;cursor:pointer;font-family:Nunito Sans,sans-serif">${isFav?'Saved':'Save'}</button>
-          ${typeof prod.avail==='number'?`<div style="text-align:center;font-size:11px;color:${prod.avail>10?B.sage:prod.avail>0?'#8A6020':'#888'};font-weight:600;margin-bottom:8px">${prod.avail>10?prod.avail+' cases available':prod.avail>0?'Only '+prod.avail+' left':'SOLD OUT'}</div>`:''}
-          <button onclick="${prod.avail===0?'showToast(\'Sold out\')':'addToCart('+prod.id+');setState({detail:null})'}" style="flex:2;padding:10px;border-radius:10px;border:none;background:${prod.avail===0?'#ccc':inCart?B.sage:B.pour};color:#fff;font-size:12px;cursor:${prod.avail===0?'not-allowed':'pointer'};font-family:Nunito Sans,sans-serif;opacity:${prod.avail===0?'.5':'1'}">${prod.avail===0?'Sold Out':inCart?'✓ In Cart — Add Case':'Add Case · $'+prod.pricePerCase}</button>
+          ${isSoldOut(prod)?`<div style="text-align:center;font-size:11px;color:${B.wine};font-weight:700;margin-bottom:8px;letter-spacing:.06em">SOLD OUT</div>`:typeof prod.avail==='number'?`<div style="text-align:center;font-size:11px;color:${prod.avail>10?B.sage:'#8A6020'};font-weight:600;margin-bottom:8px">${prod.avail>10?prod.avail+' cases available':'Only '+prod.avail+' left'}</div>`:''}
+          <button onclick="${isSoldOut(prod)?'showToast(\'Sold out\')':'addToCart('+prod.id+');setState({detail:null})'}" style="flex:2;padding:10px;border-radius:10px;border:none;background:${isSoldOut(prod)?'#ccc':inCart?B.sage:B.pour};color:#fff;font-size:12px;cursor:${isSoldOut(prod)?'not-allowed':'pointer'};font-family:Nunito Sans,sans-serif;opacity:${isSoldOut(prod)?'.5':'1'}">${isSoldOut(prod)?'Sold Out':inCart?'✓ In Cart — Add Case':'Add Case · $'+prod.pricePerCase}</button>
         </div>
       </div>
     </div>
@@ -2574,14 +2590,16 @@ function agentPortalHTML() {
       content += '<div style="padding:12px">';
       myOrders.forEach(function(order){
         var isUnlocked  = !!state.unlocked[order.id];
-        var isConfirmed = !!state.confirmed[order.id];
+        var isConfirmed = !!state.confirmed[order.id] || order.status==='confirmed';
         var sub = order.items.reduce(function(s,i){return s+(i.qtyCases||1)*(i.pricePerCase||0);},0);
         var fee = order.unlockFee || calcOrderUnlockFee(sub);
         content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
-        content += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+        content += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:6px">';
         content += '<span style="font-family:monospace;font-size:11px;color:#888">'+order.id+'</span>';
-        content += '<span class="dp-badge '+(isConfirmed?'dp-badge-green':isUnlocked?'dp-badge-blue':'dp-badge-gray')+'">'+(isConfirmed?'Confirmed':isUnlocked?'Unlocked':'Locked')+'</span>';
-        content += '</div>';
+        content += '<div style="display:flex;gap:6px">';
+        content += '<span class="dp-badge '+(isConfirmed?'dp-badge-green':'dp-badge-amber')+'">'+(isConfirmed?'CONFIRMED':'SUBMITTED')+'</span>';
+        content += '<span class="dp-badge '+(isUnlocked?'dp-badge-blue':'dp-badge-gray')+'">'+(isUnlocked?'Unlocked':'Locked')+'</span>';
+        content += '</div></div>';
         content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+(isUnlocked?order.customer:'🔒 Locked — pay to reveal')+'</div>';
         if(isUnlocked) content += '<div style="font-size:12px;color:#888;margin-bottom:2px">'+order.email+(order.phone?' · '+order.phone:'')+'</div>';
         content += '<div style="font-size:12px;color:#888;margin-bottom:4px">'+order.items.length+' items · $'+sub.toFixed(2)+'</div>';
@@ -3265,8 +3283,9 @@ window.showAccountModal = function(portal, name, email) {
     + '<div><div style="'+labelStyle+'">Company / Organization</div><input id="acct-company" value="'+company+'" style="'+fieldStyle+'"></div>'
     + '<div><div style="'+labelStyle+'">Phone</div><input id="acct-phone" value="'+phone+'" type="tel" style="'+fieldStyle+'"></div>'
     + '<div style="border-top:1px solid #F0F0F0;padding-top:14px">'
-    + '<div style="'+labelStyle+'">Password</div>'
-    + '<button onclick="showToast(\'Connect Supabase for password reset\')" style="padding:8px 16px;border-radius:8px;border:1.5px solid #E5E5E5;background:#fff;color:#555;font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">Change Password</button>'
+    + '<div style="'+labelStyle+'">New Password</div>'
+    + '<input id="acct-pw" type="password" placeholder="Leave blank to keep current" style="'+fieldStyle+';margin-bottom:8px">'
+    + '<button onclick="changePassword(\'host\')" style="padding:8px 16px;border-radius:8px;border:1.5px solid #E5E5E5;background:#fff;color:#555;font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">Change Password</button>'
     + '</div>'
     + '<button onclick="saveProfile(\'host\');document.getElementById(\'account-modal\').remove()" style="width:100%;padding:13px;border-radius:10px;border:none;background:#1A1A1A;color:#fff;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-top:4px">Save Changes</button>'
     + '</div></div>';
@@ -3465,6 +3484,17 @@ window.approveProduct = async function(id, approved) {
   }
 };
 window.rejectProduct = function(id) { return window.approveProduct(id, false); };
+window.hideProduct = async function(id, hidden) {
+  (EVENTS||[]).forEach(function(e){
+    (e.products||[]).forEach(function(p){ if(p.id===id) p.hidden = !!hidden; });
+  });
+  render();
+  if(LIVE_MODE && !IS_DEMO && _sb) {
+    var res = await _sb.from('products').update({hidden: !!hidden}).eq('id', id);
+    if(res && res.error) showToast('Error: '+res.error.message);
+    else showToast(hidden ? 'Product hidden from attendees' : 'Product visible to attendees');
+  }
+};
 window.undoApproval = async function(id) {
   if(!state.coordApprovals) state.coordApprovals = {};
   delete state.coordApprovals[id];
@@ -3475,6 +3505,19 @@ window.undoApproval = async function(id) {
   if(LIVE_MODE && !IS_DEMO && _sb) {
     await _sb.from('products').update({approved: null}).eq('id', id);
   }
+};
+window.dlAttendeesCSV = function() {
+  var ev = EVENTS.find(function(e){return e.id===(state.coordSelectedEventId||state.selectedEventId);}) || EV;
+  var list = ev.attendees || [];
+  var rows = [['Name','Email','Phone','Tier','Ticket','Paid','Admitted']];
+  list.forEach(function(a){
+    rows.push([a.name||'', a.email||'', a.phone||'', a.tier||'', a.ticket||'', a.paid?'yes':'no', a.admitted?'yes':'no']);
+  });
+  var csv = rows.map(function(r){return r.map(function(c){var s=String(c==null?'':c);return s.indexOf(',')>=0||s.indexOf('"')>=0?'"'+s.replace(/"/g,'""')+'"':s;}).join(',');}).join('\n');
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'attendees-'+(ev.name||'event').replace(/\s+/g,'-')+'.csv';
+  a.click();
 };
 window.dlSupplierCSV = function(supplier) {
   var ev = EVENTS.find(function(e){return e.id===state.selectedEventId;})||EV;
@@ -3649,10 +3692,20 @@ window.acceptInvite   = function(evId) {
   showToast('Invitation accepted — upload your wines to get started');
   setState({selectedEventId:evId, agentTab:'upload'});
 };
-window.confirmOrder = function(id) {
+window.confirmOrder = async function(id) {
   state.confirmed = Object.assign({},state.confirmed||{},{});
   state.confirmed[id] = true;
+  (EVENTS||[]).forEach(function(e){
+    (e.orders||[]).forEach(function(o){ if(o.id===id) o.status = 'confirmed'; });
+  });
   render();
+  if(LIVE_MODE && !IS_DEMO && _sb) {
+    var res = await _sb.from('orders').update({status:'confirmed'}).eq('id', id);
+    if(res && res.error) { showToast('Error: '+res.error.message); return; }
+    showToast('Order confirmed');
+    lastEventFetch = 0;
+    loadUserEvents();
+  }
 };
 window.unlockOrder  = function(id) {
   state.unlocked = Object.assign({},state.unlocked||{},{});
@@ -3673,7 +3726,7 @@ window.stars = function(n) {
   }).join('');
 };
 
-window.doConfirm = function(id) { confirmOrder(id); };
+window.doConfirm = function(id) { window.confirmOrder(id); };
 window.dlCSVTemplate = function() {
   var headers = 'Producer,Product Name,Vintage,Available Vintage,Category,ABV(%),Bottle Size(mL),Case Size(bottles),Price Per Bottle($),Price Per Case($),Cases Available,Tasting Notes,Food Pairings,Product URL';
   var example = 'Fantini Group,Montepulciano d\'Abruzzo DOC,2025,2024,Red Wine,13.5,750,12,12.00,144.00,25,"Ripe cherry, plum, soft tannins.","Pasta, Pizza, Grilled Meats",https://shop.example.com/montepulciano';
@@ -3887,6 +3940,14 @@ window.submitOrderWithContact = async function() {
 
       var itemsRes = await _sb.from('order_items').insert(items);
       if(itemsRes.error){ throw itemsRes.error; }
+
+      items.forEach(function(item){
+        if(item.product_id) {
+          _sb.rpc('decrement_availability', {p_id: item.product_id, qty: item.qty_cases}).then(function(r){
+            if(r && r.error) console.warn('Availability decrement failed:', r.error);
+          });
+        }
+      });
 
       hideLoader();
       setState({cart:[], orderDone:true, custTab:'order'});
@@ -4387,7 +4448,7 @@ function coordPortalHTML() {
   var content = '';
 
   if(tab==='overview') {
-    content += '<div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openEditEventModal()">✎ Edit Event</button></div>';
+    content += '<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;flex-wrap:wrap"><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="dlAttendeesCSV()">⬇ Export Attendees CSV</button><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="openEditEventModal()">✎ Edit Event</button></div>';
     if(isMobile()) {
       content += mobileStatGrid([
         {value:totalSold+'/'+totalCap, label:'Tickets Sold ('+pctSold+'%)'},
@@ -4490,12 +4551,15 @@ function coordPortalHTML() {
               actions = '<span class="dp-badge dp-badge-red">REJECTED</span>'
                 + '<button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="undoApproval('+p.id+')" style="padding:3px 8px;font-size:10px">Undo</button>';
             }
-            return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;font-size:12px;border-bottom:1px dashed #EBEBEB">'
+            var hideBtn = p.hidden
+              ? '<button class="dp-btn dp-btn-ghost dp-btn-sm" title="Product hidden from attendees — click to show" onclick="hideProduct('+p.id+',false)" style="padding:3px 8px;font-size:10px;color:#8A6020">🚫 Hidden</button>'
+              : '<button class="dp-btn dp-btn-ghost dp-btn-sm" title="Hide from attendees" onclick="hideProduct('+p.id+',true)" style="padding:3px 8px;font-size:10px;color:#888">👁 Hide</button>';
+            return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;font-size:12px;border-bottom:1px dashed #EBEBEB;'+(p.hidden?'opacity:.55;':'')+'">'
               + '<div style="flex:1;min-width:0"><span style="font-weight:600">'+(p.name||p.product_name||'')+'</span>'
               + (p.vintage?' <span style="color:#888">'+p.vintage+'</span>':'')
               + ' — <span style="color:#888">'+(p.supplier||p.producer||'')+'</span></div>'
               + '<div style="color:#4A8A6A;font-weight:600;flex-shrink:0">$'+(p.price_per_bottle||p.pricePerBottle||p.pricePerCase||0)+'/btl</div>'
-              + '<div style="display:flex;gap:4px;flex-shrink:0">'+actions+'</div>'
+              + '<div style="display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">'+actions+hideBtn+'</div>'
               + '</div>';
           }).join('');
     };
@@ -4953,7 +5017,8 @@ function custEventListHTML() {
     html+='<div style="margin-bottom:14px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">EMAIL</div><input id="prof-email" type="email" value="'+_profEmail+'" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
     html+='<div style="margin-bottom:14px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">PHONE</div><input id="prof-phone" type="tel" value="'+_profPhone+'" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
     html+='<div style="margin-bottom:14px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">COMPANY / RESTAURANT <span style="color:#CCC">(optional)</span></div><input id="prof-company" type="text" value="" placeholder="e.g. Canoe Restaurant" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
-    html+='<div style="margin-bottom:20px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">PASSWORD</div><input id="prof-pw" type="password" value="********" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
+    html+='<div style="margin-bottom:10px"><div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:6px">NEW PASSWORD</div><input id="prof-pw" type="password" placeholder="Leave blank to keep current" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:14px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box"></div>';
+    html+='<button onclick="changePassword(\'attendee\')" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #E5E5E5;background:#fff;color:#555;font-size:12px;font-weight:600;font-family:Nunito Sans,sans-serif;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px">Change Password</button>';
     html+='<button onclick="saveProfile(\'attendee\')" style="width:100%;padding:13px;border-radius:10px;border:none;background:#1A1A1A;color:#fff;font-size:13px;font-weight:700;font-family:Nunito Sans,sans-serif;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px">Save Changes</button>';
     html+='<div style="border-top:1px solid #EBEBEB;padding-top:16px;margin-top:8px">';
     html+='<div style="font-size:10px;color:#888;letter-spacing:.1em;margin-bottom:8px">MEMBER SINCE OCTOBER 2024</div>';
@@ -4966,6 +5031,23 @@ function custEventListHTML() {
 }
 
 window.skipOnboarding = function(){ setState({onboardingDone:true}); };
+
+window.changePassword = async function(source) {
+  var id = source === 'attendee' ? 'prof-pw' : 'acct-pw';
+  var el = document.getElementById(id);
+  if(!el) return;
+  var pw = (el.value || '').trim();
+  if(pw.length < 8) { showToast('Password must be at least 8 characters'); return; }
+  if(LIVE_MODE && !IS_DEMO && _sb) {
+    var res = await _sb.auth.updateUser({password: pw});
+    if(res && res.error) { showToast('Error: '+res.error.message); return; }
+    el.value = '';
+    showToast('Password updated');
+  } else {
+    el.value = '';
+    showToast('Password updated');
+  }
+};
 
 window.forgotPassword = function() {
   var email = (document.getElementById('login-email')||{}).value||'';
@@ -5011,6 +5093,7 @@ function custPortalHTML() {
   const searchTerm = (state.wineSearch||'').toLowerCase();
   const visibleProducts = (EV.products||[]).filter(function(p){
     if(p.approved === false) return false;
+    if(p.hidden === true) return false;
     if(!searchTerm) return true;
     return (p.name||'').toLowerCase().indexOf(searchTerm) >= 0
       || (p.supplier||'').toLowerCase().indexOf(searchTerm) >= 0
