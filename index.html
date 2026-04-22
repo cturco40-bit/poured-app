@@ -544,7 +544,7 @@ console.time('app-load');
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=115').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=116').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1025,6 +1025,8 @@ let state = {
   catFilter: "all",
   wineSearch: "",
   editEventModal: false,
+  eventSearch: "",
+  appliedPromo: null,
   cart: [],
   favs: {1:true,3:true},
   notes: {3:"Fine brioche, extraordinary persistence."},
@@ -1038,6 +1040,7 @@ let state = {
     name:"",host:"",date:"",startTime:"18:00",endTime:"21:00",
     venue:"",address:"",city:"Toronto",province:"ON",
     description:"",passcode:"",submissionDeadline:"",
+    coverImage:null, promoCodes:[],
     tiers:[
       {id:"ga",  label:"General Admission",price:"85", capacity:"120",enabled:true, perks:"All tables\nWelcome drink\nEvent booklet"},
       {id:"vip", label:"VIP Reserve",      price:"165",capacity:"30", enabled:false,perks:"Early entry 5:30 PM\nGrand cru walkthrough\nGift bottle"},
@@ -1371,9 +1374,52 @@ function approvalPanelHTML(products) {
 }
 
 // ── 10. EVENT DUPLICATION (Coordinator) ──────────────────────────────────
-window.duplicateEvent = () => {
-  showToast('Event duplicated — update the date and deadline before publishing');
-  setState({dupModal:false});
+window.duplicateEvent = async function() {
+  var sourceEv = EVENTS.find(function(e){return e.id===(state.coordSelectedEventId||state.selectedEventId);}) || EV;
+  var nameInput = document.getElementById('dup-name');
+  var dateInput = document.getElementById('dup-date');
+  var newName = (nameInput && nameInput.value.trim()) || ((sourceEv.name||'Event') + ' (Copy)');
+  var newDate = (dateInput && dateInput.value) || '';
+  if(LIVE_MODE && !IS_DEMO && _sb && state.currentUser && state.currentUser.id) {
+    try {
+      var res = await _sb.from('events').insert({
+        host_id: state.currentUser.id,
+        name: newName,
+        date: newDate || sourceEv.date || null,
+        time: sourceEv.time || '',
+        venue: sourceEv.venue || '',
+        address: sourceEv.address || '',
+        city: sourceEv.city || '',
+        description: sourceEv.description || '',
+        passcode: sourceEv.passcode || '',
+        status: 'upcoming'
+      }).select().single();
+      if(res.error) { showToast('Error: '+res.error.message); return; }
+      var tiers = (sourceEv.tiers||[]).map(function(t){
+        return {event_id: res.data.id, label:t.label, price:t.price, capacity:t.capacity, sold:0};
+      });
+      if(tiers.length) await _sb.from('ticket_tiers').insert(tiers);
+      showToast('Event duplicated');
+      setState({dupModal:false});
+      lastEventFetch = 0;
+      loadUserEvents();
+    } catch(err) {
+      showToast('Error duplicating: '+(err.message||err));
+    }
+  } else {
+    var copy = Object.assign({}, sourceEv, {
+      id: Date.now(),
+      name: newName,
+      date: newDate || sourceEv.date,
+      status: 'upcoming',
+      tiers: (sourceEv.tiers||[]).map(function(t){ return Object.assign({}, t, {sold:0}); }),
+      orders: [],
+      attendees: []
+    });
+    EVENTS.push(copy);
+    showToast('Event duplicated (demo)');
+    setState({dupModal:false});
+  }
 };
 function editEventModalHTML(ev) {
   if(!state.editEventModal || !ev) return '';
@@ -1422,6 +1468,14 @@ function dupModalHTML(ev) {
           <div style="font-size:11px;color:${B.cork};margin-bottom:8px">COPYING FROM</div>
           ${[['Event',ev.name],['Date',ev.date],['Venue',ev.venue],['Exhibitors',ev.agents.length+' exhibitors'],['Products',ev.products.length+' wines']].map(([l,v])=>`
             <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:${B.cork}">${l}</span><span style="font-weight:700">${v}</span></div>`).join('')}
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:.08em;margin-bottom:6px">NEW EVENT NAME</div>
+          <input id="dup-name" type="text" value="${(ev.name||'').replace(/"/g,'&quot;')} (Copy)" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:13px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box">
+        </div>
+        <div style="margin-bottom:14px">
+          <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:.08em;margin-bottom:6px">NEW EVENT DATE</div>
+          <input id="dup-date" type="date" style="width:100%;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:13px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;box-sizing:border-box">
         </div>
         <div style="font-size:11px;color:${B.cork};margin-bottom:12px">What carries over to the new event:</div>
         ${[['✓','Event name + venue (editable)'],['✓','All ticket tiers and pricing'],['✓','All agents pre-invited'],['✓','Listing fees and settings'],['-','Wines — agents must re-upload'],['-','Date and deadline — must be updated']].map(([icon,text])=>`
@@ -3287,6 +3341,7 @@ window.showAccountModal = function(portal, name, email) {
     + '<input id="acct-pw" type="password" placeholder="Leave blank to keep current" style="'+fieldStyle+';margin-bottom:8px">'
     + '<button onclick="changePassword(\'host\')" style="padding:8px 16px;border-radius:8px;border:1.5px solid #E5E5E5;background:#fff;color:#555;font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">Change Password</button>'
     + '</div>'
+    + (portal==='agent' ? '<div style="border-top:1px solid #F0F0F0;padding-top:14px"><div style="'+labelStyle+'">Public Profile</div><button onclick="shareProfile()" style="padding:8px 16px;border-radius:8px;border:1.5px solid #E5E5E5;background:#fff;color:#555;font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">🔗 Share Profile Link</button></div>' : '')
     + '<button onclick="saveProfile(\'host\');document.getElementById(\'account-modal\').remove()" style="width:100%;padding:13px;border-radius:10px;border:none;background:#1A1A1A;color:#fff;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-top:4px">Save Changes</button>'
     + '</div></div>';
   document.body.appendChild(ov);
@@ -3484,6 +3539,140 @@ window.approveProduct = async function(id, approved) {
   }
 };
 window.rejectProduct = function(id) { return window.approveProduct(id, false); };
+window.addToCalendar = function(ev) {
+  if(!ev) return;
+  var dateStr = ev.dateISO || ev.date || '';
+  var parsed = new Date(dateStr);
+  if(isNaN(parsed.getTime())) parsed = new Date();
+  var timeStr = '18:00:00';
+  if(ev.time) {
+    var m = String(ev.time).match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?/i);
+    if(m) {
+      var hh = parseInt(m[1],10);
+      var mm = m[2] ? parseInt(m[2],10) : 0;
+      if(m[3] && /PM/i.test(m[3]) && hh < 12) hh += 12;
+      if(m[3] && /AM/i.test(m[3]) && hh === 12) hh = 0;
+      timeStr = String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')+':00';
+    }
+  }
+  var start = new Date(parsed.getFullYear()+'-'+String(parsed.getMonth()+1).padStart(2,'0')+'-'+String(parsed.getDate()).padStart(2,'0')+'T'+timeStr);
+  if(isNaN(start.getTime())) start = new Date();
+  var end = new Date(start.getTime() + 3*60*60*1000);
+  var fmt = function(d){ return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,''); };
+  var esc = function(s){ return String(s||'').replace(/[\\,;]/g, function(c){return '\\'+c;}).replace(/\r?\n/g,'\\n'); };
+  var location = [ev.venue||'', ev.address||'', ev.city||''].filter(Boolean).join(', ');
+  var ics = [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//POURED//EN',
+    'BEGIN:VEVENT',
+    'UID:'+(ev.id||Date.now())+'@pouredevents.com',
+    'DTSTAMP:'+fmt(new Date()),
+    'DTSTART:'+fmt(start),
+    'DTEND:'+fmt(end),
+    'SUMMARY:'+esc(ev.name||'Poured Event'),
+    'LOCATION:'+esc(location),
+    'DESCRIPTION:'+esc('Beverage trade event on POURED. Browse wines and place orders at app.pouredevents.com'),
+    'END:VEVENT','END:VCALENDAR'
+  ].join('\r\n');
+  var blob = new Blob([ics], {type:'text/calendar'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (ev.name||'event').replace(/[^a-zA-Z0-9]/g,'-')+'.ics';
+  a.click();
+};
+
+window.addPromoCode = function() {
+  var codes = (state.draft.promoCodes||[]).slice();
+  codes.push({code:'', discount:10, type:'percent', maxUses:100, used:0});
+  state.draft.promoCodes = codes;
+  render();
+};
+window.updatePromoCode = function(idx, key, val) {
+  var codes = (state.draft.promoCodes||[]).slice();
+  if(!codes[idx]) return;
+  if(key==='code') val = String(val||'').toUpperCase().trim();
+  if(key==='discount' || key==='maxUses') val = parseInt(val,10) || 0;
+  codes[idx][key] = val;
+  state.draft.promoCodes = codes;
+};
+window.removePromoCode = function(idx) {
+  var codes = (state.draft.promoCodes||[]).slice();
+  codes.splice(idx,1);
+  state.draft.promoCodes = codes;
+  render();
+};
+window.applyPromo = function() {
+  var input = document.getElementById('promo-input');
+  var code = input ? String(input.value||'').toUpperCase().trim() : '';
+  if(!code) { showToast('Enter a promo code'); return; }
+  var ev = EVENTS.find(function(e){return e.id===state.selectedEventId;});
+  var promo = ((ev&&ev.promoCodes)||[]).find(function(p){return p.code===code && (p.used||0) < (p.maxUses||Infinity);});
+  if(promo) {
+    state.appliedPromo = promo;
+    showToast('Promo applied: '+(promo.type==='percent'?promo.discount+'% off':'$'+promo.discount+' off'));
+    render();
+  } else {
+    showToast('Invalid or expired promo code');
+  }
+};
+window.clearPromo = function() { state.appliedPromo = null; render(); };
+
+window.handleCoverUpload = function(input) {
+  var file = input && input.files && input.files[0];
+  if(!file) return;
+  if(file.size > 5*1024*1024) { showToast('Image must be under 5MB'); input.value=''; return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    state.draft.coverImage = e.target.result;
+    render();
+  };
+  reader.readAsDataURL(file);
+};
+window.removeCoverImage = function() { state.draft.coverImage = null; render(); };
+
+window.joinWaitlist = function(tierId) {
+  var w = Object.assign({}, state.waitlist||{});
+  var list = (w[tierId]||[]).slice();
+  var email = (state.currentUser && state.currentUser.email) || '';
+  if(!email) { showToast('Please sign in to join waitlist'); return; }
+  if(list.indexOf(email) >= 0) { showToast("You're already on the waitlist"); return; }
+  list.push(email);
+  w[tierId] = list;
+  state.waitlist = w;
+  showToast("Added to waitlist — we'll notify you if spots open");
+  render();
+};
+
+window.transferTicket = function(ticketId) {
+  var email = prompt('Enter the email address to transfer this ticket to:');
+  if(email===null) return;
+  email = String(email||'').trim();
+  if(!email || email.indexOf('@') < 0) { showToast('Please enter a valid email'); return; }
+  if(LIVE_MODE && !IS_DEMO) {
+    showToast('Transfer request sent to ' + email + '. They will receive an email with ticket details.');
+  } else {
+    showToast('Ticket transferred to ' + email + ' (demo)');
+  }
+};
+
+window.shareProfile = function() {
+  var id = (state.currentUser && state.currentUser.id) || '';
+  var url = window.location.origin + window.location.pathname + '?exhibitor=' + encodeURIComponent(id);
+  if(navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function(){
+      showToast('Profile link copied to clipboard');
+    }).catch(function(){
+      showToast('Link: ' + url);
+    });
+  } else {
+    showToast('Link: ' + url);
+  }
+};
+
+window.togglePromoInput = function() {
+  state.promoOpen = !state.promoOpen;
+  render();
+};
+
 window.hideProduct = async function(id, hidden) {
   (EVENTS||[]).forEach(function(e){
     (e.products||[]).forEach(function(p){ if(p.id===id) p.hidden = !!hidden; });
@@ -3654,6 +3843,22 @@ window.onWineSearchInput = function(val) {
     if(wasSearch) {
       requestAnimationFrame(function(){
         var w = document.getElementById('wine-search');
+        if(w) { w.focus(); try { if(caret!=null) w.setSelectionRange(caret, caret); } catch(e){} }
+      });
+    }
+  }, 160);
+};
+window.onEventSearchInput = function(val) {
+  state.eventSearch = val;
+  if(window._esDeb) clearTimeout(window._esDeb);
+  window._esDeb = setTimeout(function(){
+    var active = document.activeElement;
+    var wasSearch = active && active.id === 'event-search';
+    var caret = wasSearch ? active.selectionStart : null;
+    render();
+    if(wasSearch) {
+      requestAnimationFrame(function(){
+        var w = document.getElementById('event-search');
         if(w) { w.focus(); try { if(caret!=null) w.setSelectionRange(caret, caret); } catch(e){} }
       });
     }
@@ -4038,7 +4243,7 @@ window.loadUserEvents = async function() {
   render();
 };
 
-window.resetCreate = () => setState({createDone:false,createStep:1,draft:{name:"",host:"",date:"",startTime:"18:00",endTime:"21:00",venue:"",address:"",city:"Toronto",province:"ON",description:"",passcode:"",submissionDeadline:"",tiers:[{id:"ga",label:"General Admission",price:"85",capacity:"120",enabled:true,perks:"All tables\nWelcome drink\nEvent booklet"},{id:"vip",label:"VIP Reserve",price:"165",capacity:"30",enabled:false,perks:"Early entry 5:30 PM\nGrand cru walkthrough\nGift bottle"},{id:"trade",label:"Trade / Industry",price:"0",capacity:"40",enabled:false,perks:"Trade ID required\nFull access\nPrice sheets"}],agentEmails:"",listingFee:"50",featuredFee:"500",requirePasscode:true,allowPublicBrowse:false}});
+window.resetCreate = () => setState({createDone:false,createStep:1,draft:{name:"",host:"",date:"",startTime:"18:00",endTime:"21:00",venue:"",address:"",city:"Toronto",province:"ON",description:"",passcode:"",submissionDeadline:"",coverImage:null,promoCodes:[],tiers:[{id:"ga",label:"General Admission",price:"85",capacity:"120",enabled:true,perks:"All tables\nWelcome drink\nEvent booklet"},{id:"vip",label:"VIP Reserve",price:"165",capacity:"30",enabled:false,perks:"Early entry 5:30 PM\nGrand cru walkthrough\nGift bottle"},{id:"trade",label:"Trade / Industry",price:"0",capacity:"40",enabled:false,perks:"Trade ID required\nFull access\nPrice sheets"}],agentEmails:"",listingFee:"50",featuredFee:"500",requirePasscode:true,allowPublicBrowse:false}});
 
 function createEventHTML() {
   const d = state.draft;
@@ -4108,6 +4313,13 @@ function createEventHTML() {
         <div><label class="lbl">PROV.</label><select class="inp" style="appearance:none" data-field="province">${["ON","BC","AB","QC","MB","SK","NS","NB","NL","PE"].map(p=>`<option ${d.province===p?'selected':''}>${p}</option>`).join('')}</select></div>
       </div>
       <div style="margin-bottom:18px"><label class="lbl">DESCRIPTION</label><textarea class="inp" style="min-height:68px;resize:vertical;line-height:1.6" data-field="description" placeholder="What makes this event special?">${d.description}</textarea></div>
+      <div style="margin-bottom:20px">
+        <label class="lbl">EVENT COVER IMAGE <span style="color:#CCC">(optional)</span></label>
+        ${d.coverImage?`<div style="width:100%;height:160px;border-radius:8px;background-image:url('${d.coverImage}');background-size:cover;background-position:center;margin-bottom:8px;border:1px solid ${B.mist}"></div>`:''}
+        <input type="file" id="cover-upload" accept="image/*" onchange="handleCoverUpload(this)" style="display:none">
+        <button onclick="document.getElementById('cover-upload').click()" style="padding:8px 14px;border-radius:8px;border:1px solid ${B.mist};background:#fff;color:${B.cork};font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">📷 Upload Image</button>
+        ${d.coverImage?`<button onclick="removeCoverImage()" style="padding:8px 14px;border-radius:8px;border:1px solid ${B.mist};background:#fff;color:${B.cork};font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-left:6px">Remove</button>`:''}
+      </div>
       ${navBtns(null, 2, "Ticket Tiers →")}
     </div>`;
   } else if(state.createStep===2) {
@@ -4131,6 +4343,20 @@ function createEventHTML() {
         </div>`:''}
       </div>`;}).join('')}
       ${enabledTiers.length===0?`<div style="background:#FBF5E6;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:#7A1020">Enable at least one ticket tier to continue.</div>`:''}
+      <div style="margin-top:20px;background:#fff;border-radius:12px;border:1px solid ${B.mist};padding:14px 16px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#888;margin-bottom:8px">PROMO CODES (optional)</div>
+        ${(d.promoCodes||[]).map((pc,i)=>`<div style="display:grid;grid-template-columns:1.2fr .8fr .7fr .8fr auto;gap:6px;align-items:center;margin-bottom:8px">
+          <input class="inp" value="${(pc.code||'').replace(/"/g,'&quot;')}" placeholder="WELCOME25" oninput="updatePromoCode(${i},'code',this.value)" style="text-transform:uppercase;font-size:12px;padding:8px 10px">
+          <input class="inp" type="number" min="0" value="${pc.discount||0}" oninput="updatePromoCode(${i},'discount',this.value)" style="font-size:12px;padding:8px 10px">
+          <select class="inp" onchange="updatePromoCode(${i},'type',this.value)" style="font-size:12px;padding:8px 10px;appearance:none">
+            <option value="percent" ${pc.type!=='flat'?'selected':''}>% off</option>
+            <option value="flat" ${pc.type==='flat'?'selected':''}>$ off</option>
+          </select>
+          <input class="inp" type="number" min="1" value="${pc.maxUses||100}" placeholder="Max uses" oninput="updatePromoCode(${i},'maxUses',this.value)" style="font-size:12px;padding:8px 10px">
+          <button onclick="removePromoCode(${i})" style="background:none;border:none;color:${B.pour};font-size:18px;cursor:pointer;padding:0 4px" title="Remove">×</button>
+        </div>`).join('')}
+        <button onclick="addPromoCode()" style="padding:8px 14px;border-radius:8px;border:1px solid ${B.mist};background:#fff;color:${B.cork};font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">+ Add Promo Code</button>
+      </div>
       ${navBtns(1, 3, "Invite Exhibitors →")}
     </div>`;
   } else if(state.createStep===3) {
@@ -4892,6 +5118,9 @@ function custEventListHTML() {
     else badge='<span style="background:#F5F5F5;color:#888;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.04em">Past</span>';
 
     var c='<div style="background:#FFFFFF;border:1px solid #EBEBEB;border-radius:14px;margin-bottom:14px;overflow:hidden">';
+    if(ev.coverImage||ev.cover_image) {
+      c+='<div style="height:140px;background-image:url(\''+(ev.coverImage||ev.cover_image)+'\');background-size:cover;background-position:center"></div>';
+    }
     c+='<div style="padding:16px 18px 14px">';
     c+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">';
     c+='<div style="font-size:15px;font-weight:800;color:#1A1A1A;letter-spacing:.02em;line-height:1.3;flex:1;margin-right:10px">'+ev.name+'</div>';
@@ -4903,20 +5132,51 @@ function custEventListHTML() {
     c+='<div style="padding:14px 18px 16px">';
 
     if(hasTicket){
-      c+='<div style="font-size:13px;color:#2a7a4a;font-weight:600;margin-bottom:12px">✓ You have a ticket</div>';
+      c+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
+        +'<div style="font-size:13px;color:#2a7a4a;font-weight:600">✓ You have a ticket</div>'
+        +'<button onclick="transferTicket(\'T-'+ev.id+'\')" style="background:none;border:none;color:#7A1020;font-size:11px;cursor:pointer;text-decoration:underline;font-family:Nunito Sans,sans-serif;padding:0">Transfer →</button>'
+        +'</div>';
       var btnLabel=ev.status==='active'?'Browse & Order →':'View My Ticket →';
       c+='<button data-evid="'+ev.id+'" onclick="openCustEvent(parseInt(this.dataset.evid))" style="width:100%;padding:13px;background:#1A1A1A;color:#FFFFFF;border:none;border-radius:10px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-family:Nunito Sans,sans-serif;cursor:pointer">'+btnLabel+'</button>';
     } else {
       paidTiers.forEach(function(t){
         var buyerPrice=t.price.toFixed(0);
+        var soldOut = t.sold >= t.capacity;
         c+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #F5F5F5">';
-        c+='<div><div style="font-size:13px;font-weight:600;color:#1A1A1A">'+t.label+'</div>';
-        c+='<div style="font-size:11px;color:#888;margin-top:2px">'+t.sold+' / '+t.capacity+' remaining</div></div>';
-        c+='<div style="font-size:15px;font-weight:800;color:#7A1020">$'+buyerPrice+'</div>';
+        c+='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:#1A1A1A">'+t.label+'</div>';
+        c+='<div style="font-size:11px;color:#888;margin-top:2px">'+(soldOut?'Sold out':(t.sold+' / '+t.capacity+' remaining'))+'</div></div>';
+        if(soldOut) {
+          var waitCount = (state.waitlist&&state.waitlist[t.id])?state.waitlist[t.id].length:0;
+          c+='<div style="text-align:right">'
+            +'<div style="font-size:11px;color:#7A1020;font-weight:700;margin-bottom:4px">SOLD OUT</div>'
+            +'<button onclick="joinWaitlist(\''+t.id+'\')" style="background:#1A1A1A;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:Nunito Sans,sans-serif">Join Waitlist</button>'
+            +(waitCount>0?'<div style="font-size:10px;color:#888;margin-top:4px">'+waitCount+' on waitlist</div>':'')
+            +'</div>';
+        } else {
+          c+='<div style="font-size:15px;font-weight:800;color:#7A1020">$'+buyerPrice+'</div>';
+        }
         c+='</div>';
       });
-      c+='<button data-evid="'+ev.id+'" onclick="if(!disableBtn(this))return;purchaseTicket(parseInt(this.dataset.evid))" style="width:100%;padding:13px;background:#7A1020;color:#FFFFFF;border:none;border-radius:10px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-top:12px">Buy Tickets →</button>';
+      var anyAvailable = paidTiers.some(function(t){return t.sold < t.capacity;});
+      if(anyAvailable) {
+        if(state.promoOpen) {
+          c+='<div style="margin-top:12px;display:flex;gap:6px">'
+            +'<input id="promo-input" type="text" placeholder="Promo code" style="flex:1;padding:10px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:13px;font-family:Nunito Sans,sans-serif;color:#1A1A1A;text-transform:uppercase;box-sizing:border-box">'
+            +'<button onclick="applyPromo()" style="padding:10px 14px;border-radius:8px;border:none;background:#1A1A1A;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:Nunito Sans,sans-serif">Apply</button>'
+            +'</div>';
+          if(state.appliedPromo) {
+            c+='<div style="margin-top:8px;padding:8px 12px;background:#EBF5EE;border-radius:8px;font-size:11px;color:#2a7a4a;display:flex;justify-content:space-between;align-items:center">'
+              +'<span><strong>'+state.appliedPromo.code+'</strong> — '+(state.appliedPromo.type==='percent'?state.appliedPromo.discount+'% off':'$'+state.appliedPromo.discount+' off')+'</span>'
+              +'<button onclick="clearPromo()" style="background:none;border:none;color:#7A1020;cursor:pointer;font-size:14px;padding:0">×</button>'
+              +'</div>';
+          }
+        } else {
+          c+='<button onclick="togglePromoInput()" style="margin-top:10px;background:none;border:none;color:#7A1020;font-size:12px;cursor:pointer;text-decoration:underline;font-family:Nunito Sans,sans-serif;padding:0">Have a promo code?</button>';
+        }
+        c+='<button data-evid="'+ev.id+'" onclick="if(!disableBtn(this))return;purchaseTicket(parseInt(this.dataset.evid))" style="width:100%;padding:13px;background:#7A1020;color:#FFFFFF;border:none;border-radius:10px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-top:12px">Buy Tickets →</button>';
+      }
     }
+    c+='<button data-evid="'+ev.id+'" onclick="var e=EVENTS.find(function(x){return x.id===parseInt(this.dataset.evid)});addToCalendar(e)" style="width:100%;padding:10px;background:#fff;border:1.5px solid #E5E5E5;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:Nunito Sans,sans-serif;margin-top:8px;color:#1A1A1A">📅 Add to Calendar</button>';
     c+='</div></div>';
     return c;
   }
@@ -4968,13 +5228,27 @@ function custEventListHTML() {
   // ── EVENTS TAB ──
   else if(dashTab==='events') {
     var evSubTab = state.evSubTab || 'discover';
-    html+='<div style="display:flex;gap:8px;margin-bottom:16px">';
+    html+='<div style="display:flex;gap:8px;margin-bottom:12px">';
     [['discover','Discover'],['mytickets','My Tickets ('+myActive.length+')'],['past','Past ('+myPast.length+')']].forEach(function(t){
       var active = evSubTab===t[0];
       html+='<button onclick="setState({evSubTab:\''+t[0]+'\'})" style="padding:8px 14px;border-radius:20px;border:1px solid '+(active?'#1A1A1A':'#E5E5E5')+';background:'+(active?'#1A1A1A':'#fff')+';color:'+(active?'#fff':'#888')+';font-size:11px;font-weight:700;font-family:Nunito Sans,sans-serif;cursor:pointer;letter-spacing:.04em">'+t[1]+'</button>';
     });
     html+='</div>';
+    if(evSubTab==='discover') {
+      html+='<div style="margin-bottom:12px"><input id="event-search" type="search" placeholder="Search events..." value="'+(state.eventSearch||'').replace(/"/g,'&quot;')+'" oninput="onEventSearchInput(this.value)" style="width:100%;padding:10px 14px;border:1.5px solid #E5E5E5;border-radius:8px;font-size:13px;font-family:Nunito Sans,sans-serif;box-sizing:border-box;color:#1A1A1A"></div>';
+    }
     var evList = evSubTab==='mytickets'?myActive:evSubTab==='past'?myPast:discover;
+    if(evSubTab==='discover') {
+      var searchTerm = (state.eventSearch||'').toLowerCase();
+      if(searchTerm) {
+        evList = evList.filter(function(e){
+          return (e.name||'').toLowerCase().indexOf(searchTerm) >= 0
+            || (e.venue||'').toLowerCase().indexOf(searchTerm) >= 0
+            || (e.city||'').toLowerCase().indexOf(searchTerm) >= 0
+            || (e.description||'').toLowerCase().indexOf(searchTerm) >= 0;
+        });
+      }
+    }
     if(!evList.length){html+='<div style="text-align:center;padding:48px 20px;color:#888"><div style="font-size:36px;margin-bottom:12px;opacity:.3">○</div><div>No events here yet.</div></div>';}
     else{evList.forEach(function(ev){html+=eventCard(ev);});}
   }
@@ -5134,7 +5408,8 @@ function custPortalHTML() {
           </div>
         </div>
         <div style="font-size:11px;color:#555;font-weight:500;margin-bottom:14px">${tables.length} supplier tables · ${EV.products.length} products · ${EV.agents.filter(a=>a.submitted).length} agents</div>
-        <button onclick="setCustTab('browse')" style="width:100%;padding:13px;background:#7A1020;color:#FFFFFF;border:none;border-radius:10px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;font-family:Nunito Sans,sans-serif;cursor:pointer">Browse Tonight's Products →</button>
+        <button onclick="setCustTab('browse')" style="width:100%;padding:13px;background:#7A1020;color:#FFFFFF;border:none;border-radius:10px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-bottom:8px">Browse Tonight's Products →</button>
+        <button onclick="addToCalendar(EVENTS.find(function(e){return e.id===state.selectedEventId}))" style="width:100%;padding:10px;background:#fff;border:1.5px solid #E5E5E5;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:Nunito Sans,sans-serif;color:#1A1A1A">📅 Add to Calendar</button>
       </div>
     </div>
   </div>` : '';
