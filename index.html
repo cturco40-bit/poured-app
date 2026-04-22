@@ -504,7 +504,13 @@ body.dp input,body.dp textarea,body.dp select,body.dp button{font-family:var(--f
 .poured-loading{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:rgba(26,26,26,.9);color:#fff;padding:16px 28px;border-radius:10px;font-size:13px;font-weight:700;font-family:Nunito Sans,sans-serif;display:none}
 .poured-loading.show{display:block}
 </style>
-<script src="https://js.sentry-cdn.com/798f0a4ec4c39903ea62bf672dedf14c.min.js" crossorigin="anonymous"></script>
+<script src="https://browser.sentry-cdn.com/8.0.0/bundle.min.js" crossorigin="anonymous"></script>
+<script>
+  Sentry.init({
+    dsn: "https://21e42dacaa5762296c94e7b44cc01ca8@o4511263948406784.ingest.us.sentry.io/4511263973834752",
+    sendDefaultPii: true
+  });
+</script>
 </head>
 <body>
 <div id="app"></div>
@@ -545,7 +551,7 @@ console.time('app-load');
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=120').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=121').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
