@@ -558,7 +558,7 @@ console.time('app-load');
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────────
 // IMPORTANT: bump ?v= on every deploy
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=117').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js?v=118').then(function(reg) {
     console.log('Poured: SW registered');
     reg.update();
     setInterval(function() { reg.update(); }, 60000);
@@ -1042,6 +1042,7 @@ let state = {
   eventSearch: "",
   appliedPromo: null,
   promoOpen: false,
+  expandedExhibitor: null,
   cart: [],
   favs: {1:true,3:true},
   notes: {3:"Fine brioche, extraordinary persistence."},
@@ -3825,6 +3826,13 @@ window.togglePromoInput = function() {
   render();
 };
 
+window.toggleExhibitor = function(id) {
+  var current = state.expandedExhibitor;
+  var key = id == null ? null : String(id);
+  state.expandedExhibitor = (current === key) ? null : key;
+  render();
+};
+
 window.hideProduct = async function(id, hidden) {
   (EVENTS||[]).forEach(function(e){
     (e.products||[]).forEach(function(p){ if(p.id===id) p.hidden = !!hidden; });
@@ -4959,40 +4967,59 @@ function coordPortalHTML() {
               + '</div>';
           }).join('');
     };
+    var exhibitorKey = function(agent){ return String(agent.id || agent.agent_id || agent.email || agent.firm || ''); };
     if(isMobile()) {
       content += '<div style="padding:12px">';
       EV.agents.forEach(function(agent){
         var agentProds = agentProductsFor(agent);
-        content += '<div style="background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #E5E5E5">';
-        content += '<div style="font-size:14px;font-weight:700;margin-bottom:2px">'+agent.firm+'</div>';
-        content += '<div style="font-size:12px;color:#888;margin-bottom:8px">'+agent.email+'</div>';
-        content += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+        var key = exhibitorKey(agent);
+        var expanded = state.expandedExhibitor === key;
+        var chev = expanded ? '▾' : '▸';
+        content += '<div style="background:#fff;border-radius:10px;margin-bottom:10px;border:1px solid #E5E5E5;overflow:hidden">';
+        content += '<div onclick="toggleExhibitor(\''+key.replace(/\'/g,"\\'")+'\')" style="padding:14px;cursor:pointer;user-select:none">';
+        content += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px">';
+        content += '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700">'+agent.firm+'</div>'
+          + '<div style="font-size:12px;color:#888">'+(agent.email||'')+'</div></div>';
+        content += '<span style="font-size:16px;color:#888;flex-shrink:0">'+chev+'</span>';
+        content += '</div>';
+        content += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">';
+        content += '<span class="dp-badge dp-badge-gray">'+agentProds.length+' wine'+(agentProds.length===1?'':'s')+'</span>';
         content += '<span class="dp-badge '+(agent.submitted?'dp-badge-green':'dp-badge-gray')+'">'+(agent.submitted?'Submitted':'Pending')+'</span>';
         content += '<span class="dp-badge '+(agent.paid?'dp-badge-green':'dp-badge-amber')+'">'+(agent.paid?'Fee paid':'Unpaid')+'</span>';
         content += '</div>';
-        if(agentProds.length > 0) {
-          content += '<div style="margin-top:10px;padding:8px 12px;background:#F8F8F8;border-radius:8px;border:1px solid #EBEBEB">'+productListHTML(agentProds)+'</div>';
-        } else {
-          content += '<div style="margin-top:10px;padding:8px 12px;background:#F8F8F8;border-radius:8px;border:1px solid #EBEBEB;font-size:11px;color:#AAA">No products uploaded yet</div>';
+        content += '</div>';
+        if(expanded) {
+          if(agentProds.length > 0) {
+            content += '<div style="padding:8px 12px;background:#F8F8F8;border-top:1px solid #EBEBEB">'+productListHTML(agentProds)+'</div>';
+          } else {
+            content += '<div style="padding:10px 14px;background:#F8F8F8;border-top:1px solid #EBEBEB;font-size:11px;color:#AAA">No products uploaded yet</div>';
+          }
         }
         content += '</div>';
       });
       content += '</div>';
     } else {
-      content += '<table class="dp-table"><thead><tr><th>Exhibitor</th><th>Listing fee</th><th>Submission</th><th>Products</th><th>Actions</th></tr></thead><tbody>';
+      content += '<table class="dp-table"><thead><tr><th style="width:24px"></th><th>Exhibitor</th><th>Listing fee</th><th>Submission</th><th>Products</th><th>Actions</th></tr></thead><tbody>';
       EV.agents.forEach(function(agent){
         var agentProds = agentProductsFor(agent);
-        content += '<tr>'
-          + '<td><div style="font-weight:600;font-size:13px">'+agent.firm+'</div><div style="font-size:11px;color:var(--muted)">'+agent.email+'</div></td>'
+        var key = exhibitorKey(agent);
+        var expanded = state.expandedExhibitor === key;
+        var chev = expanded ? '▾' : '▸';
+        var rowClick = 'onclick="toggleExhibitor(\''+key.replace(/\'/g,"\\'")+'\')" style="cursor:pointer"';
+        content += '<tr '+rowClick+'>'
+          + '<td style="color:#888;font-size:14px;text-align:center">'+chev+'</td>'
+          + '<td><div style="font-weight:600;font-size:13px">'+agent.firm+'</div><div style="font-size:11px;color:var(--muted)">'+(agent.email||'')+'</div></td>'
           + '<td><span class="dp-badge '+(agent.paid?'dp-badge-green':'dp-badge-amber')+'">$'+agent.listingFee+' '+(agent.paid?'paid':'unpaid')+'</span></td>'
           + '<td><span class="dp-badge '+(agent.submitted?'dp-badge-green':'dp-badge-amber')+'">'+(agent.submitted?'✓ Submitted':'Pending')+'</span></td>'
-          + '<td style="font-size:13px">'+agentProds.length+' products</td>'
-          + '<td><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="sendAgentReminder(state.selectedEventId)">Remind</button></td>'
+          + '<td style="font-size:13px">'+agentProds.length+' wine'+(agentProds.length===1?'':'s')+'</td>'
+          + '<td><button class="dp-btn dp-btn-ghost dp-btn-sm" onclick="event.stopPropagation();sendAgentReminder(state.selectedEventId)">Remind</button></td>'
           + '</tr>';
-        if(agentProds.length > 0) {
-          content += '<tr><td colspan="5" style="padding:8px 12px;background:#F8F8F8;border-top:1px solid #EBEBEB">'+productListHTML(agentProds)+'</td></tr>';
-        } else {
-          content += '<tr><td colspan="5" style="padding:8px 12px;background:#F8F8F8;border-top:1px solid #EBEBEB;font-size:11px;color:#AAA">No products uploaded yet</td></tr>';
+        if(expanded) {
+          if(agentProds.length > 0) {
+            content += '<tr><td colspan="6" style="padding:8px 12px;background:#F8F8F8;border-top:1px solid #EBEBEB">'+productListHTML(agentProds)+'</td></tr>';
+          } else {
+            content += '<tr><td colspan="6" style="padding:8px 12px;background:#F8F8F8;border-top:1px solid #EBEBEB;font-size:11px;color:#AAA">No products uploaded yet</td></tr>';
+          }
         }
       });
       content += '</tbody></table>';
