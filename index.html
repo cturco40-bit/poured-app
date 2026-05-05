@@ -3783,12 +3783,17 @@ window.handleCoverUpload = function(input) {
   if(file.size > 5*1024*1024) { showToast('Image must be under 5MB'); input.value=''; return; }
   var reader = new FileReader();
   reader.onload = function(e) {
+    document.querySelectorAll('[data-field]').forEach(function(el){var key=el.getAttribute('data-field');if(key&&el.value!==undefined)state.draft[key]=el.value;});
     state.draft.coverImage = e.target.result;
     render();
   };
   reader.readAsDataURL(file);
 };
-window.removeCoverImage = function() { state.draft.coverImage = null; render(); };
+window.removeCoverImage = function() {
+  document.querySelectorAll('[data-field]').forEach(function(el){var key=el.getAttribute('data-field');if(key&&el.value!==undefined)state.draft[key]=el.value;});
+  state.draft.coverImage = null;
+  render();
+};
 
 window.joinWaitlist = function(tierId) {
   var w = Object.assign({}, state.waitlist||{});
@@ -4496,7 +4501,7 @@ function createEventHTML() {
       <div style="margin-bottom:18px"><label class="lbl">DESCRIPTION</label><textarea class="inp" style="min-height:68px;resize:vertical;line-height:1.6" data-field="description" placeholder="What makes this event special?">${d.description}</textarea></div>
       <div style="margin-bottom:20px">
         <label class="lbl">EVENT COVER IMAGE <span style="color:#CCC">(optional)</span></label>
-        ${d.coverImage?`<div style="width:100%;height:160px;border-radius:8px;background-image:url('${d.coverImage}');background-size:cover;background-position:center;margin-bottom:8px;border:1px solid ${B.mist}"></div>`:''}
+        ${d.coverImage?`<div style="width:100%;aspect-ratio:16/9;border-radius:8px;background:#f5f5f5 url('${d.coverImage}') center/contain no-repeat;margin-bottom:8px;border:1px solid ${B.mist}"></div>`:''}
         <input type="file" id="cover-upload" accept="image/*" onchange="handleCoverUpload(this)" style="display:none">
         <button onclick="document.getElementById('cover-upload').click()" style="padding:8px 14px;border-radius:8px;border:1px solid ${B.mist};background:#fff;color:${B.cork};font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">📷 Upload Image</button>
         ${d.coverImage?`<button onclick="removeCoverImage()" style="padding:8px 14px;border-radius:8px;border:1px solid ${B.mist};background:#fff;color:${B.cork};font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-left:6px">Remove</button>`:''}
