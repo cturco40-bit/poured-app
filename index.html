@@ -4395,6 +4395,9 @@ window.publishEvent=async function(){
   document.querySelectorAll('[data-field]').forEach(function(el){var k=el.getAttribute('data-field');if(k&&el.value!==undefined)state.draft[k]=el.value;});
   var d=state.draft;
   if(!d.host||!d.host.trim()){showToast('Please enter your organization name');return;}
+  var enabledTiers=(d.tiers||[]).filter(function(t){return t.enabled;}).map(function(t){
+    return{id:t.id,label:t.label,price:parseFloat(t.price)||0,capacity:parseInt(t.capacity)||100,sold:0,perks:(t.perks||'').split('\n').filter(Boolean)};
+  });
   if(LIVE_MODE&&_sb){
     showLoader('Publishing event...');
     var user=await _sb.auth.getUser();
@@ -4409,18 +4412,26 @@ window.publishEvent=async function(){
     }).select().single();
     if(res.error){hideLoader();showToast('Error: '+res.error.message);return;}
     var eventId=res.data.id;
-    var tiers=(d.tiers||[]).filter(function(t){return t.enabled;}).map(function(t){
-      return{event_id:eventId,label:t.label,price:parseFloat(t.price)||0,capacity:parseInt(t.capacity)||100,sold:0};
-    });
-    if(tiers.length>0){
-      var tierRes=await _sb.from('ticket_tiers').insert(tiers);
+    var tiersForDb=enabledTiers.map(function(t){return{event_id:eventId,label:t.label,price:t.price,capacity:t.capacity,sold:0};});
+    if(tiersForDb.length>0){
+      var tierRes=await _sb.from('ticket_tiers').insert(tiersForDb);
       if(tierRes.error)console.warn('Tier insert error:',tierRes.error);
     }
+    var newEv=Object.assign({},res.data,{tiers:enabledTiers,agents:[],products:[],orders:[],coverImage:d.coverImage||null});
+    EVENTS.unshift(newEv);
+    lastEventFetch=0;
     hideLoader();
-    setState({createDone:true});
+    setState({createDone:true,lastCreatedEventId:eventId});
     showToast('Event created successfully');
   }else{
-    setState({createDone:true});
+    var demoId=Date.now();
+    var newEv2={id:demoId,name:d.name,host:d.host,date:d.date,dateISO:d.date,time:(d.startTime||'18:00')+'-'+(d.endTime||'21:00'),
+      venue:d.venue,address:d.address,city:d.city||'Toronto',province:d.province||'ON',
+      description:d.description||'',passcode:d.passcode||'',submissionDeadline:d.submissionDeadline||'',
+      status:'upcoming',coverImage:d.coverImage||null,categories:[],
+      tiers:enabledTiers,agents:[],products:[],orders:[]};
+    EVENTS.unshift(newEv2);
+    setState({createDone:true,lastCreatedEventId:demoId});
   }
 };
 
@@ -4464,7 +4475,19 @@ window.loadUserEvents = async function() {
   render();
 };
 
-window.resetCreate = () => setState({createDone:false,createStep:1,draft:{name:"",host:"",date:"",startTime:"18:00",endTime:"21:00",venue:"",address:"",city:"Toronto",province:"ON",description:"",passcode:"",submissionDeadline:"",coverImage:null,promoCodes:[],tiers:[{id:"ga",label:"General Admission",price:"85",capacity:"120",enabled:true,perks:"All tables\nWelcome drink\nEvent booklet"},{id:"vip",label:"VIP Reserve",price:"165",capacity:"30",enabled:false,perks:"Early entry 5:30 PM\nGrand cru walkthrough\nGift bottle"},{id:"trade",label:"Trade / Industry",price:"0",capacity:"40",enabled:false,perks:"Trade ID required\nFull access\nPrice sheets"}],agentEmails:"",listingFee:"50",featuredFee:"500",requirePasscode:true,allowPublicBrowse:false}});
+window.resetCreate = () => setState({createDone:false,createStep:1,lastCreatedEventId:null,draft:{name:"",host:"",date:"",startTime:"18:00",endTime:"21:00",venue:"",address:"",city:"Toronto",province:"ON",description:"",passcode:"",submissionDeadline:"",coverImage:null,promoCodes:[],tiers:[{id:"ga",label:"General Admission",price:"85",capacity:"120",enabled:true,perks:"All tables\nWelcome drink\nEvent booklet"},{id:"vip",label:"VIP Reserve",price:"165",capacity:"30",enabled:false,perks:"Early entry 5:30 PM\nGrand cru walkthrough\nGift bottle"},{id:"trade",label:"Trade / Industry",price:"0",capacity:"40",enabled:false,perks:"Trade ID required\nFull access\nPrice sheets"}],agentEmails:"",listingFee:"50",featuredFee:"500",requirePasscode:true,allowPublicBrowse:false}});
+
+window.openCreatedEvent = function(){
+  var id = state.lastCreatedEventId;
+  if(!id){ showToast('Event id missing'); return; }
+  var draftReset = {name:"",host:"",date:"",startTime:"18:00",endTime:"21:00",venue:"",address:"",city:"Toronto",province:"ON",description:"",passcode:"",submissionDeadline:"",coverImage:null,promoCodes:[],tiers:[{id:"ga",label:"General Admission",price:"85",capacity:"120",enabled:true,perks:"All tables\nWelcome drink\nEvent booklet"},{id:"vip",label:"VIP Reserve",price:"165",capacity:"30",enabled:false,perks:"Early entry 5:30 PM\nGrand cru walkthrough\nGift bottle"},{id:"trade",label:"Trade / Industry",price:"0",capacity:"40",enabled:false,perks:"Trade ID required\nFull access\nPrice sheets"}],agentEmails:"",listingFee:"50",featuredFee:"500",requirePasscode:true,allowPublicBrowse:false};
+  setState({createDone:false,createStep:1,lastCreatedEventId:null,coordSelectedEventId:id,coordTab:'overview',draft:draftReset});
+};
+
+window.backToMyEvents = function(){
+  var draftReset = {name:"",host:"",date:"",startTime:"18:00",endTime:"21:00",venue:"",address:"",city:"Toronto",province:"ON",description:"",passcode:"",submissionDeadline:"",coverImage:null,promoCodes:[],tiers:[{id:"ga",label:"General Admission",price:"85",capacity:"120",enabled:true,perks:"All tables\nWelcome drink\nEvent booklet"},{id:"vip",label:"VIP Reserve",price:"165",capacity:"30",enabled:false,perks:"Early entry 5:30 PM\nGrand cru walkthrough\nGift bottle"},{id:"trade",label:"Trade / Industry",price:"0",capacity:"40",enabled:false,perks:"Trade ID required\nFull access\nPrice sheets"}],agentEmails:"",listingFee:"50",featuredFee:"500",requirePasscode:true,allowPublicBrowse:false};
+  setState({createDone:false,createStep:1,lastCreatedEventId:null,coordSelectedEventId:null,coordTab:'overview',draft:draftReset});
+};
 
 function createEventHTML() {
   const d = state.draft;
@@ -4497,6 +4520,8 @@ function createEventHTML() {
       <div style="background:#EEF3FA;border-radius:10px;padding:11px 14px;margin-bottom:14px;font-size:11px;color:${B.cork};line-height:1.75">
         Share link — attendees buy and get their passcode automatically.<br> Exhibitors upload wines, one table per producer — you approve before going live.<br> On event day — attendees browse, taste, rate and order.
       </div>
+      ${state.lastCreatedEventId?`<button onclick="openCreatedEvent()" style="width:100%;padding:12px;border-radius:8px;border:none;background:${B.pour};color:#fff;font-size:13px;font-weight:700;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-bottom:8px">Open Event →</button>`:''}
+      <button onclick="backToMyEvents()" style="width:100%;padding:11px;border-radius:8px;border:1px solid ${B.mist};background:#fff;color:${B.ink};font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer;margin-bottom:8px">Back to My Events</button>
       <button onclick="resetCreate()" style="width:100%;padding:11px;border-radius:8px;border:1px solid ${B.mist};background:#fff;color:${B.cork};font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">+ Create Another Event</button>
     </div>`;
   }
