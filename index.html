@@ -3823,14 +3823,49 @@ window.transferTicket = function(ticketId) {
 window.shareProfile = function() {
   var id = (state.currentUser && state.currentUser.id) || '';
   var url = window.location.origin + window.location.pathname + '?exhibitor=' + encodeURIComponent(id);
-  if(navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(url).then(function(){
-      showToast('Profile link copied to clipboard');
-    }).catch(function(){
-      showToast('Link: ' + url);
-    });
+  copyTextToClipboard(url, 'Profile link copied to clipboard');
+};
+
+function copyTextToClipboard(text, successMsg) {
+  var msg = successMsg || 'Copied to clipboard';
+  var done = function(ok){ showToast(ok ? msg : ('Copy failed — link: ' + text), ok ? 2800 : 6000); };
+  try {
+    if(navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext !== false) {
+      navigator.clipboard.writeText(text).then(function(){ done(true); }).catch(function(){ legacyCopy(text, done); });
+      return;
+    }
+  } catch(e) {}
+  legacyCopy(text, done);
+}
+
+function legacyCopy(text, done) {
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly','');
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    var ok = document.execCommand && document.execCommand('copy');
+    document.body.removeChild(ta);
+    done(!!ok);
+  } catch(e) { done(false); }
+}
+
+window.copyTicketLink = function(slug) {
+  copyTextToClipboard('https://pouredevents.com/events/' + slug, 'Ticket link copied');
+};
+
+window.shareTicketLink = function(name, slug) {
+  var url = 'https://pouredevents.com/events/' + slug;
+  if(navigator.share) {
+    navigator.share({ title: name, text: 'Get tickets to ' + name, url: url }).catch(function(){});
   } else {
-    showToast('Link: ' + url);
+    copyTextToClipboard(url, 'Ticket link copied — paste it anywhere to share');
   }
 };
 
@@ -4451,8 +4486,8 @@ function createEventHTML() {
         <div style="font-size:9px;color:var(--muted);letter-spacing:.14em;margin-bottom:5px">TICKET LINK</div>
         <div style="background:rgba(255,255,255,.07);border-radius:8px;padding:9px 12px;margin-bottom:9px;font-size:12px;color:${B.gold};word-break:break-all;font-family:monospace">pouredevents.com/events/${slug}</div>
         <div style="display:flex;gap:8px">
-          <button onclick="navigator.clipboard&&navigator.clipboard.writeText('https://pouredevents.com/events/${slug}')" style="flex:1;padding:9px;border-radius:8px;border:1px solid #555;background:rgba(255,255,255,.06);color:${B.cream};font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">Copy</button>
-          <button style="flex:1;padding:9px;border-radius:8px;border:none;background:${B.pour};color:#fff;font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">Share</button>
+          <button onclick="copyTicketLink('${slug}')" style="flex:1;padding:9px;border-radius:8px;border:1px solid #555;background:rgba(255,255,255,.06);color:${B.cream};font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">Copy</button>
+          <button onclick="shareTicketLink(${JSON.stringify(d.name)}, '${slug}')" style="flex:1;padding:9px;border-radius:8px;border:none;background:${B.pour};color:#fff;font-size:12px;font-family:Nunito Sans,sans-serif;cursor:pointer">Share</button>
         </div>
       </div>
       <div style="background:#fff;border-radius:12px;padding:12px 14px;border:1px solid ${B.mist};margin-bottom:14px">
