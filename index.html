@@ -653,6 +653,9 @@ window.addEventListener('load', function() {
   }
 });
 
+// ─── DEMO DETECTION (must come before Supabase init below) ─────────────────
+var IS_DEMO = (new URLSearchParams(window.location.search)).get('demo') !== null;
+
 // ─── SUPABASE ──────────────────────────────────────────────────────────────────
 var _sb=null,LIVE_MODE=false;
 var orderQueue = [];
@@ -772,9 +775,6 @@ function orderingBanner(ev) {
 }
 const fmt = n => n.toFixed(2);
 const IC = {"Wine":"W","Champagne & Sparkling":"SP","Whisky & Spirits":"WS","Beer & Cider":"BC","Non-Alcoholic":"NA","RTD":"RT"};
-
-// ─── DEMO DETECTION (must run before data) ──────────────────────────────────
-var IS_DEMO = (new URLSearchParams(window.location.search)).get('demo') !== null;
 
 // ─── MOCK DATA ───────────────────────────────────────────────────────────────
 // Multiple events in different states
